@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+<!--
+  Clearpath Husky A200 – Unity-ready URDF (wheels visible + joints solid)
+  Source: husky-noetic-devel / husky_description
+
+  Key fixes:
+  - Mass & inertia on base_link (ArticulationBody requirement)
+  - Wheel visuals use wheel.dae (confirmed visible in Unity)
+  - Body / top plate / rail use STL
+  - Continuous wheel joints with effort/velocity limits
+  - Primitive collisions for stability
+
+  Unity post-import checklist:
+  1. Root ArticulationBody → temporarily set Immovable = true
+  2. Each of the 4 wheel joints:
+       Stiffness ≈ 100000
+       Damping   ≈ 10000
+       Force Limit ≈ 1000000
+  3. Confirm 4 wheel_*_link are children of base_link
+  4. Uncheck Immovable → Play
+-->
+<robot name="husky">
+
+  <material name="dark_grey">
+    <color rgba="0.25 0.25 0.25 1"/>
+  </material>
+  <material name="medium_grey">
+    <color rgba="0.55 0.55 0.55 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0.08 0.08 0.08 1"/>
+  </material>
+
+  <!-- ==================== BASE (root, has mass) ==================== -->
+  <link name="base_link">
+    <inertial>
+      <mass value="46.034"/>
+      <origin xyz="-0.00065 -0.085 0.062" rpy="0 0 0"/>
+      <inertia ixx="0.6022" ixy="-0.02364" ixz="-0.1197"
+               iyy="1.7386" iyz="-0.001544" izz="2.0296"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/base_link.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="medium_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.061875" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.9874 0.5709 0.12375"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0.175625" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.79 0.5709 0.10375"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="base_footprint"/>
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0 0 -0.13228" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="base_footprint"/>
+  </joint>
+
+  <!-- ==================== CHASSIS ==================== -->
+  <link name="top_chassis_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/top_chassis.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+  </link>
+  <joint name="top_chassis_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="top_chassis_link"/>
+  </joint>
+
+  <link name="front_bumper_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/bumper.dae" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="front_bumper" type="fixed">
+    <origin xyz="0.48 0 0.091" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="front_bumper_link"/>
+  </joint>
+
+  <link name="rear_bumper_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/bumper.dae" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+  <joint name="rear_bumper" type="fixed">
+    <origin xyz="-0.48 0 0.091" rpy="0 0 3.14159"/>
+    <parent link="base_link"/>
+    <child link="rear_bumper_link"/>
+  </joint>
+
+  <link name="user_rail_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/user_rail.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="medium_grey"/>
+    </visual>
+  </link>
+  <joint name="user_rail" type="fixed">
+    <origin xyz="0.272 0 0.245" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="user_rail_link"/>
+  </joint>
+
+  <link name="top_plate_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/top_plate.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="medium_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.003175" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.73 0.59 0.00635"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="top_plate_joint" type="fixed">
+    <origin xyz="0.0812 0 0.245" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="top_plate_link"/>
+  </joint>
+
+  <link name="top_plate_front_link"/>
+  <joint name="top_plate_front_joint" type="fixed">
+    <origin xyz="0.36367 0 0.00639" rpy="0 0 0"/>
+    <parent link="top_plate_link"/>
+    <child link="top_plate_front_link"/>
+  </joint>
+
+  <link name="top_plate_rear_link"/>
+  <joint name="top_plate_rear_joint" type="fixed">
+    <origin xyz="-0.36633 0 0.00639" rpy="0 0 0"/>
+    <parent link="top_plate_link"/>
+    <child link="top_plate_rear_link"/>
+  </joint>
+
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <origin xyz="0.19 0 0.149" rpy="0 -1.5708 3.1416"/>
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+  <!-- ==================== WHEELS (visual = DAE, collision = cylinder) ==================== -->
+  <!-- positions: wheelbase/2=0.256, track/2=0.2775, z=0.03282 -->
+
+  <link name="front_left_wheel_link">
+    <inertial>
+      <mass value="2.637"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/wheel.dae" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder length="0.1143" radius="0.1651"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="front_left_wheel" type="continuous">
+    <origin xyz="0.256 0.2775 0.03282" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="front_left_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="10"/>
+  </joint>
+
+  <link name="front_right_wheel_link">
+    <inertial>
+      <mass value="2.637"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/wheel.dae" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder length="0.1143" radius="0.1651"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="front_right_wheel" type="continuous">
+    <origin xyz="0.256 -0.2775 0.03282" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="front_right_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="10"/>
+  </joint>
+
+  <link name="rear_left_wheel_link">
+    <inertial>
+      <mass value="2.637"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/wheel.dae" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder length="0.1143" radius="0.1651"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rear_left_wheel" type="continuous">
+    <origin xyz="-0.256 0.2775 0.03282" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="rear_left_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="10"/>
+  </joint>
+
+  <link name="rear_right_wheel_link">
+    <inertial>
+      <mass value="2.637"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.02467" ixy="0" ixz="0" iyy="0.04411" iyz="0" izz="0.02467"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/wheel.dae" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder length="0.1143" radius="0.1651"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rear_right_wheel" type="continuous">
+    <origin xyz="-0.256 -0.2775 0.03282" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="rear_right_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="10"/>
+  </joint>
+
+</robot>
