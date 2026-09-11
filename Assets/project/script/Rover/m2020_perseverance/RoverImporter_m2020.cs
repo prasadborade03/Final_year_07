@@ -3,40 +3,45 @@ using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
-/// Perseverance M2020 importer – drive + soft rocker-bogie + 4-wheel steer.
-///
-/// Suspension joints are free (low stiffness hold at 0) so wheels can rise over
-/// obstacles like a real rocker-bogie, without the chassis collapsing flat.
-/// Steer joints are position-controlled from the controller.
-/// Only Body_Wheel* with dof>=1 are velocity-driven.
+/// FIXED Perseverance M2020 Importer – ArticulationBody Rocker-Bogie System.
+/// Key Fixes:
+/// 1. Converts Radians -> Degrees for ArticulationDrive.target (fixes steering scale).
+/// 2. Scales suspension stiffness (1800 N·m/deg) & neutral target to keep chassis elevated.
+/// 3. Removes jointPosition target override in velocity drives.
+/// 4. Auto-ignores internal collisions between wheel / bogie / chassis colliders.
+/// 5. Includes invert option for right-side wheel revolute axes.
 /// </summary>
 public class RoverImporter_m2020 : MonoBehaviour
 {
-    [Header("Prefab")]
+    [Header("Prefab & Spawn")]
     public GameObject roverPrefab;
+    public Vector3 spawnPosition = new Vector3(0f, 2.5f, 0f);
 
-    [Header("Spawn")]
-    public Vector3 spawnPosition = new Vector3(0f, 2.2f, 0f);
-
-    [Header("Physics")]
+    [Header("Physics Damping & Friction")]
     public float linearDamping = 0.5f;
     public float angularDamping = 0.5f;
     public float jointFriction = 0.05f;
 
     [Header("Wheel Drive")]
     public float wheelDamping = 2500f;
-    public float wheelForceLimit = 1500f;
+    public float wheelForceLimit = 2500f;
+    public bool invertRightSideDrives = true; // URDF joint axis correction
 
-    [Header("Steer (position control)")]
-    public float steerStiffness = 2000f;
-    public float steerDamping = 200f;
-    public float steerForceLimit = 250f;
+    [Header("Steer Drive (Position Controlled)")]
+    public float steerStiffness = 5000f;
+    public float steerDamping = 500f;
+    public float steerForceLimit = 1000f;
 
-    [Header("Suspension (soft passive hold)")]
-    [Tooltip("Low stiffness lets rockers/bogies flex over obstacles while resisting full collapse")]
-    public float suspStiffness = 80f;
-    public float suspDamping = 40f;
-    public float suspForceLimit = 500f;
+    [Header("Suspension (Rocker-Bogie Passive Hold)")]
+    [Tooltip("Sufficient stiffness prevents chassis from collapsing flat onto the ground")]
+    public float suspStiffness = 1800f;
+    public float suspDamping = 350f;
+    public float suspForceLimit = 3000f;
+    [Tooltip("Target elevation offset angle in degrees (higher = lifts chassis)")]
+    public float suspTargetElevationDeg = 0f;
+
+    [Header("Safety & Collision")]
+    public bool ignoreInternalCollisions = true;
 
     private GameObject currentRoverObject;
     private readonly List<ArticulationBody> leftWheels = new List<ArticulationBody>();
@@ -44,7 +49,7 @@ public class RoverImporter_m2020 : MonoBehaviour
 
     private ArticulationBody steerLF, steerLR, steerRF, steerRR;
     private float lastLeftSpeed, lastRightSpeed;
-    private float lastSteerAngle; // radians
+    private float lastSteerAngle; // in radians
 
     void Start()
     {
@@ -58,15 +63,15 @@ public class RoverImporter_m2020 : MonoBehaviour
 
         if (roverPrefab == null)
         {
-            Debug.LogError("[M2020] roverPrefab not assigned");
+            Debug.LogError("[M2020] roverPrefab is not assigned in Inspector!");
             return;
         }
 
         currentRoverObject = Instantiate(roverPrefab, spawnPosition, Quaternion.identity);
-        currentRoverObject.name = "GeneratedPerseverance";
+        currentRoverObject.name = "GeneratedPerseverance_Fixed";
 
         var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>(true);
-        Debug.Log($"[M2020] ArticulationBodies: {allBodies.Length}");
+        Debug.Log($"[M2020] Found {allBodies.Length} ArticulationBodies.");
 
         foreach (var body in allBodies)
         {
@@ -87,10 +92,34 @@ public class RoverImporter_m2020 : MonoBehaviour
             root.immovable = false;
             root.useGravity = true;
             root.TeleportRoot(spawnPosition, Quaternion.identity);
-            Debug.Log($"[M2020] Root={root.name} mass={root.mass:F1}");
+            Debug.Log($"[M2020] Configured Root={root.name}, Mass={root.mass:F1}kg");
+        }
+
+        if (ignoreInternalCollisions)
+        {
+            IgnoreInternalCollisions(allBodies);
         }
 
         StartCoroutine(SetupAfterPhysics(allBodies));
+    }
+
+    private void IgnoreInternalCollisions(ArticulationBody[] bodies)
+    {
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            var colsA = bodies[i].GetComponents<Collider>();
+            for (int j = i + 1; j < bodies.Length; j++)
+            {
+                var colsB = bodies[j].GetComponents<Collider>();
+                foreach (var cA in colsA)
+                {
+                    foreach (var cB in colsB)
+                    {
+                        Physics.IgnoreCollision(cA, cB, true);
+                    }
+                }
+            }
+        }
     }
 
     private IEnumerator SetupAfterPhysics(ArticulationBody[] allBodies)
@@ -105,40 +134,40 @@ public class RoverImporter_m2020 : MonoBehaviour
         {
             string n = body.name;
 
-            // --- Drive wheels ---
+            // --- Drive Wheels ---
             if (n.StartsWith("Body_Wheel") && !body.isRoot && body.dofCount >= 1)
             {
                 ConfigureVelocityDrive(body);
                 if (n.Contains("Left"))
                 {
                     leftWheels.Add(body);
-                    Debug.Log($"[M2020] LEFT drive {n}");
+                    Debug.Log($"[M2020] Connected LEFT drive: {n}");
                 }
                 else if (n.Contains("Right"))
                 {
                     rightWheels.Add(body);
-                    Debug.Log($"[M2020] RIGHT drive {n}");
+                    Debug.Log($"[M2020] Connected RIGHT drive: {n}");
                 }
                 continue;
             }
 
-            // --- Steer actuators ---
-            if (n == "Body_SteerLeftFront")  { steerLF = ConfigurePositionDrive(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
-            if (n == "Body_SteerLeftRear")   { steerLR = ConfigurePositionDrive(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
-            if (n == "Body_SteerRightFront") { steerRF = ConfigurePositionDrive(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
-            if (n == "Body_SteerRightRear")  { steerRR = ConfigurePositionDrive(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
+            // --- Steer Actuators (4 Corners) ---
+            if (n == "Body_SteerLeftFront")  { steerLF = ConfigurePositionDriveDeg(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
+            if (n == "Body_SteerLeftRear")   { steerLR = ConfigurePositionDriveDeg(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
+            if (n == "Body_SteerRightFront") { steerRF = ConfigurePositionDriveDeg(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
+            if (n == "Body_SteerRightRear")  { steerRR = ConfigurePositionDriveDeg(body, 0f, steerStiffness, steerDamping, steerForceLimit); continue; }
 
-            // --- Soft suspension (rocker / bogie / differential) ---
+            // --- Rocker / Bogie / Differential Suspension ---
             if (n == "Body_RockerLeft" || n == "Body_RockerRight"
                 || n == "Body_BogieLeft" || n == "Body_BogieRight"
                 || n == "Body_Differential")
             {
-                ConfigurePositionDrive(body, 0f, suspStiffness, suspDamping, suspForceLimit);
-                Debug.Log($"[M2020] Soft susp: {n}");
+                ConfigurePositionDriveDeg(body, suspTargetElevationDeg, suspStiffness, suspDamping, suspForceLimit);
+                Debug.Log($"[M2020] Suspension link initialized: {n}");
             }
         }
 
-        Debug.Log($"[M2020] Drives left={leftWheels.Count} right={rightWheels.Count} | steers LF={steerLF!=null} LR={steerLR!=null} RF={steerRF!=null} RR={steerRR!=null}");
+        Debug.Log($"[M2020] Setup Complete: Drive Left={leftWheels.Count}, Right={rightWheels.Count} | Steers LF={steerLF!=null} LR={steerLR!=null} RF={steerRF!=null} RR={steerRR!=null}");
     }
 
     private void ConfigureVelocityDrive(ArticulationBody body)
@@ -152,7 +181,7 @@ public class RoverImporter_m2020 : MonoBehaviour
         body.xDrive = drive;
     }
 
-    private ArticulationBody ConfigurePositionDrive(ArticulationBody body, float targetRad,
+    private ArticulationBody ConfigurePositionDriveDeg(ArticulationBody body, float targetDeg,
         float stiffness, float damping, float forceLimit)
     {
         if (body == null || body.dofCount < 1) return body;
@@ -160,14 +189,14 @@ public class RoverImporter_m2020 : MonoBehaviour
         drive.stiffness = stiffness;
         drive.damping = damping;
         drive.forceLimit = forceLimit;
-        drive.target = targetRad;
+        drive.target = targetDeg; // ArticulationDrive expects DEGREES
         drive.targetVelocity = 0f;
         body.xDrive = drive;
         return body;
     }
 
     /// <summary>
-    /// leftSpeed/rightSpeed in deg/s. SAME sign on both sides = forward (for this URDF).
+    /// Set drive wheel angular speeds in deg/sec.
     /// </summary>
     public void SetWheelSpeeds(float leftSpeed, float rightSpeed)
     {
@@ -176,8 +205,7 @@ public class RoverImporter_m2020 : MonoBehaviour
     }
 
     /// <summary>
-    /// Four-wheel steer angle in radians. Positive = turn left (counter-clockwise from top).
-    /// Front and rear steer in opposite directions for pivot-in-place style.
+    /// Set 4-wheel steering angle in RADIANS. (Converted to Degrees internally!)
     /// </summary>
     public void SetSteerAngle(float angleRad)
     {
@@ -188,10 +216,13 @@ public class RoverImporter_m2020 : MonoBehaviour
     {
         foreach (var w in leftWheels)
             ApplyVelocity(w, lastLeftSpeed);
-        foreach (var w in rightWheels)
-            ApplyVelocity(w, lastRightSpeed);
 
-        // 4-wheel steer: front +angle, rear -angle (NASA-style pivot / arc)
+        float rightSpeedToApply = invertRightSideDrives ? -lastRightSpeed : lastRightSpeed;
+        foreach (var w in rightWheels)
+            ApplyVelocity(w, rightSpeedToApply);
+
+        // Standard 4-wheel pivot steering:
+        // LF and RR steer +angle, RF and LR steer -angle
         ApplySteer(steerLF,  lastSteerAngle);
         ApplySteer(steerRF, -lastSteerAngle);
         ApplySteer(steerLR, -lastSteerAngle);
@@ -206,8 +237,7 @@ public class RoverImporter_m2020 : MonoBehaviour
         drive.damping = wheelDamping;
         drive.forceLimit = wheelForceLimit;
         drive.targetVelocity = speedDegPerSec;
-        if (body.jointPosition.dofCount > 0)
-            drive.target = body.jointPosition[0];
+        drive.target = 0f; // Kept 0 to prevent fighting velocity solver
         body.xDrive = drive;
     }
 
@@ -218,8 +248,29 @@ public class RoverImporter_m2020 : MonoBehaviour
         drive.stiffness = steerStiffness;
         drive.damping = steerDamping;
         drive.forceLimit = steerForceLimit;
-        drive.target = angleRad;
+        
+        // FIX: Convert input Radians to Degrees for Unity ArticulationDrive.target!
+        drive.target = angleRad * Mathf.Rad2Deg; 
         drive.targetVelocity = 0f;
         body.xDrive = drive;
+    }
+
+    /// <summary>
+    /// Dynamically adjust suspension elevation in degrees to change ground clearance.
+    /// </summary>
+    public void AdjustGroundClearance(float elevationOffsetDeg)
+    {
+        suspTargetElevationDeg = elevationOffsetDeg;
+        var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>(true);
+        foreach (var body in allBodies)
+        {
+            string n = body.name;
+            if (n == "Body_RockerLeft" || n == "Body_RockerRight" || n == "Body_BogieLeft" || n == "Body_BogieRight")
+            {
+                var drive = body.xDrive;
+                drive.target = suspTargetElevationDeg;
+                body.xDrive = drive;
+            }
+        }
     }
 }

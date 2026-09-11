@@ -963,17 +963,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf5ffa03344b7b449a10b102feef3e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoverController_m2020
-  importer: {fileID: 0}
-  driveMode: 0
-  maxSpeedDegPerSec: 240
-  maxSteerAngleDeg: 40
-  inputSmoothing: 8
-  wheelBase: 2.2
-  trackWidth: 2
-  throttleAxis: Vertical
-  steerAxis: Horizontal
-  toggleModeKey: 109
-  liftChassisKey: 9
+  roverImporter: {fileID: 2074180958}
+  maxWheelSpeed: 250
+  invertDriveDirection: 0
+  skidSteerMix: 0.5
+  maxSteerDegrees: 45
 --- !u!114 &2074180958
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -993,15 +987,12 @@ MonoBehaviour:
   jointFriction: 0.1
   wheelDamping: 1200
   wheelForceLimit: 250
-  invertRightSideDrives: 1
   steerStiffness: 2000
   steerDamping: 200
   steerForceLimit: 250
   suspStiffness: 80
   suspDamping: 40
   suspForceLimit: 500
-  suspTargetElevationDeg: 0
-  ignoreInternalCollisions: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
