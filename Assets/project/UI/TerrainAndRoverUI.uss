@@ -1,0 +1,327 @@
+﻿/* VR Rover Digital Twin Studio & Workbench - Glassmorphism Sci-Fi Theme */
+
+.root-container {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: 440px;
+    background-color: rgba(13, 17, 23, 0.92);
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: rgba(56, 189, 248, 0.3);
+    padding: 16px;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header */
+.header-container {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(56, 189, 248, 0.2);
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+}
+
+.title-container {
+    flex-direction: column;
+}
+
+.main-title {
+    font-size: 14px;
+    color: #38bdf8;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+.subtitle {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.status-badge {
+    background-color: rgba(16, 185, 129, 0.2);
+    border-width: 1px;
+    border-color: rgba(52, 211, 153, 0.5);
+    border-radius: 12px;
+    color: #34d399;
+    padding: 4px 10px;
+    font-size: 10px;
+    -unity-font-style: bold;
+}
+
+/* Scroll Area */
+.workbench-scroll {
+    flex-grow: 1;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+/* Cards & Sections */
+.section-card {
+    background-color: rgba(22, 27, 34, 0.85);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.15);
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.section-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.section-title {
+    font-size: 11px;
+    color: #f97316;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+/* 2D Canvas Painter */
+.canvas-wrapper {
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.heightmap-preview-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: #38bdf8;
+    background-color: #020617;
+}
+
+.canvas-hint {
+    font-size: 9px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Brush Tools Bar */
+.brush-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: rgba(15, 23, 42, 0.8);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 8px;
+}
+
+.brush-btn {
+    flex-grow: 1;
+    font-size: 10px;
+    color: #cbd5e1;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 6px;
+    padding: 4px;
+    margin: 1px;
+    -unity-text-align: middle-center;
+}
+
+.brush-btn:hover {
+    background-color: rgba(56, 189, 248, 0.2);
+    color: #ffffff;
+}
+
+.brush-btn-active {
+    background-color: #f97316;
+    color: #020617;
+    -unity-font-style: bold;
+}
+
+/* Sliders & Fields */
+.slider-row {
+    margin-bottom: 6px;
+}
+
+.slider-label-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.param-name {
+    font-size: 10px;
+    color: #cbd5e1;
+}
+
+.param-val {
+    font-size: 10px;
+    color: #f97316;
+    -unity-font-style: bold;
+}
+
+/* Presets Grid */
+.preset-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.preset-btn {
+    width: 48%;
+    font-size: 10px;
+    color: #e2e8f0;
+    background-color: rgba(30, 41, 59, 0.8);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 6px;
+    margin-bottom: 6px;
+    -unity-text-align: middle-center;
+}
+
+.preset-btn:hover {
+    background-color: rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+}
+
+.preset-btn-active {
+    background-color: rgba(249, 115, 22, 0.25);
+    border-color: #f97316;
+    color: #fdba74;
+    -unity-font-style: bold;
+}
+
+/* Custom Upload Button */
+.upload-btn {
+    background-color: rgba(30, 41, 59, 0.9);
+    border-width: 1px;
+    border-color: rgba(56, 189, 248, 0.4);
+    border-radius: 8px;
+    padding: 8px;
+    color: #38bdf8;
+    font-size: 10px;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+}
+
+.upload-btn:hover {
+    background-color: rgba(56, 189, 248, 0.2);
+}
+
+/* Remap Curve Bar */
+.curve-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
+.curve-btn {
+    flex-grow: 1;
+    font-size: 9px;
+    color: #94a3b8;
+    background-color: rgba(30, 41, 59, 0.6);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 6px;
+    padding: 4px;
+    margin: 1px;
+}
+
+.curve-btn-active {
+    background-color: rgba(249, 115, 22, 0.3);
+    border-color: #f97316;
+    color: #fdba74;
+    -unity-font-style: bold;
+}
+
+/* Material Selector Grid */
+.material-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.material-btn {
+    width: 48%;
+    font-size: 9px;
+    color: #cbd5e1;
+    background-color: rgba(30, 41, 59, 0.7);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 6px;
+    margin-bottom: 6px;
+    -unity-text-align: middle-center;
+}
+
+.material-btn:hover {
+    border-color: #38bdf8;
+}
+
+.material-btn-active {
+    background-color: rgba(249, 115, 22, 0.25);
+    border-color: #f97316;
+    color: #fdba74;
+    -unity-font-style: bold;
+}
+
+/* Action Buttons */
+.generate-btn {
+    background-color: #f97316;
+    color: #020617;
+    font-size: 11px;
+    -unity-font-style: bold;
+    border-radius: 10px;
+    border-width: 0;
+    padding: 10px;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+}
+
+.generate-btn:hover {
+    background-color: #ea580c;
+    color: #ffffff;
+}
+
+/* Rover Selection Section */
+.rover-container {
+    margin-top: 8px;
+}
+
+.rover-btn {
+    font-size: 10px;
+    color: #f1f5f9;
+    background-color: rgba(30, 41, 59, 0.85);
+    border-width: 1px;
+    border-color: rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 6px;
+    -unity-text-align: middle-left;
+}
+
+.rover-btn:hover {
+    background-color: rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+}
+
+/* Guide Text Footer */
+.guide-box {
+    background-color: rgba(15, 23, 42, 0.95);
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: rgba(56, 189, 248, 0.25);
+    padding: 8px 12px;
+    margin-top: 6px;
+}
+
+.guide-label {
+    font-size: 10px;
+    color: #38bdf8;
+    white-space: normal;
+}

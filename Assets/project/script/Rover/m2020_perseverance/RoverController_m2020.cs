@@ -1,4 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 /// <summary>
 /// Production Perseverance M2020 Rover Controller.
@@ -7,6 +10,7 @@ using UnityEngine;
 /// 2. Point Turn / Pivot In-Place (Zero radius 360 spin)
 /// 3. Crab Steering (Diagonal translation)
 /// 4. Differential / Tank Drive
+/// Supports both New Input System (Keyboard.current) and legacy Input fallback.
 /// </summary>
 public class RoverController_m2020 : MonoBehaviour
 {
@@ -49,22 +53,54 @@ public class RoverController_m2020 : MonoBehaviour
             importer = GetComponent<RoverImporter_m2020>();
             if (importer == null)
             {
-                importer = FindFirstObjectByType<RoverImporter_m2020>();
+                importer = FindAnyObjectByType<RoverImporter_m2020>();
             }
         }
     }
 
     void Update()
     {
+        float rawThrottle = 0f;
+        float rawSteer = 0f;
+        bool modeToggled = false;
+        bool liftToggled = false;
+
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) rawThrottle += 1f;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) rawThrottle -= 1f;
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) rawSteer += 1f;
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) rawSteer -= 1f;
+
+            if (Keyboard.current.mKey.wasPressedThisFrame) modeToggled = true;
+            if (Keyboard.current.spaceKey.wasPressedThisFrame) liftToggled = true;
+        }
+        else
+#endif
+        {
+            try
+            {
+                rawThrottle = Input.GetAxisRaw(throttleAxis);
+                rawSteer = Input.GetAxisRaw(steerAxis);
+                if (Input.GetKeyDown(toggleModeKey)) modeToggled = true;
+                if (Input.GetKeyDown(liftChassisKey)) liftToggled = true;
+            }
+            catch
+            {
+                // Fallback if legacy axes are unmapped
+            }
+        }
+
         // Toggle Steering Mode with key press
-        if (Input.GetKeyDown(toggleModeKey))
+        if (modeToggled)
         {
             driveMode = (DriveMode)(((int)driveMode + 1) % 4);
-            Debug.Log($"[RoverController] Switched Drive Mode to: {driveMode}");
+            Debug.Log($"[RoverController_m2020] Switched Drive Mode to: {driveMode}");
         }
 
         // Lift/Lower chassis ground clearance
-        if (Input.GetKeyDown(liftChassisKey))
+        if (liftToggled)
         {
             isChassisLifted = !isChassisLifted;
             float targetOffset = isChassisLifted ? 8f : 0f; // 8 degrees lift
@@ -73,10 +109,6 @@ public class RoverController_m2020 : MonoBehaviour
                 importer.AdjustGroundClearance(targetOffset);
             }
         }
-
-        // Raw inputs
-        float rawThrottle = Input.GetAxisRaw(throttleAxis);
-        float rawSteer = Input.GetAxisRaw(steerAxis);
 
         // Smooth inputs to prevent abrupt physical jerks
         currentThrottle = Mathf.Lerp(currentThrottle, rawThrottle, Time.deltaTime * inputSmoothing);

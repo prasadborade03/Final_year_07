@@ -51,12 +51,15 @@ public class RoverImporter_m2020 : MonoBehaviour
     private float lastLeftSpeed, lastRightSpeed;
     private float lastSteerAngle; // in radians
 
+    public bool autoSpawnOnStart = false;
+
     void Start()
     {
-        SpawnRover();
+        if (autoSpawnOnStart)
+            SpawnRover();
     }
 
-    public void SpawnRover()
+    public GameObject SpawnRover()
     {
         if (currentRoverObject != null)
             Destroy(currentRoverObject);
@@ -64,7 +67,7 @@ public class RoverImporter_m2020 : MonoBehaviour
         if (roverPrefab == null)
         {
             Debug.LogError("[M2020] roverPrefab is not assigned in Inspector!");
-            return;
+            return null;
         }
 
         currentRoverObject = Instantiate(roverPrefab, spawnPosition, Quaternion.identity);
@@ -101,6 +104,7 @@ public class RoverImporter_m2020 : MonoBehaviour
         }
 
         StartCoroutine(SetupAfterPhysics(allBodies));
+        return currentRoverObject;
     }
 
     private void IgnoreInternalCollisions(ArticulationBody[] bodies)

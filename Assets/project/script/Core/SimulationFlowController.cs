@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
 
@@ -16,8 +16,12 @@ public class SimulationFlowController : MonoBehaviour
     public RoverImporter_m20 m20Importer;
     public RoverController_m20 m20Controller;
 
-    [Header("UI Guide Text")]
-    [Tooltip("Drag a TextMeshProUGUI element here. Shows the user what to do at each step.")]
+    [Header("M2020 (NASA Perseverance)")]
+    public RoverImporter_m2020 m2020Importer;
+    public RoverController_m2020 m2020Controller;
+
+    [Header("UI Guide Text (Legacy uGUI / TMP Fallback)")]
+    [Tooltip("Drag a TextMeshProUGUI element here if using legacy Canvas.")]
     public TextMeshProUGUI guideText;
 
     [Header("Placement Settings")]
@@ -28,9 +32,16 @@ public class SimulationFlowController : MonoBehaviour
     [Tooltip("Turn on to see Debug.Log messages and a gizmo at the last raycast hit point.")]
     public bool showDebugLogs = true;
 
+    // Events for UI Toolkit binding
+    public System.Action<string> onGuideTextChanged;
+    public System.Action<string> onStateChanged;
+
     // Internal state
-    private enum State { WaitingForTerrain, WaitingForRobotChoice, WaitingForClickToPlace }
+    public enum State { WaitingForTerrain, WaitingForRobotChoice, WaitingForClickToPlace, ActiveDriving }
     private State currentState = State.WaitingForTerrain;
+
+    public State CurrentState => currentState;
+    public string SelectedRobot => selectedRobot;
 
     private string selectedRobot = "";
     private GameObject pendingRobot = null;
@@ -40,7 +51,8 @@ public class SimulationFlowController : MonoBehaviour
 
     void Start()
     {
-        SetGuideText("Upload a heightmap to begin.");
+        SetState(State.WaitingForTerrain);
+        SetGuideText("Configure heightmap tuning & click Generate to begin.");
     }
 
     void Update()
@@ -51,21 +63,27 @@ public class SimulationFlowController : MonoBehaviour
         }
     }
 
+    private void SetState(State newState)
+    {
+        currentState = newState;
+        onStateChanged?.Invoke(currentState.ToString());
+    }
+
     // -------------------------------------------------
-    // Called by UploadHeightmapUI after terrain is generated
+    // Called by UI after terrain is generated
     // -------------------------------------------------
     public void OnTerrainReady()
     {
         if (robotSelectPanel != null)
             robotSelectPanel.SetActive(true);
 
-        currentState = State.WaitingForRobotChoice;
-        SetGuideText("Terrain ready. Choose a robot to spawn.");
+        SetState(State.WaitingForRobotChoice);
+        SetGuideText("Terrain ready! Select a rover (Husky, M20, or M2020) to deploy.");
         Log("Terrain ready → choose a robot");
     }
 
     // -------------------------------------------------
-    // Called by the two UI buttons
+    // Called by the UI buttons
     // -------------------------------------------------
     public void OnSelectHusky()
     {
@@ -76,6 +94,12 @@ public class SimulationFlowController : MonoBehaviour
     public void OnSelectM20()
     {
         selectedRobot = "m20";
+        StartPlacementMode();
+    }
+
+    public void OnSelectM2020()
+    {
+        selectedRobot = "m2020";
         StartPlacementMode();
     }
 
@@ -98,6 +122,11 @@ public class SimulationFlowController : MonoBehaviour
             m20Importer.enabled = true;
             pendingRobot = m20Importer.SpawnRover();
         }
+        else if (selectedRobot == "m2020" && m2020Importer != null)
+        {
+            m2020Importer.enabled = true;
+            pendingRobot = m2020Importer.SpawnRover();
+        }
 
         if (pendingRobot == null)
         {
@@ -107,13 +136,11 @@ public class SimulationFlowController : MonoBehaviour
         }
 
         // Freeze physics completely while the robot waits off-screen.
-        // This stops gravity from corrupting the ArticulationBody joint
-        // state before the user has picked a placement point.
         SetRoverFrozen(pendingRobot, true);
         TeleportRover(pendingRobot, new Vector3(0f, 500f, 0f));
 
-        currentState = State.WaitingForClickToPlace;
-        SetGuideText($"Click anywhere on the terrain to place the {selectedRobot.ToUpper()}.");
+        SetState(State.WaitingForClickToPlace);
+        SetGuideText($"Click anywhere on the terrain surface to place the {selectedRobot.ToUpper()}.");
         Log($"{selectedRobot} spawned and frozen at holding position. Waiting for click to place.");
     }
 
@@ -134,12 +161,12 @@ public class SimulationFlowController : MonoBehaviour
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+        if (Physics.Raycast(ray, out RaycastHit hit, 2000f))
         {
             lastHitPoint = hit.point;
             hasLastHit = true;
 
-            if (hit.collider.GetComponent<Terrain>() != null)
+            if (hit.collider.GetComponent<Terrain>() != null || hit.collider.CompareTag("Terrain"))
             {
                 Vector3 placementPoint = hit.point + Vector3.up * placementYOffset;
                 TeleportRover(pendingRobot, placementPoint);
@@ -149,17 +176,19 @@ public class SimulationFlowController : MonoBehaviour
                     huskyController.enabled = true;
                 else if (selectedRobot == "m20" && m20Controller != null)
                     m20Controller.enabled = true;
+                else if (selectedRobot == "m2020" && m2020Controller != null)
+                    m2020Controller.enabled = true;
 
                 Log($"Robot '{selectedRobot}' placed at {placementPoint}");
-                SetGuideText($"{selectedRobot.ToUpper()} placed! Use WASD to drive.");
+                SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD. M20: Q/E knee lift. M2020: M (mode), Space (clearance).");
 
-                currentState = State.WaitingForTerrain;
+                SetState(State.ActiveDriving);
                 pendingRobot = null;
             }
             else
             {
                 Log($"Raycast hit '{hit.collider.name}' but it is not Terrain — click ignored.");
-                SetGuideText("That's not the terrain. Click on the ground to place the robot.");
+                SetGuideText("That's not terrain! Click on the planetary surface to place the robot.");
             }
         }
         else
@@ -168,20 +197,13 @@ public class SimulationFlowController : MonoBehaviour
         }
     }
 
-    // -------------------------------------------------
-    // ArticulationBody-safe teleport.
-    // Never set .transform.position directly on an
-    // ArticulationBody rig — the physics solver keeps
-    // its own internal state and will fight the change,
-    // causing jitter, sinking, or the rig flying apart.
-    // -------------------------------------------------
     private void TeleportRover(GameObject rover, Vector3 position)
     {
         ArticulationBody rootBody = FindRootArticulationBody(rover);
 
         if (rootBody == null)
         {
-            LogWarning($"No root ArticulationBody found anywhere under '{rover.name}' — falling back to transform.position (may cause instability).");
+            LogWarning($"No root ArticulationBody found anywhere under '{rover.name}' — falling back to transform.position.");
             rover.transform.position = position;
             return;
         }
@@ -190,9 +212,6 @@ public class SimulationFlowController : MonoBehaviour
         Log($"TeleportRoot called on '{rover.name}' (root body: '{rootBody.name}') → {position}");
     }
 
-    // Searches the whole hierarchy for the ArticulationBody marked isRoot,
-    // the same way RoverImporter_husky/m20 do it. The root is not always
-    // on the top-level GameObject, so GetComponent() alone is not reliable.
     private ArticulationBody FindRootArticulationBody(GameObject rover)
     {
         var allBodies = rover.GetComponentsInChildren<ArticulationBody>();
@@ -203,11 +222,6 @@ public class SimulationFlowController : MonoBehaviour
         return null;
     }
 
-    // -------------------------------------------------
-    // Freezes/unfreezes gravity and velocity on every
-    // ArticulationBody in the rover, so it doesn't fall
-    // or drift while waiting for the user to click.
-    // -------------------------------------------------
     private void SetRoverFrozen(GameObject rover, bool frozen)
     {
         var bodies = rover.GetComponentsInChildren<ArticulationBody>();
@@ -225,26 +239,23 @@ public class SimulationFlowController : MonoBehaviour
         Log($"SetRoverFrozen({frozen}) applied to {bodies.Length} ArticulationBody components on '{rover.name}'.");
     }
 
-    private void DisableAllRovers()
+    public void DisableAllRovers()
     {
         if (huskyImporter != null) huskyImporter.enabled = false;
         if (huskyController != null) huskyController.enabled = false;
         if (m20Importer != null) m20Importer.enabled = false;
         if (m20Controller != null) m20Controller.enabled = false;
+        if (m2020Importer != null) m2020Importer.enabled = false;
+        if (m2020Controller != null) m2020Controller.enabled = false;
     }
 
-    // -------------------------------------------------
-    // UI guide text helper
-    // -------------------------------------------------
-    private void SetGuideText(string message)
+    public void SetGuideText(string message)
     {
         if (guideText != null)
             guideText.text = message;
+        onGuideTextChanged?.Invoke(message);
     }
 
-    // -------------------------------------------------
-    // Debug helpers
-    // -------------------------------------------------
     private void Log(string message)
     {
         if (showDebugLogs)
@@ -257,8 +268,6 @@ public class SimulationFlowController : MonoBehaviour
             Debug.LogWarning($"[Flow] {message}");
     }
 
-    // Draws a small sphere in the Scene view at the last raycast hit,
-    // so you can visually confirm where clicks are landing.
     private void OnDrawGizmos()
     {
         if (!showDebugLogs || !hasLastHit) return;
