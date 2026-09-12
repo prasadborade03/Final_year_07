@@ -122,6 +122,28 @@
                 <ui:Button name="BtnRoverM20" text="Deep Robotics M20 (Wheeled Quadruped)" class="rover-btn" />
                 <ui:Button name="BtnRoverM2020" text="NASA Perseverance M2020 (Rocker-Bogie 6WD)" class="rover-btn" />
             </ui:VisualElement>
+
+            <!-- 7. Camera Speed Controller -->
+            <ui:VisualElement name="CameraSection" class="section-card">
+                <ui:VisualElement class="section-header">
+                    <ui:Label text="CAMERA SPEED CONTROLLER" class="section-title" />
+                    <ui:Label name="LabelSpeedometer" text="10.0 m/s" class="speed-badge" />
+                </ui:VisualElement>
+                <ui:VisualElement class="slider-row">
+                    <ui:VisualElement class="slider-label-row">
+                        <ui:Label text="Move Speed (0.5 - 150 m/s):" class="param-name" />
+                        <ui:Label name="LabelCameraSpeedVal" text="10.0 m/s" class="param-val" />
+                    </ui:VisualElement>
+                    <ui:Slider name="SliderCameraSpeed" low-value="0.5" high-value="150" value="10" />
+                </ui:VisualElement>
+                <ui:VisualElement class="speed-preset-grid">
+                    <ui:Button name="BtnSpeedPrecision" text="Precision (2 m/s)" class="speed-preset-btn" />
+                    <ui:Button name="BtnSpeedStandard" text="Standard (10 m/s)" class="speed-preset-btn speed-preset-active" />
+                    <ui:Button name="BtnSpeedFast" text="Fast Fly (50 m/s)" class="speed-preset-btn" />
+                    <ui:Button name="BtnSpeedWarp" text="Warp (120 m/s)" class="speed-preset-btn" />
+                </ui:VisualElement>
+                <ui:Label text="Controls: 8 5 4 6 (Horiz) | 9 / 7 (Up/Down) | Shift (Fast) | RMB (Look)" class="canvas-hint" style="margin-top: 4px;" />
+            </ui:VisualElement>
         </ui:ScrollView>
 
         <!-- Status & Guide Banner -->

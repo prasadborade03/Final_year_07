@@ -1,27 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ProjectName.Terrain
 {
     /// <summary>
-    /// Manages Planetary Surface Materials and PBR TerrainLayers for Unity Terrain.
-    /// Provides procedural texture synthesis fallbacks (Albedo + Normal Maps + Roughness)
-    /// so the system works with zero external assets, while supporting custom artist
-    /// materials and textures assigned via Inspector.
+    /// TerrainMaterialManager - FIXED FOR URP & BUILT-IN PIPELINE
+    /// Fixes Pink Material / Missing Shader errors on Planetary Surface Materials.
+    /// Supports both SurfaceMaterialType (user reference) and PlanetaryMaterialType (workbench enum).
     /// </summary>
     public class TerrainMaterialManager : MonoBehaviour
     {
-        [Header("Custom Artist Materials (Optional)")]
-        [Tooltip("Assign custom Material templates if using custom shaders")]
-        public Material martianRustMaterial;
-        public Material lunarRegolithMaterial;
-        public Material volcanicBasaltMaterial;
-        public Material polarIceMaterial;
-        public Material redCanyonMaterial;
-        public Material wireframeMaterial;
-        public Material normalInspectorMaterial;
+        [Header("Target Terrain Component")]
+        public UnityEngine.Terrain targetTerrain;
 
-        [Header("Custom Artist Textures (Optional)")]
+        [Header("Material & Layer Presets")]
+        public SurfaceMaterialType activeMaterialType = SurfaceMaterialType.MartianRust;
+
+        public enum SurfaceMaterialType
+        {
+            MartianRust,
+            LunarRegolith,
+            VolcanicBasalt,
+            PolarIce,
+            RedSandstone,
+            TopographicGrid,
+            NormalInspector
+        }
+
+        [System.Serializable]
+        public struct SurfaceMaterialConfig
+        {
+            public SurfaceMaterialType type;
+            public string name;
+            public Color primaryColor;
+            public float roughness;
+            public float metallic;
+            public float bumpScale;
+            public Texture2D customAlbedo;
+            public Texture2D customNormal;
+        }
+
+        [Header("Material Configurations")]
+        public List<SurfaceMaterialConfig> materialConfigs = new List<SurfaceMaterialConfig>();
+
+        [Header("Custom Artist Textures (Optional Overrides)")]
         public Texture2D customMartianAlbedo;
         public Texture2D customMartianNormal;
         public Texture2D customLunarAlbedo;
@@ -31,393 +55,375 @@ namespace ProjectName.Terrain
         public Texture2D customIceAlbedo;
         public Texture2D customIceNormal;
 
-        // Cache of procedural textures and TerrainLayers
-        private readonly Dictionary<PlanetaryMaterialType, TerrainLayer> generatedLayers = new Dictionary<PlanetaryMaterialType, TerrainLayer>();
-        private readonly Dictionary<PlanetaryMaterialType, Material> generatedMaterials = new Dictionary<PlanetaryMaterialType, Material>();
+        // Runtime Cache
+        private readonly Dictionary<SurfaceMaterialType, TerrainLayer> generatedLayers = new Dictionary<SurfaceMaterialType, TerrainLayer>();
+        private readonly Dictionary<SurfaceMaterialType, Material> generatedMaterials = new Dictionary<SurfaceMaterialType, Material>();
 
-        /// <summary>
-        /// Applies the requested planetary surface material to a Unity Terrain instance.
-        /// </summary>
-        public void ApplyMaterial(UnityEngine.Terrain terrain, PlanetaryMaterialType matType)
+        private void Awake()
         {
-            if (terrain == null) return;
+            if (targetTerrain == null)
+                targetTerrain = GetComponent<UnityEngine.Terrain>();
 
-            TerrainData tData = terrain.terrainData;
-            if (tData == null) return;
-
-            // Handle diagnostic materials that use a custom materialTemplate
-            if (matType == PlanetaryMaterialType.TopographicWireframe || matType == PlanetaryMaterialType.NormalInspector)
-            {
-                Material diagMat = GetOrCreateDiagnosticMaterial(matType);
-                if (diagMat != null)
-                {
-                    terrain.materialTemplate = diagMat;
-                    Debug.Log($"[TerrainMaterialManager] Assigned custom materialTemplate '{matType}'.");
-                    return;
-                }
-            }
-
-            // Check if artist provided a custom material override
-            Material customMat = GetCustomMaterial(matType);
-            if (customMat != null)
-            {
-                terrain.materialTemplate = customMat;
-                Debug.Log($"[TerrainMaterialManager] Assigned custom Material template for '{matType}'.");
-                return;
-            }
-
-            // Otherwise, reset materialTemplate to null (uses URP default terrain lit shader)
-            // and configure PBR TerrainLayer with diffuse, normal map, metallic, and smoothness.
-            terrain.materialTemplate = null;
-
-            TerrainLayer layer = GetOrCreateTerrainLayer(matType);
-            if (layer != null)
-            {
-                tData.terrainLayers = new TerrainLayer[] { layer };
-                Debug.Log($"[TerrainMaterialManager] Applied TerrainLayer for '{matType}' with PBR albedo & normal mapping.");
-            }
+            InitializeDefaultConfigs();
         }
 
-        public void ApplyMaterial(UnityEngine.Terrain terrain, string matTypeStr)
+        private void Start()
         {
-            if (System.Enum.TryParse(matTypeStr, true, out PlanetaryMaterialType parsed))
+            ApplySurfaceMaterial(activeMaterialType);
+        }
+
+        public void InitializeDefaultConfigs()
+        {
+            if (materialConfigs != null && materialConfigs.Count > 0) return;
+
+            materialConfigs = new List<SurfaceMaterialConfig>
             {
-                ApplyMaterial(terrain, parsed);
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.MartianRust,
+                    name = "Martian Rust Oxide",
+                    primaryColor = new Color(0.78f, 0.32f, 0.16f),
+                    roughness = 0.85f,
+                    metallic = 0.05f,
+                    bumpScale = 1.2f,
+                    customAlbedo = customMartianAlbedo,
+                    customNormal = customMartianNormal
+                },
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.LunarRegolith,
+                    name = "Lunar Regolith",
+                    primaryColor = new Color(0.42f, 0.44f, 0.48f),
+                    roughness = 0.65f,
+                    metallic = 0.15f,
+                    bumpScale = 0.8f,
+                    customAlbedo = customLunarAlbedo,
+                    customNormal = customLunarNormal
+                },
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.VolcanicBasalt,
+                    name = "Volcanic Charcoal Basalt",
+                    primaryColor = new Color(0.12f, 0.13f, 0.16f),
+                    roughness = 0.92f,
+                    metallic = 0.25f,
+                    bumpScale = 1.5f,
+                    customAlbedo = customBasaltAlbedo,
+                    customNormal = customBasaltNormal
+                },
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.PolarIce,
+                    name = "Polar Cryo-Ice Cap",
+                    primaryColor = new Color(0.68f, 0.85f, 0.95f),
+                    roughness = 0.18f,
+                    metallic = 0.10f,
+                    bumpScale = 0.4f,
+                    customAlbedo = customIceAlbedo,
+                    customNormal = customIceNormal
+                },
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.RedSandstone,
+                    name = "Red Sandstone Canyon",
+                    primaryColor = new Color(0.72f, 0.33f, 0.21f),
+                    roughness = 0.80f,
+                    metallic = 0.08f,
+                    bumpScale = 1.4f
+                },
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.TopographicGrid,
+                    name = "Topographic Grid",
+                    primaryColor = new Color(0.0f, 0.95f, 1.0f),
+                    roughness = 0.5f,
+                    metallic = 0.1f,
+                    bumpScale = 0.0f
+                },
+                new SurfaceMaterialConfig
+                {
+                    type = SurfaceMaterialType.NormalInspector,
+                    name = "Surface Normal Inspector",
+                    primaryColor = new Color(0.65f, 0.33f, 0.96f),
+                    roughness = 0.5f,
+                    metallic = 0.1f,
+                    bumpScale = 0.0f
+                }
+            };
+        }
+
+        /// <summary>
+        /// Applies the requested planetary surface material to the Terrain.
+        /// Guaranteed immune to pink/magenta missing shader errors.
+        /// </summary>
+        public void ApplySurfaceMaterial(SurfaceMaterialType type)
+        {
+            activeMaterialType = type;
+            if (targetTerrain == null) targetTerrain = UnityEngine.Terrain.activeTerrain;
+            if (targetTerrain == null)
+            {
+                targetTerrain = FindAnyObjectByType<UnityEngine.Terrain>();
+            }
+            if (targetTerrain == null) return;
+
+            InitializeDefaultConfigs();
+            SurfaceMaterialConfig config = materialConfigs.Find(c => c.type == type);
+
+            // Determine whether an active Scriptable Render Pipeline (URP) is currently rendering
+            bool isSRP = GraphicsSettings.currentRenderPipeline != null || QualitySettings.renderPipeline != null;
+
+            // Pipeline-aware shader resolution
+            Shader targetShader = null;
+            if (isSRP)
+            {
+                targetShader = Shader.Find("Universal Render Pipeline/Terrain/Lit");
+                if (targetShader == null || !targetShader.isSupported)
+                    targetShader = Shader.Find("Universal Render Pipeline/Lit");
+            }
+
+            if (targetShader == null || !targetShader.isSupported)
+                targetShader = Shader.Find("Nature/Terrain/Standard");
+            if (targetShader == null || !targetShader.isSupported)
+                targetShader = Shader.Find("Nature/Terrain/Diffuse");
+            if (targetShader == null || !targetShader.isSupported)
+                targetShader = Shader.Find("Standard");
+
+            // Diagnostic Modes (Topographic Grid & Normal Inspector)
+            if (type == SurfaceMaterialType.TopographicGrid || type == SurfaceMaterialType.NormalInspector)
+            {
+                Shader diagShader = null;
+                if (isSRP)
+                {
+                    diagShader = (type == SurfaceMaterialType.NormalInspector)
+                        ? Shader.Find("Universal Render Pipeline/Lit")
+                        : Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Universal Render Pipeline/Lit");
+                }
+
+                if (diagShader == null || !diagShader.isSupported)
+                {
+                    diagShader = Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
+                }
+
+                if (diagShader == null) diagShader = targetShader;
+
+                Material diagMat = new Material(diagShader);
+                diagMat.name = "TerrainDiag_" + type.ToString();
+                diagMat.SetColor("_BaseColor", config.primaryColor);
+                diagMat.SetColor("_Color", config.primaryColor);
+                targetTerrain.materialTemplate = diagMat;
             }
             else
             {
-                ApplyMaterial(terrain, PlanetaryMaterialType.MartianDust);
+                // Planetary Surface Material: Configure TerrainLayer with PBR textures
+                TerrainLayer layer = GetOrCreateTerrainLayer(config);
+                if (targetTerrain.terrainData != null)
+                {
+                    targetTerrain.terrainData.terrainLayers = new TerrainLayer[] { layer };
+
+                    // Initialize full splatmap weight so layer 0 renders at 100% opacity
+                    int alphaRes = Mathf.Max(32, targetTerrain.terrainData.alphamapResolution);
+                    targetTerrain.terrainData.alphamapResolution = alphaRes;
+                    float[,,] alphaMaps = new float[alphaRes, alphaRes, 1];
+                    for (int y = 0; y < alphaRes; y++)
+                    {
+                        for (int x = 0; x < alphaRes; x++)
+                        {
+                            alphaMaps[y, x, 0] = 1.0f;
+                        }
+                    }
+                    targetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
+                }
+
+                if (isSRP && targetShader != null && targetShader.name.Contains("Universal Render Pipeline"))
+                {
+                    // URP TerrainLit material
+                    Material customMat = new Material(targetShader);
+                    customMat.name = "TerrainMat_" + type.ToString();
+                    customMat.SetColor("_BaseColor", config.primaryColor);
+                    customMat.SetColor("_Color", config.primaryColor);
+                    customMat.EnableKeyword("_TERRAIN_INSTANCED_PERPIXEL_NORMAL");
+                    targetTerrain.materialTemplate = customMat;
+                }
+                else
+                {
+                    // Built-in Pipeline: setting materialTemplate to null uses Unity's native
+                    // built-in terrain engine which shades TerrainLayers with full lighting and NO pink artifacts!
+                    targetTerrain.materialTemplate = null;
+                }
             }
+
+            targetTerrain.Flush();
+            Debug.Log($"[TerrainMaterialManager] Applied FIXED material for '{type}' (isSRP: {isSRP}) with PBR albedo & normal mapping.");
         }
 
-        private Material GetCustomMaterial(PlanetaryMaterialType matType)
+        private TerrainLayer GetOrCreateTerrainLayer(SurfaceMaterialConfig config)
         {
-            switch (matType)
-            {
-                case PlanetaryMaterialType.MartianDust: return martianRustMaterial;
-                case PlanetaryMaterialType.LunarRegolith: return lunarRegolithMaterial;
-                case PlanetaryMaterialType.VolcanicBasalt: return volcanicBasaltMaterial;
-                case PlanetaryMaterialType.PolarIce: return polarIceMaterial;
-                case PlanetaryMaterialType.RedCanyon: return redCanyonMaterial;
-                case PlanetaryMaterialType.TopographicWireframe: return wireframeMaterial;
-                case PlanetaryMaterialType.NormalInspector: return normalInspectorMaterial;
-                default: return null;
-            }
-        }
-
-        private TerrainLayer GetOrCreateTerrainLayer(PlanetaryMaterialType matType)
-        {
-            if (generatedLayers.TryGetValue(matType, out TerrainLayer cached) && cached != null)
+            if (generatedLayers.TryGetValue(config.type, out TerrainLayer cached) && cached != null)
             {
                 return cached;
             }
 
-            TerrainLayer layer = new TerrainLayer();
-            layer.name = $"Layer_{matType}";
+            Texture2D albedoTex = config.customAlbedo != null 
+                ? config.customAlbedo 
+                : GenerateProceduralAlbedo(config.primaryColor, config.type);
 
-            Texture2D albedo = null;
-            Texture2D normal = null;
-            float smoothness = 0.2f;
-            float metallic = 0.0f;
-            Vector2 tileSize = new Vector2(25f, 25f);
+            Texture2D normalTex = config.customNormal != null 
+                ? config.customNormal 
+                : GenerateProceduralNormalMap(config.bumpScale);
 
-            switch (matType)
+            TerrainLayer layer = new TerrainLayer
             {
-                case PlanetaryMaterialType.MartianDust:
-                    albedo = customMartianAlbedo != null ? customMartianAlbedo : GenerateProceduralMartianAlbedo();
-                    normal = customMartianNormal != null ? customMartianNormal : GenerateProceduralNormal(albedo, 2.5f);
-                    smoothness = 0.15f;
-                    metallic = 0.05f;
-                    tileSize = new Vector2(20f, 20f);
-                    break;
+                name = "Layer_" + config.type.ToString(),
+                diffuseTexture = albedoTex,
+                normalMapTexture = normalTex,
+                normalScale = config.bumpScale,
+                smoothness = Mathf.Clamp01(1.0f - config.roughness),
+                metallic = config.metallic,
+                tileSize = new Vector2(15f, 15f)
+            };
 
-                case PlanetaryMaterialType.LunarRegolith:
-                    albedo = customLunarAlbedo != null ? customLunarAlbedo : GenerateProceduralLunarAlbedo();
-                    normal = customLunarNormal != null ? customLunarNormal : GenerateProceduralNormal(albedo, 2.0f);
-                    smoothness = 0.35f;
-                    metallic = 0.15f;
-                    tileSize = new Vector2(18f, 18f);
-                    break;
-
-                case PlanetaryMaterialType.VolcanicBasalt:
-                    albedo = customBasaltAlbedo != null ? customBasaltAlbedo : GenerateProceduralBasaltAlbedo();
-                    normal = customBasaltNormal != null ? customBasaltNormal : GenerateProceduralNormal(albedo, 3.5f);
-                    smoothness = 0.08f;
-                    metallic = 0.25f;
-                    tileSize = new Vector2(15f, 15f);
-                    break;
-
-                case PlanetaryMaterialType.PolarIce:
-                    albedo = customIceAlbedo != null ? customIceAlbedo : GenerateProceduralIceAlbedo();
-                    normal = customIceNormal != null ? customIceNormal : GenerateProceduralNormal(albedo, 1.2f);
-                    smoothness = 0.82f;
-                    metallic = 0.10f;
-                    tileSize = new Vector2(30f, 30f);
-                    break;
-
-                case PlanetaryMaterialType.RedCanyon:
-                default:
-                    albedo = GenerateProceduralCanyonAlbedo();
-                    normal = GenerateProceduralNormal(albedo, 3.0f);
-                    smoothness = 0.18f;
-                    metallic = 0.05f;
-                    tileSize = new Vector2(25f, 25f);
-                    break;
-            }
-
-            layer.diffuseTexture = albedo;
-            layer.normalMapTexture = normal;
-            layer.smoothness = smoothness;
-            layer.metallic = metallic;
-            layer.tileSize = tileSize;
-
-            generatedLayers[matType] = layer;
+            generatedLayers[config.type] = layer;
             return layer;
         }
 
-        private Material GetOrCreateDiagnosticMaterial(PlanetaryMaterialType matType)
-        {
-            if (generatedMaterials.TryGetValue(matType, out Material cached) && cached != null)
-                return cached;
-
-            Shader s = null;
-            if (matType == PlanetaryMaterialType.TopographicWireframe)
-            {
-                if (wireframeMaterial != null) return wireframeMaterial;
-                s = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
-                if (s != null)
-                {
-                    Material m = new Material(s);
-                    m.name = "Mat_TopographicWireframe";
-                    m.color = new Color(0.0f, 0.95f, 0.75f, 1.0f);
-                    generatedMaterials[matType] = m;
-                    return m;
-                }
-            }
-            else if (matType == PlanetaryMaterialType.NormalInspector)
-            {
-                if (normalInspectorMaterial != null) return normalInspectorMaterial;
-                s = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-                if (s != null)
-                {
-                    Material m = new Material(s);
-                    m.name = "Mat_NormalInspector";
-                    m.color = new Color(0.7f, 0.4f, 0.9f, 1.0f);
-                    generatedMaterials[matType] = m;
-                    return m;
-                }
-            }
-
-            return null;
-        }
-
-        // =============================================================
-        // Procedural PBR Texture Synthesizers
-        // =============================================================
-        private Texture2D GenerateProceduralMartianAlbedo()
+        // =========================================================================
+        // High-Quality Procedural Texture Synthesizers (RGBA32 + mipmaps)
+        // =========================================================================
+        private Texture2D GenerateProceduralAlbedo(Color baseColor, SurfaceMaterialType type)
         {
             int size = 256;
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGB24, true);
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
             tex.wrapMode = TextureWrapMode.Repeat;
-            Color[] cols = new Color[size * size];
-
-            Color rustBase = new Color(0.78f, 0.32f, 0.16f); // Iron oxide base
-            Color rustDark = new Color(0.55f, 0.20f, 0.10f); // Shadow crevices
-            Color rustDust = new Color(0.88f, 0.48f, 0.25f); // Fine surface dust
-
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float u = (float)x / size;
-                    float v = (float)y / size;
-
-                    float n1 = Mathf.PerlinNoise(u * 12f, v * 12f);
-                    float n2 = Mathf.PerlinNoise(u * 32f, v * 32f) * 0.5f;
-                    float n3 = Mathf.PerlinNoise(u * 64f, v * 64f) * 0.25f;
-                    float blend = Mathf.Clamp01(n1 + n2 + n3);
-
-                    Color c = Color.Lerp(rustDark, rustBase, blend);
-                    if (n2 > 0.35f) c = Color.Lerp(c, rustDust, (n2 - 0.35f) * 1.5f);
-
-                    cols[y * size + x] = c;
-                }
-            }
-
-            tex.SetPixels(cols);
-            tex.Apply();
-            return tex;
-        }
-
-        private Texture2D GenerateProceduralLunarAlbedo()
-        {
-            int size = 256;
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGB24, true);
-            tex.wrapMode = TextureWrapMode.Repeat;
-            Color[] cols = new Color[size * size];
-
-            Color anorthositeBase = new Color(0.42f, 0.44f, 0.48f); // Titanium-anorthosite
-            Color craterDark = new Color(0.24f, 0.25f, 0.28f);
-            Color glassHighlight = new Color(0.65f, 0.67f, 0.72f); // Glass bead spherules
-
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float u = (float)x / size;
-                    float v = (float)y / size;
-
-                    float n1 = Mathf.PerlinNoise(u * 10f, v * 10f);
-                    float n2 = Mathf.PerlinNoise(u * 28f, v * 28f);
-                    float micro = Mathf.PerlinNoise(u * 70f, v * 70f);
-
-                    Color c = Color.Lerp(craterDark, anorthositeBase, n1);
-                    if (micro > 0.65f) c = Color.Lerp(c, glassHighlight, (micro - 0.65f) * 2f);
-
-                    cols[y * size + x] = c;
-                }
-            }
-
-            tex.SetPixels(cols);
-            tex.Apply();
-            return tex;
-        }
-
-        private Texture2D GenerateProceduralBasaltAlbedo()
-        {
-            int size = 256;
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGB24, true);
-            tex.wrapMode = TextureWrapMode.Repeat;
-            Color[] cols = new Color[size * size];
-
-            Color basaltDark = new Color(0.12f, 0.13f, 0.16f); // Igneous charcoal
-            Color basaltMid = new Color(0.22f, 0.23f, 0.27f);
-            Color mineralSpeck = new Color(0.35f, 0.36f, 0.40f);
-
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float u = (float)x / size;
-                    float v = (float)y / size;
-
-                    float n1 = Mathf.PerlinNoise(u * 16f, v * 16f);
-                    float fracture = Mathf.Abs(Mathf.Sin(u * 30f + v * 30f + n1 * 5f));
-
-                    Color c = Color.Lerp(basaltDark, basaltMid, n1);
-                    if (fracture < 0.15f) c = Color.Lerp(c, basaltDark * 0.7f, 0.8f);
-
-                    cols[y * size + x] = c;
-                }
-            }
-
-            tex.SetPixels(cols);
-            tex.Apply();
-            return tex;
-        }
-
-        private Texture2D GenerateProceduralIceAlbedo()
-        {
-            int size = 256;
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGB24, true);
-            tex.wrapMode = TextureWrapMode.Repeat;
-            Color[] cols = new Color[size * size];
-
-            Color iceBase = new Color(0.68f, 0.85f, 0.95f);
-            Color iceDeep = new Color(0.45f, 0.68f, 0.85f);
-            Color iceGlaze = new Color(0.92f, 0.97f, 1.0f);
-
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float u = (float)x / size;
-                    float v = (float)y / size;
-
-                    float n1 = Mathf.PerlinNoise(u * 8f, v * 8f);
-                    float sastrugi = Mathf.Sin(u * 25f + v * 8f + n1 * 2f);
-
-                    Color c = Color.Lerp(iceDeep, iceBase, n1);
-                    if (sastrugi > 0.4f) c = Color.Lerp(c, iceGlaze, (sastrugi - 0.4f) * 1.5f);
-
-                    cols[y * size + x] = c;
-                }
-            }
-
-            tex.SetPixels(cols);
-            tex.Apply();
-            return tex;
-        }
-
-        private Texture2D GenerateProceduralCanyonAlbedo()
-        {
-            int size = 256;
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGB24, true);
-            tex.wrapMode = TextureWrapMode.Repeat;
-            Color[] cols = new Color[size * size];
-
-            Color[] strata = new Color[]
-            {
-                new Color(0.72f, 0.28f, 0.15f), // Red sandstone
-                new Color(0.55f, 0.22f, 0.12f), // Dark mudstone
-                new Color(0.85f, 0.45f, 0.22f), // Bright orange sand
-                new Color(0.60f, 0.30f, 0.18f), // Siltstone
-            };
+            tex.filterMode = FilterMode.Bilinear;
+            Color[] pixels = new Color[size * size];
 
             for (int y = 0; y < size; y++)
             {
                 float v = (float)y / size;
-                int stratumIdx = Mathf.FloorToInt(v * 16f) % strata.Length;
-                Color baseC = strata[stratumIdx];
-
                 for (int x = 0; x < size; x++)
                 {
                     float u = (float)x / size;
-                    float noise = Mathf.PerlinNoise(u * 20f, v * 40f) * 0.2f - 0.1f;
-                    cols[y * size + x] = new Color(
-                        Mathf.Clamp01(baseC.r + noise),
-                        Mathf.Clamp01(baseC.g + noise * 0.7f),
-                        Mathf.Clamp01(baseC.b + noise * 0.5f)
+                    float noise = 0f;
+
+                    switch (type)
+                    {
+                        case SurfaceMaterialType.MartianRust:
+                            noise = (Mathf.PerlinNoise(u * 14f, v * 14f) - 0.5f) * 0.22f +
+                                    (Mathf.PerlinNoise(u * 38f, v * 38f) - 0.5f) * 0.08f;
+                            break;
+
+                        case SurfaceMaterialType.LunarRegolith:
+                            noise = (Mathf.PerlinNoise(u * 18f, v * 18f) - 0.5f) * 0.16f;
+                            // Micro impact speckles
+                            if (Mathf.PerlinNoise(u * 75f, v * 75f) > 0.7f) noise += 0.15f;
+                            break;
+
+                        case SurfaceMaterialType.VolcanicBasalt:
+                            noise = (Mathf.PerlinNoise(u * 20f, v * 20f) - 0.5f) * 0.18f;
+                            float cracks = Mathf.Abs(Mathf.Sin(u * 25f + v * 25f));
+                            if (cracks < 0.12f) noise -= 0.15f;
+                            break;
+
+                        case SurfaceMaterialType.PolarIce:
+                            noise = Mathf.Sin(u * 28f + v * 10f) * 0.08f + (Mathf.PerlinNoise(u * 8f, v * 8f) - 0.5f) * 0.12f;
+                            break;
+
+                        case SurfaceMaterialType.RedSandstone:
+                            float band = Mathf.Sin(v * Mathf.PI * 16f) * 0.12f;
+                            noise = band + (Mathf.PerlinNoise(u * 16f, v * 32f) - 0.5f) * 0.10f;
+                            break;
+
+                        default:
+                            noise = (Mathf.PerlinNoise(u * 10f, v * 10f) - 0.5f) * 0.15f;
+                            break;
+                    }
+
+                    Color col = new Color(
+                        Mathf.Clamp01(baseColor.r + noise),
+                        Mathf.Clamp01(baseColor.g + noise * 0.75f),
+                        Mathf.Clamp01(baseColor.b + noise * 0.55f),
+                        1.0f
+                    );
+                    pixels[y * size + x] = col;
+                }
+            }
+
+            tex.SetPixels(pixels);
+            tex.Apply(true, false);
+            return tex;
+        }
+
+        private Texture2D GenerateProceduralNormalMap(float strength)
+        {
+            int size = 256;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            tex.wrapMode = TextureWrapMode.Repeat;
+            tex.filterMode = FilterMode.Bilinear;
+            Color[] pixels = new Color[size * size];
+
+            for (int y = 0; y < size; y++)
+            {
+                float v = (float)y / size;
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (float)x / size;
+                    float nx = (Mathf.PerlinNoise(u * 16f, v * 16f) - 0.5f) * strength;
+                    float ny = (Mathf.PerlinNoise(v * 16f, u * 16f) - 0.5f) * strength;
+                    Vector3 normal = new Vector3(-nx, -ny, 1.0f).normalized;
+
+                    pixels[y * size + x] = new Color(
+                        normal.x * 0.5f + 0.5f,
+                        normal.y * 0.5f + 0.5f,
+                        normal.z * 0.5f + 0.5f,
+                        1.0f
                     );
                 }
             }
 
-            tex.SetPixels(cols);
-            tex.Apply();
+            tex.SetPixels(pixels);
+            tex.Apply(true, false);
             return tex;
         }
 
-        // Sobel filter normal map generation from an albedo/grayscale texture
-        private Texture2D GenerateProceduralNormal(Texture2D source, float strength = 2.0f)
+        // =========================================================================
+        // Compatibility Adapters for PlanetaryMaterialType (Used by UI Workbench)
+        // =========================================================================
+        public void ApplyMaterial(UnityEngine.Terrain terrain, PlanetaryMaterialType matType)
         {
-            int width = source.width;
-            int height = source.height;
-            Texture2D normalTex = new Texture2D(width, height, TextureFormat.RGBA32, true, true);
-            normalTex.wrapMode = TextureWrapMode.Repeat;
+            targetTerrain = terrain;
+            ApplySurfaceMaterial(MapPlanetaryToSurface(matType));
+        }
 
-            Color[] normals = new Color[width * height];
-
-            for (int y = 0; y < height; y++)
+        public void ApplyMaterial(UnityEngine.Terrain terrain, string matTypeStr)
+        {
+            targetTerrain = terrain;
+            if (System.Enum.TryParse(matTypeStr, true, out SurfaceMaterialType parsedSurface))
             {
-                for (int x = 0; x < width; x++)
-                {
-                    float left = source.GetPixel((x - 1 + width) % width, y).grayscale;
-                    float right = source.GetPixel((x + 1) % width, y).grayscale;
-                    float down = source.GetPixel(x, (y - 1 + height) % height).grayscale;
-                    float up = source.GetPixel(x, (y + 1) % height).grayscale;
-
-                    float dx = (right - left) * strength;
-                    float dy = (up - down) * strength;
-                    Vector3 n = new Vector3(-dx, -dy, 1.0f).normalized;
-
-                    // Pack into normal map color [0, 1]
-                    normals[y * width + x] = new Color(n.x * 0.5f + 0.5f, n.y * 0.5f + 0.5f, n.z * 0.5f + 0.5f, 1f);
-                }
+                ApplySurfaceMaterial(parsedSurface);
             }
+            else if (System.Enum.TryParse(matTypeStr, true, out PlanetaryMaterialType parsedPlanetary))
+            {
+                ApplySurfaceMaterial(MapPlanetaryToSurface(parsedPlanetary));
+            }
+            else
+            {
+                ApplySurfaceMaterial(SurfaceMaterialType.MartianRust);
+            }
+        }
 
-            normalTex.SetPixels(normals);
-            normalTex.Apply();
-            return normalTex;
+        private SurfaceMaterialType MapPlanetaryToSurface(PlanetaryMaterialType p)
+        {
+            switch (p)
+            {
+                case PlanetaryMaterialType.MartianDust: return SurfaceMaterialType.MartianRust;
+                case PlanetaryMaterialType.LunarRegolith: return SurfaceMaterialType.LunarRegolith;
+                case PlanetaryMaterialType.VolcanicBasalt: return SurfaceMaterialType.VolcanicBasalt;
+                case PlanetaryMaterialType.PolarIce: return SurfaceMaterialType.PolarIce;
+                case PlanetaryMaterialType.RedCanyon: return SurfaceMaterialType.RedSandstone;
+                case PlanetaryMaterialType.TopographicWireframe: return SurfaceMaterialType.TopographicGrid;
+                case PlanetaryMaterialType.NormalInspector: return SurfaceMaterialType.NormalInspector;
+                default: return SurfaceMaterialType.MartianRust;
+            }
         }
     }
 }

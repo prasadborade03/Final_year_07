@@ -1,7 +1,18 @@
 using UnityEngine;
 
+/// <summary>
+/// FreeFlyCamera controller matching the original intuitive controls:
+/// - Horizontal: 8, 5, 4, 6 (both Keypad and Alpha)
+/// - Vertical: 9 (Up), 7 (Down) (both Keypad and Alpha)
+/// - Boost: Shift (fastSpeed)
+/// - Look: Right Mouse Button (Mouse Button 1) + Mouse drag
+///
+/// Speed can be tuned via the UI Toolkit workbench (slider & presets).
+/// </summary>
 public class FreeFlyCamera : MonoBehaviour
 {
+    public static FreeFlyCamera Instance { get; private set; }
+
     [Header("Movement Settings")]
     public float normalSpeed = 10f;     // Normal flying speed
     public float fastSpeed = 30f;       // Speed when holding Shift
@@ -10,8 +21,25 @@ public class FreeFlyCamera : MonoBehaviour
     [Header("Look Settings")]
     public float mouseSensitivity = 3f; // Speed of mouse rotation
 
+    // Event for UI Toolkit synchronization (baseSpeed, activeSpeed)
+    public static System.Action<float, float> OnCameraSpeedChanged;
+
+    /// <summary>
+    /// Property for compatibility with UI Toolkit bindings
+    /// </summary>
+    public float movementSpeed
+    {
+        get => normalSpeed;
+        set => SetMovementSpeed(value);
+    }
+
     private float pitch = 0f;
     private float yaw = 0f;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     void Start()
     {
@@ -19,6 +47,8 @@ public class FreeFlyCamera : MonoBehaviour
         Vector3 angles = transform.eulerAngles;
         pitch = angles.x;
         yaw = angles.y;
+
+        OnCameraSpeedChanged?.Invoke(normalSpeed, normalSpeed);
     }
 
     void Update()
@@ -70,4 +100,25 @@ public class FreeFlyCamera : MonoBehaviour
             transform.position -= Vector3.up * climbSpeed * Time.deltaTime; // Down
         }
     }
+
+    /// <summary>
+    /// Changes speed from UI slider or external call.
+    /// Fast speed (Shift) and climb speed scale proportionally.
+    /// </summary>
+    public void SetMovementSpeed(float speed)
+    {
+        normalSpeed = Mathf.Max(0.5f, speed);
+        fastSpeed = normalSpeed * 3f;
+        climbSpeed = normalSpeed;
+        OnCameraSpeedChanged?.Invoke(normalSpeed, normalSpeed);
+    }
+
+    // UI Preset methods
+    public void SetPrecisionPreset() => SetMovementSpeed(2.0f);
+    public void SetStandardPreset() => SetMovementSpeed(10.0f);
+    public void SetFastPreset() => SetMovementSpeed(50.0f);
+    public void SetWarpPreset() => SetMovementSpeed(120.0f);
+
+    public float GetMovementSpeed() => normalSpeed;
+    public float GetCurrentCalculatedSpeed() => normalSpeed;
 }

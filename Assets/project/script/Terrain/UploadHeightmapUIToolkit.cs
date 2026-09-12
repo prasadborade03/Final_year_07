@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UIElements;
 using SFB;
 
@@ -7,7 +7,7 @@ namespace ProjectName.Terrain
     /// <summary>
     /// Modern Unity UI Toolkit Controller for VR Rover Digital Twin Studio & Workbench.
     /// Manages real-time pre-import heightmap tuning, interactive 2D canvas painting,
-    /// planetary surface material selection, and rover deployment.
+    /// planetary surface material selection, rover deployment, and camera speed controls.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public class UploadHeightmapUIToolkit : MonoBehaviour
@@ -60,6 +60,12 @@ namespace ProjectName.Terrain
 
         // Rover Buttons
         private Button btnRoverHusky, btnRoverM20, btnRoverM2020;
+
+        // Camera Speed Controller
+        private Label labelSpeedometer;
+        private Slider sliderCameraSpeed;
+        private Label labelCameraSpeedVal;
+        private Button btnSpeedPrecision, btnSpeedStandard, btnSpeedFast, btnSpeedWarp;
 
         private void Awake()
         {
@@ -238,6 +244,37 @@ namespace ProjectName.Terrain
             if (btnRoverM20 != null) btnRoverM20.clicked += () => { if (flowController != null) flowController.OnSelectM20(); };
             if (btnRoverM2020 != null) btnRoverM2020.clicked += () => { if (flowController != null) flowController.OnSelectM2020(); };
 
+            // Camera Speed Controller
+            labelSpeedometer = root.Q<Label>("LabelSpeedometer");
+            sliderCameraSpeed = root.Q<Slider>("SliderCameraSpeed");
+            labelCameraSpeedVal = root.Q<Label>("LabelCameraSpeedVal");
+
+            btnSpeedPrecision = root.Q<Button>("BtnSpeedPrecision");
+            btnSpeedStandard = root.Q<Button>("BtnSpeedStandard");
+            btnSpeedFast = root.Q<Button>("BtnSpeedFast");
+            btnSpeedWarp = root.Q<Button>("BtnSpeedWarp");
+
+            if (sliderCameraSpeed != null)
+            {
+                float initialSpeed = FreeFlyCamera.Instance != null ? FreeFlyCamera.Instance.movementSpeed : 10.0f;
+                sliderCameraSpeed.value = initialSpeed;
+                if (labelCameraSpeedVal != null) labelCameraSpeedVal.text = $"{initialSpeed:F1} m/s";
+
+                sliderCameraSpeed.RegisterValueChangedCallback(evt =>
+                {
+                    if (labelCameraSpeedVal != null) labelCameraSpeedVal.text = $"{evt.newValue:F1} m/s";
+                    if (FreeFlyCamera.Instance != null) FreeFlyCamera.Instance.SetMovementSpeed(evt.newValue);
+                    UpdateSpeedPresetStyles(evt.newValue);
+                });
+            }
+
+            if (btnSpeedPrecision != null) btnSpeedPrecision.clicked += () => { if (FreeFlyCamera.Instance != null) FreeFlyCamera.Instance.SetPrecisionPreset(); };
+            if (btnSpeedStandard != null) btnSpeedStandard.clicked += () => { if (FreeFlyCamera.Instance != null) FreeFlyCamera.Instance.SetStandardPreset(); };
+            if (btnSpeedFast != null) btnSpeedFast.clicked += () => { if (FreeFlyCamera.Instance != null) FreeFlyCamera.Instance.SetFastPreset(); };
+            if (btnSpeedWarp != null) btnSpeedWarp.clicked += () => { if (FreeFlyCamera.Instance != null) FreeFlyCamera.Instance.SetWarpPreset(); };
+
+            FreeFlyCamera.OnCameraSpeedChanged += OnCameraSpeedUpdated;
+
             // Flow Controller Events
             if (flowController != null)
             {
@@ -256,11 +293,36 @@ namespace ProjectName.Terrain
 
         private void OnDisable()
         {
+            FreeFlyCamera.OnCameraSpeedChanged -= OnCameraSpeedUpdated;
+
             if (previewTexture != null)
             {
                 DestroyImmediate(previewTexture);
                 previewTexture = null;
             }
+        }
+
+        private void OnCameraSpeedUpdated(float baseSpeed, float activeSpeed)
+        {
+            if (labelSpeedometer != null)
+            {
+                labelSpeedometer.text = $"{baseSpeed:F1} m/s";
+            }
+
+            if (sliderCameraSpeed != null && Mathf.Abs(sliderCameraSpeed.value - baseSpeed) > 0.1f)
+            {
+                sliderCameraSpeed.SetValueWithoutNotify(baseSpeed);
+                if (labelCameraSpeedVal != null) labelCameraSpeedVal.text = $"{baseSpeed:F1} m/s";
+                UpdateSpeedPresetStyles(baseSpeed);
+            }
+        }
+
+        private void UpdateSpeedPresetStyles(float currentSpeed)
+        {
+            SetBtnClass(btnSpeedPrecision, "speed-preset-active", Mathf.Abs(currentSpeed - 2f) < 0.8f);
+            SetBtnClass(btnSpeedStandard, "speed-preset-active", Mathf.Abs(currentSpeed - 10f) < 1.5f || Mathf.Abs(currentSpeed - 15f) < 1.5f);
+            SetBtnClass(btnSpeedFast, "speed-preset-active", Mathf.Abs(currentSpeed - 50f) < 3.0f);
+            SetBtnClass(btnSpeedWarp, "speed-preset-active", Mathf.Abs(currentSpeed - 120f) < 5.0f);
         }
 
         // -------------------------------------------------------------

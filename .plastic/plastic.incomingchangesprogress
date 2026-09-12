@@ -1,0 +1,68 @@
+[
+  {
+    "MountId": "56e62dd7-241f-41e9-8c6b-dd4ca4513e62",
+    "AncestorCsetIds": [
+      7
+    ],
+    "SourceCsetId": 8,
+    "DestinationCsetId": 7,
+    "FileConflicts": [
+      {
+        "Path": "/Packages/manifest.json",
+        "ItemId": 187,
+        "ParentItemId": 170,
+        "BaseRevId": 460,
+        "SourceRevId": 7177,
+        "DestinationRevId": 460
+      },
+      {
+        "Path": "/Packages/packages-lock.json",
+        "ItemId": 188,
+        "ParentItemId": 170,
+        "BaseRevId": 461,
+        "SourceRevId": 7178,
+        "DestinationRevId": 461
+      },
+      {
+        "Path": "/Assets/project/script/Core/SimulationFlowController.cs",
+        "ItemId": 2255,
+        "ParentItemId": 528,
+        "BaseRevId": 2176,
+        "SourceRevId": 6801,
+        "DestinationRevId": 2176
+      },
+      {
+        "Path": "/Assets/project/script/Rover/m2020_perseverance/RoverController_m2020.cs",
+        "ItemId": 2308,
+        "ParentItemId": 2263,
+        "BaseRevId": 2645,
+        "SourceRevId": 6817,
+        "DestinationRevId": 2645
+      },
+      {
+        "Path": "/Assets/project/script/Rover/m2020_perseverance/RoverImporter_m2020.cs",
+        "ItemId": 2310,
+        "ParentItemId": 2263,
+        "BaseRevId": 2646,
+        "SourceRevId": 6819,
+        "DestinationRevId": 2646
+      },
+      {
+        "Path": "/Assets/XR/Settings/OpenXR Package Settings.asset",
+        "ItemId": 2242,
+        "ParentItemId": 500,
+        "BaseRevId": 2204,
+        "SourceRevId": 7163,
+        "DestinationRevId": 2204
+      },
+      {
+        "Path": "/.git/index",
+        "ItemId": 4151,
+        "ParentItemId": 4138,
+        "BaseRevId": 2673,
+        "SourceRevId": 6226,
+        "DestinationRevId": 2673
+      }
+    ]
+  }
+]
