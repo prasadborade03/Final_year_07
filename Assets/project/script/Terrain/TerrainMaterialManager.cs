@@ -303,11 +303,32 @@ namespace ProjectName.Terrain
             Debug.Log($"[TerrainMaterialManager] Applied surface '{type}' (isURP: {isURP}, Shader: {(targetTerrain.materialTemplate != null ? targetTerrain.materialTemplate.shader.name : "Native")})");
         }
 
+        public void ClearCache()
+        {
+            generatedLayers.Clear();
+            generatedMaterials.Clear();
+        }
+
         private TerrainLayer GetOrCreateTerrainLayer(SurfaceMaterialConfig config)
         {
             if (generatedLayers.TryGetValue(config.type, out TerrainLayer cached) && cached != null)
             {
-                return cached;
+                if (cached.diffuseTexture != null && cached.diffuseTexture.name.StartsWith("Procedural_"))
+                {
+                    Texture2D freshAlbedo = config.customAlbedo != null ? config.customAlbedo : TryAutoLoadTexture(config.type, TextureMapType.Albedo);
+                    if (freshAlbedo != null)
+                    {
+                        generatedLayers.Remove(config.type);
+                    }
+                    else
+                    {
+                        return cached;
+                    }
+                }
+                else
+                {
+                    return cached;
+                }
             }
 
             // 1. First check explicit inspector overrides
@@ -435,6 +456,7 @@ namespace ProjectName.Terrain
         {
             int size = 256;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            tex.name = "Procedural_" + type.ToString() + "_Albedo";
             tex.wrapMode = TextureWrapMode.Repeat;
             tex.filterMode = FilterMode.Bilinear;
             Color[] pixels = new Color[size * size];
@@ -498,6 +520,7 @@ namespace ProjectName.Terrain
         {
             int size = 256;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            tex.name = "Procedural_Normal";
             tex.wrapMode = TextureWrapMode.Repeat;
             tex.filterMode = FilterMode.Bilinear;
             Color[] pixels = new Color[size * size];
