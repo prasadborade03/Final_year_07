@@ -54,10 +54,6 @@ public class RoverImporter_husky : MonoBehaviour
         currentRoverObject = Instantiate(roverPrefab);
         currentRoverObject.name = "GeneratedHusky";
 
-        // ── URP material fix (replaces any Built-in/pink shaders) ────────────
-        var urpFixer = currentRoverObject.AddComponent<RoverURPMaterialFixer>();
-        urpFixer.ApplyTo(currentRoverObject.transform, "husky");
-
         // Apply basic physics to every ArticulationBody
         var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>();
         foreach (var body in allBodies)
