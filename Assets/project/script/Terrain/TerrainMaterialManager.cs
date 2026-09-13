@@ -162,22 +162,22 @@ namespace ProjectName.Terrain
                 new SurfaceMaterialConfig
                 {
                     type = SurfaceMaterialType.TopographicGrid,
-                    name = "Topographic Grid",
+                    name = "Topographic Wireframe Grid",
                     primaryColor = new Color(0.0f, 0.95f, 0.85f),
-                    roughness = 0.5f,
-                    metallic = 0.1f,
-                    bumpScale = 0.0f,
-                    tileSize = new Vector2(20f, 20f)
+                    roughness = 0.2f,
+                    metallic = 0.8f,
+                    bumpScale = 1.0f,
+                    tileSize = new Vector2(10f, 10f)
                 },
                 new SurfaceMaterialConfig
                 {
                     type = SurfaceMaterialType.NormalInspector,
                     name = "Surface Normal Inspector",
                     primaryColor = new Color(0.4f, 0.65f, 1.0f),
-                    roughness = 0.5f,
-                    metallic = 0.1f,
-                    bumpScale = 0.0f,
-                    tileSize = new Vector2(20f, 20f)
+                    roughness = 0.45f,
+                    metallic = 0.15f,
+                    bumpScale = 1.8f,
+                    tileSize = new Vector2(25f, 25f)
                 }
             };
         }
@@ -219,83 +219,48 @@ namespace ProjectName.Terrain
                     targetShader = Shader.Find("Standard");
             }
 
-            // Diagnostic Modes (Topographic Grid & Normal Inspector)
-            if (type == SurfaceMaterialType.TopographicGrid || type == SurfaceMaterialType.NormalInspector)
+            // Configure TerrainLayer with PBR textures (applies to ALL 7 presets including Topographic Grid & Normal Inspector)
+            TerrainLayer layer = GetOrCreateTerrainLayer(config);
+            if (targetTerrain.terrainData != null)
             {
-                Shader diagShader = null;
-                if (isURP)
+                targetTerrain.terrainData.terrainLayers = new TerrainLayer[] { layer };
+
+                // Initialize splatmap weights so layer 0 renders at 100% opacity
+                int alphaRes = Mathf.Max(32, targetTerrain.terrainData.alphamapResolution);
+                targetTerrain.terrainData.alphamapResolution = alphaRes;
+                float[,,] alphaMaps = new float[alphaRes, alphaRes, 1];
+                for (int y = 0; y < alphaRes; y++)
                 {
-                    diagShader = (type == SurfaceMaterialType.NormalInspector)
-                        ? Shader.Find("Universal Render Pipeline/Lit")
-                        : Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Universal Render Pipeline/Lit");
+                    for (int x = 0; x < alphaRes; x++)
+                    {
+                        alphaMaps[y, x, 0] = 1.0f;
+                    }
                 }
-                else
-                {
-                    diagShader = Shader.Find("Unlit/Color") ?? Shader.Find("Nature/Terrain/Standard") ?? Shader.Find("Standard");
-                }
+                targetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
+            }
 
-                if (diagShader == null || !diagShader.isSupported)
-                {
-                    diagShader = targetShader;
-                }
-
-                Material diagMat = new Material(diagShader);
-                diagMat.name = "TerrainDiag_" + type.ToString();
-
-                Color tint = (type == SurfaceMaterialType.TopographicGrid)
-                    ? new Color(0.0f, 0.95f, 0.85f, 1.0f)   // Neon Cyan Diagnostic
-                    : new Color(0.4f, 0.65f, 1.0f, 1.0f);   // Elevation Inspector
-
-                if (diagMat.HasProperty("_BaseColor")) diagMat.SetColor("_BaseColor", tint);
-                if (diagMat.HasProperty("_Color")) diagMat.SetColor("_Color", tint);
-
-                targetTerrain.materialTemplate = diagMat;
+            if (isURP && targetShader != null && targetShader.name.Contains("Universal Render Pipeline"))
+            {
+                // URP TerrainLit material
+                Material customMat = new Material(targetShader);
+                customMat.name = "TerrainMat_URP_" + type.ToString();
+                if (customMat.HasProperty("_BaseColor")) customMat.SetColor("_BaseColor", config.primaryColor);
+                customMat.EnableKeyword("_TERRAIN_INSTANCED_PERPIXEL_NORMAL");
+                targetTerrain.materialTemplate = customMat;
             }
             else
             {
-                // Standard Planetary Surface: Configure TerrainLayer with PBR textures
-                TerrainLayer layer = GetOrCreateTerrainLayer(config);
-                if (targetTerrain.terrainData != null)
+                // Built-in Pipeline:
+                // In Unity 6, explicitly assigning a Nature/Terrain/Standard material guarantees
+                // full PBR lighting, normal mapping, vertex displacement, and ZERO pink material artifacts!
+                if (targetShader != null)
                 {
-                    targetTerrain.terrainData.terrainLayers = new TerrainLayer[] { layer };
-
-                    // Initialize splatmap weights so layer 0 renders at 100% opacity
-                    int alphaRes = Mathf.Max(32, targetTerrain.terrainData.alphamapResolution);
-                    targetTerrain.terrainData.alphamapResolution = alphaRes;
-                    float[,,] alphaMaps = new float[alphaRes, alphaRes, 1];
-                    for (int y = 0; y < alphaRes; y++)
-                    {
-                        for (int x = 0; x < alphaRes; x++)
-                        {
-                            alphaMaps[y, x, 0] = 1.0f;
-                        }
-                    }
-                    targetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
+                    Material builtInMat = new Material(targetShader);
+                    builtInMat.name = "TerrainMat_BuiltIn_" + type.ToString();
+                    if (builtInMat.HasProperty("_Color")) builtInMat.color = config.primaryColor;
+                    targetTerrain.materialTemplate = builtInMat;
                 }
-
-                if (isURP && targetShader != null && targetShader.name.Contains("Universal Render Pipeline"))
-                {
-                    // URP TerrainLit material
-                    Material customMat = new Material(targetShader);
-                    customMat.name = "TerrainMat_URP_" + type.ToString();
-                    if (customMat.HasProperty("_BaseColor")) customMat.SetColor("_BaseColor", config.primaryColor);
-                    customMat.EnableKeyword("_TERRAIN_INSTANCED_PERPIXEL_NORMAL");
-                    targetTerrain.materialTemplate = customMat;
-                }
-                else
-                {
-                    // Built-in Pipeline:
-                    // In Unity 6, explicitly assigning a Nature/Terrain/Standard material guarantees
-                    // full PBR lighting, normal mapping, and ZERO pink material artifacts!
-                    if (targetShader != null)
-                    {
-                        Material builtInMat = new Material(targetShader);
-                        builtInMat.name = "TerrainMat_BuiltIn_" + type.ToString();
-                        if (builtInMat.HasProperty("_Color")) builtInMat.color = config.primaryColor;
-                        targetTerrain.materialTemplate = builtInMat;
-                    }
-                    targetTerrain.materialType = UnityEngine.Terrain.MaterialType.BuiltInStandard;
-                }
+                targetTerrain.materialType = UnityEngine.Terrain.MaterialType.BuiltInStandard;
             }
 
             targetTerrain.drawInstanced = true;
@@ -349,7 +314,7 @@ namespace ProjectName.Terrain
 
             if (normalTex == null)
             {
-                normalTex = GenerateProceduralNormalMap(config.bumpScale);
+                normalTex = GenerateProceduralNormalMap(config.bumpScale, config.type);
             }
 
             TerrainLayer layer = new TerrainLayer
@@ -396,6 +361,14 @@ namespace ProjectName.Terrain
                     prefix = "Sandstone";
                     altPrefix = "Rock015";
                     break;
+                case SurfaceMaterialType.TopographicGrid:
+                    prefix = "TopographicGrid";
+                    altPrefix = "Grid";
+                    break;
+                case SurfaceMaterialType.NormalInspector:
+                    prefix = "NormalInspector";
+                    altPrefix = "SlopeInspector";
+                    break;
                 default:
                     return null;
             }
@@ -427,7 +400,14 @@ namespace ProjectName.Terrain
                 $"{altPrefix}{altSuffix}",
                 $"{altPrefix}_diff_2k",
                 $"{altPrefix}_nor_gl_2k",
-                $"{altPrefix}_rough_2k"
+                $"{altPrefix}_rough_2k",
+                $"gravel_ground_01{suffix}",
+                $"gravel_ground_01{altSuffix}",
+                $"Ground048{altSuffix}",
+                $"Ground048{suffix}",
+                $"Ground030{altSuffix}",
+                $"Ground030{suffix}",
+                $"aerial_ground_rock{suffix}"
             };
 
 #if UNITY_EDITOR
@@ -496,6 +476,62 @@ namespace ProjectName.Terrain
                             noise = band + (Mathf.PerlinNoise(u * 16f, v * 32f) - 0.5f) * 0.10f;
                             break;
 
+                        case SurfaceMaterialType.TopographicGrid:
+                            {
+                                int px = x % 64;
+                                int py = y % 64;
+                                bool isMajorGrid = (px < 2 || py < 2);
+                                bool isMinorGrid = (px % 16 == 0 || py % 16 == 0);
+                                float contour = Mathf.Sin((u + v) * Mathf.PI * 16f);
+                                bool isContour = Mathf.Abs(contour) < 0.08f;
+
+                                Color bg = new Color(0.04f, 0.06f, 0.09f, 1.0f); // Deep tactical slate
+                                Color majorCol = new Color(0.0f, 0.96f, 0.88f, 1.0f); // Bright Glowing Neon Cyan
+                                Color minorCol = new Color(0.0f, 0.40f, 0.38f, 1.0f); // Subtle grid subdivision
+                                Color contourCol = new Color(0.08f, 0.65f, 0.60f, 1.0f); // Contour lines
+
+                                if (isMajorGrid) pixels[y * size + x] = majorCol;
+                                else if (isMinorGrid) pixels[y * size + x] = minorCol;
+                                else if (isContour) pixels[y * size + x] = contourCol;
+                                else pixels[y * size + x] = bg;
+                                continue;
+                            }
+
+                        case SurfaceMaterialType.NormalInspector:
+                            {
+                                // Surface normal vector slope gradient heat-map (Blue = flat, Green = mild, Yellow = steep, Red = cliff)
+                                float snx = Mathf.PerlinNoise(u * 14f, v * 14f);
+                                float sny = Mathf.PerlinNoise((u + 40f) * 14f, (v + 40f) * 14f);
+                                float slope = Mathf.Clamp01(Mathf.Sqrt((snx - 0.5f) * (snx - 0.5f) + (sny - 0.5f) * (sny - 0.5f)) * 2.8f);
+
+                                Color normCol;
+                                if (slope < 0.25f)
+                                {
+                                    normCol = Color.Lerp(new Color(0.08f, 0.35f, 0.95f), new Color(0.1f, 0.75f, 0.85f), slope / 0.25f);
+                                }
+                                else if (slope < 0.55f)
+                                {
+                                    normCol = Color.Lerp(new Color(0.1f, 0.75f, 0.85f), new Color(0.2f, 0.9f, 0.25f), (slope - 0.25f) / 0.3f);
+                                }
+                                else if (slope < 0.8f)
+                                {
+                                    normCol = Color.Lerp(new Color(0.95f, 0.85f, 0.1f), new Color(0.95f, 0.45f, 0.05f), (slope - 0.55f) / 0.25f);
+                                }
+                                else
+                                {
+                                    normCol = Color.Lerp(new Color(0.95f, 0.45f, 0.05f), new Color(0.9f, 0.1f, 0.35f), (slope - 0.8f) / 0.2f);
+                                }
+
+                                float slopeGrid = (x % 32 < 1) || (y % 32 < 1) ? 0.18f : 0f;
+                                pixels[y * size + x] = new Color(
+                                    Mathf.Clamp01(normCol.r + slopeGrid),
+                                    Mathf.Clamp01(normCol.g + slopeGrid),
+                                    Mathf.Clamp01(normCol.b + slopeGrid),
+                                    1.0f
+                                );
+                                continue;
+                            }
+
                         default:
                             noise = (Mathf.PerlinNoise(u * 10f, v * 10f) - 0.5f) * 0.15f;
                             break;
@@ -516,11 +552,11 @@ namespace ProjectName.Terrain
             return tex;
         }
 
-        private Texture2D GenerateProceduralNormalMap(float strength)
+        private Texture2D GenerateProceduralNormalMap(float strength, SurfaceMaterialType type = SurfaceMaterialType.MartianRust)
         {
             int size = 256;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
-            tex.name = "Procedural_Normal";
+            tex.name = "Procedural_" + type.ToString() + "_Normal";
             tex.wrapMode = TextureWrapMode.Repeat;
             tex.filterMode = FilterMode.Bilinear;
             Color[] pixels = new Color[size * size];
@@ -531,8 +567,26 @@ namespace ProjectName.Terrain
                 for (int x = 0; x < size; x++)
                 {
                     float u = (float)x / size;
-                    float nx = (Mathf.PerlinNoise(u * 16f, v * 16f) - 0.5f) * strength;
-                    float ny = (Mathf.PerlinNoise(v * 16f, u * 16f) - 0.5f) * strength;
+                    float nx, ny;
+
+                    if (type == SurfaceMaterialType.TopographicGrid)
+                    {
+                        int px = x % 64;
+                        int py = y % 64;
+                        nx = (px < 3 || px > 61) ? ((px < 3 ? 1f : -1f) * 0.5f) : 0f;
+                        ny = (py < 3 || py > 61) ? ((py < 3 ? 1f : -1f) * 0.5f) : 0f;
+                    }
+                    else if (type == SurfaceMaterialType.NormalInspector)
+                    {
+                        nx = (Mathf.PerlinNoise(u * 14f, v * 14f) - 0.5f) * strength * 1.5f;
+                        ny = (Mathf.PerlinNoise(v * 14f, u * 14f) - 0.5f) * strength * 1.5f;
+                    }
+                    else
+                    {
+                        nx = (Mathf.PerlinNoise(u * 16f, v * 16f) - 0.5f) * strength;
+                        ny = (Mathf.PerlinNoise(v * 16f, u * 16f) - 0.5f) * strength;
+                    }
+
                     Vector3 normal = new Vector3(-nx, -ny, 1.0f).normalized;
 
                     pixels[y * size + x] = new Color(
