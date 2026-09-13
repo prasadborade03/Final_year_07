@@ -67,7 +67,10 @@ public class RoverImporter_m20 : MonoBehaviour
         currentRoverObject = Instantiate(roverPrefab);
         currentRoverObject.name = "GeneratedM20";
 
-        // Apply basic physics to every ArticulationBody
+        // ── URP material fix (replaces any Built-in/pink shaders) ────────────
+        var urpFixer = currentRoverObject.AddComponent<RoverURPMaterialFixer>();
+        urpFixer.ApplyTo(currentRoverObject.transform, "m20");
+
         var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>();
         foreach (var body in allBodies)
         {

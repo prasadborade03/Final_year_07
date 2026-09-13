@@ -73,6 +73,11 @@ public class RoverImporter_m2020 : MonoBehaviour
         currentRoverObject = Instantiate(roverPrefab, spawnPosition, Quaternion.identity);
         currentRoverObject.name = "GeneratedPerseverance_Fixed";
 
+        // ── URP material fix — NASA Perseverance classified colour scheme ─────
+        var visualMgr = currentRoverObject.GetComponent<M2020VisualMaterialManager>()
+                     ?? currentRoverObject.AddComponent<M2020VisualMaterialManager>();
+        visualMgr.ApplyTo(currentRoverObject.transform);
+
         var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>(true);
         Debug.Log($"[M2020] Found {allBodies.Length} ArticulationBodies.");
 
