@@ -81,6 +81,8 @@ namespace ProjectName.Terrain
                 targetTerrain = GetComponent<UnityEngine.Terrain>();
 
             InitializeDefaultConfigs();
+            SanitizeConfigs();
+            EnforceSpaceLightingAndReflections();
         }
 
         private void Start()
@@ -88,9 +90,13 @@ namespace ProjectName.Terrain
             ApplySurfaceMaterial(activeMaterialType);
         }
 
-        public void InitializeDefaultConfigs()
+        public void InitializeDefaultConfigs(bool force = false)
         {
-            if (materialConfigs != null && materialConfigs.Count > 0) return;
+            if (!force && materialConfigs != null && materialConfigs.Count > 0)
+            {
+                SanitizeConfigs();
+                return;
+            }
 
             materialConfigs = new List<SurfaceMaterialConfig>
             {
@@ -99,8 +105,8 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.MartianRust,
                     name = "Martian Rust Oxide",
                     primaryColor = new Color(0.78f, 0.32f, 0.16f),
-                    roughness = 0.85f,
-                    metallic = 0.05f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 1.2f,
                     tileSize = new Vector2(12f, 12f),
                     customAlbedo = customMartianAlbedo,
@@ -112,8 +118,8 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.LunarRegolith,
                     name = "Lunar Regolith",
                     primaryColor = new Color(0.44f, 0.46f, 0.48f),
-                    roughness = 0.65f,
-                    metallic = 0.15f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 0.8f,
                     tileSize = new Vector2(10f, 10f),
                     customAlbedo = customLunarAlbedo,
@@ -125,8 +131,8 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.VolcanicBasalt,
                     name = "Volcanic Charcoal Basalt",
                     primaryColor = new Color(0.12f, 0.13f, 0.16f),
-                    roughness = 0.92f,
-                    metallic = 0.25f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 1.5f,
                     tileSize = new Vector2(15f, 15f),
                     customAlbedo = customBasaltAlbedo,
@@ -138,8 +144,8 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.PolarIce,
                     name = "Polar Cryo-Ice Cap",
                     primaryColor = new Color(0.72f, 0.88f, 0.96f),
-                    roughness = 0.15f,
-                    metallic = 0.10f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 0.5f,
                     tileSize = new Vector2(20f, 20f),
                     customAlbedo = customIceAlbedo,
@@ -151,8 +157,8 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.RedSandstone,
                     name = "Red Sandstone Canyon",
                     primaryColor = new Color(0.70f, 0.38f, 0.22f),
-                    roughness = 0.80f,
-                    metallic = 0.04f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 1.4f,
                     tileSize = new Vector2(16f, 16f),
                     customAlbedo = customSandstoneAlbedo,
@@ -164,8 +170,8 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.TopographicGrid,
                     name = "Topographic Wireframe Grid",
                     primaryColor = new Color(0.0f, 0.95f, 0.85f),
-                    roughness = 0.2f,
-                    metallic = 0.8f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 1.0f,
                     tileSize = new Vector2(10f, 10f)
                 },
@@ -174,12 +180,75 @@ namespace ProjectName.Terrain
                     type = SurfaceMaterialType.NormalInspector,
                     name = "Surface Normal Inspector",
                     primaryColor = new Color(0.4f, 0.65f, 1.0f),
-                    roughness = 0.45f,
-                    metallic = 0.15f,
+                    roughness = 1.0f,
+                    metallic = 0.0f,
                     bumpScale = 1.8f,
                     tileSize = new Vector2(25f, 25f)
                 }
             };
+        }
+
+        /// <summary>
+        /// Sanitizes materialConfigs to ensure planetary terrain is completely non-glossy/matte.
+        /// Overrides any stale serialized scene values that cause liquid/mirror reflections on terrain ridges.
+        /// </summary>
+        public void SanitizeConfigs()
+        {
+            if (materialConfigs == null) return;
+            for (int i = 0; i < materialConfigs.Count; i++)
+            {
+                var cfg = materialConfigs[i];
+                cfg.roughness = 1.0f;
+                cfg.metallic = 0.0f;
+                materialConfigs[i] = cfg;
+            }
+        }
+
+        /// <summary>
+        /// Fixes environment reflections and ambient lighting for space/nebula skybox.
+        /// Prevents default daylight blue sky reflections and cyan ambient light from contaminating the scene.
+        /// </summary>
+        public static void EnforceSpaceLightingAndReflections()
+        {
+            try
+            {
+                if (RenderSettings.customReflectionTexture == null)
+                {
+                    Cubemap hdrCubemap = null;
+#if UNITY_EDITOR
+                    hdrCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/HDR_multi_nebulae_2.hdr");
+#endif
+                    if (hdrCubemap != null)
+                    {
+                        RenderSettings.customReflectionTexture = hdrCubemap;
+                        RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                    }
+                }
+                else
+                {
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                }
+
+                RenderSettings.reflectionIntensity = 0.25f;
+
+                // Eliminate daylight cyan/blue ambient sky tint
+                if (RenderSettings.ambientMode == AmbientMode.Skybox || RenderSettings.ambientSkyColor.b > 0.12f)
+                {
+                    RenderSettings.ambientMode = AmbientMode.Flat;
+                    Color spaceDarkAmbient = new Color(0.05f, 0.05f, 0.07f, 1.0f);
+                    RenderSettings.ambientLight = spaceDarkAmbient;
+                    RenderSettings.ambientSkyColor = spaceDarkAmbient;
+                    RenderSettings.ambientEquatorColor = new Color(0.03f, 0.03f, 0.04f, 1.0f);
+                    RenderSettings.ambientGroundColor = new Color(0.02f, 0.02f, 0.02f, 1.0f);
+                    RenderSettings.subtractiveShadowColor = new Color(0.02f, 0.02f, 0.03f, 1.0f);
+                }
+
+                DynamicGI.UpdateEnvironment();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[TerrainMaterialManager] Could not update environment reflections: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -197,6 +266,8 @@ namespace ProjectName.Terrain
             if (targetTerrain == null) return;
 
             InitializeDefaultConfigs();
+            SanitizeConfigs();
+            EnforceSpaceLightingAndReflections();
             SurfaceMaterialConfig config = materialConfigs.Find(c => c.type == type);
 
             // Determine whether an active Scriptable Render Pipeline (URP) is currently rendering
@@ -245,6 +316,8 @@ namespace ProjectName.Terrain
                 Material customMat = new Material(targetShader);
                 customMat.name = "TerrainMat_URP_" + type.ToString();
                 if (customMat.HasProperty("_BaseColor")) customMat.SetColor("_BaseColor", config.primaryColor);
+                if (customMat.HasProperty("_Smoothness")) customMat.SetFloat("_Smoothness", 0.0f);
+                if (customMat.HasProperty("_Metallic")) customMat.SetFloat("_Metallic", 0.0f);
                 customMat.EnableKeyword("_TERRAIN_INSTANCED_PERPIXEL_NORMAL");
                 targetTerrain.materialTemplate = customMat;
             }
@@ -278,7 +351,13 @@ namespace ProjectName.Terrain
         {
             if (generatedLayers.TryGetValue(config.type, out TerrainLayer cached) && cached != null)
             {
-                if (cached.diffuseTexture != null && cached.diffuseTexture.name.StartsWith("Procedural_"))
+                // Invalidate cached layer if it contains old high glossiness or outdated procedural fallback
+                if (cached.smoothness > 0.001f || cached.metallic > 0.001f || cached.specular != Color.black ||
+                    cached.smoothnessSource != TerrainLayerSmoothnessSource.ConstantOnly)
+                {
+                    generatedLayers.Remove(config.type);
+                }
+                else if (cached.diffuseTexture != null && cached.diffuseTexture.name.StartsWith("Procedural_"))
                 {
                     Texture2D freshAlbedo = config.customAlbedo != null ? config.customAlbedo : TryAutoLoadTexture(config.type, TextureMapType.Albedo);
                     if (freshAlbedo != null)
@@ -317,14 +396,17 @@ namespace ProjectName.Terrain
                 normalTex = GenerateProceduralNormalMap(config.bumpScale, config.type);
             }
 
+            // Guarantee pure ultra-matte surface: zero glossiness, zero specular highlight, zero metallic reflections
             TerrainLayer layer = new TerrainLayer
             {
                 name = "Layer_" + config.type.ToString(),
                 diffuseTexture = albedoTex,
                 normalMapTexture = normalTex,
                 normalScale = config.bumpScale,
-                smoothness = Mathf.Clamp01(1.0f - config.roughness),
-                metallic = config.metallic,
+                smoothness = 0.0f,
+                metallic = 0.0f,
+                specular = Color.black,
+                smoothnessSource = TerrainLayerSmoothnessSource.ConstantOnly,
                 tileSize = config.tileSize.x > 0 ? config.tileSize : new Vector2(15f, 15f)
             };
 

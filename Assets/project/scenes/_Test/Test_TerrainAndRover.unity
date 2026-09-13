@@ -20,23 +20,23 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
-  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
-  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientSkyColor: {r: 0.05, g: 0.05, b: 0.07, a: 1}
+  m_AmbientEquatorColor: {r: 0.03, g: 0.03, b: 0.04, a: 1}
+  m_AmbientGroundColor: {r: 0.02, g: 0.02, b: 0.02, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
-  m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
+  m_AmbientMode: 3
+  m_SubtractiveShadowColor: {r: 0.02, g: 0.02, b: 0.03, a: 1}
   m_SkyboxMaterial: {fileID: 2100000, guid: 8db25942b90a28740977cc02f1bf25d0, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
   m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
-  m_DefaultReflectionMode: 0
+  m_DefaultReflectionMode: 1
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
-  m_ReflectionIntensity: 1
-  m_CustomReflection: {fileID: 0}
+  m_ReflectionIntensity: 0.25
+  m_CustomReflection: {fileID: 8900000, guid: c26f7c1b0faa2a6479977dd208e06cdd, type: 3}
   m_Sun: {fileID: 0}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
@@ -1421,8 +1421,8 @@ MonoBehaviour:
   - type: 0
     name: Martian Rust Oxide
     primaryColor: {r: 0.78, g: 0.32, b: 0.16, a: 1}
-    roughness: 0.85
-    metallic: 0.05
+    roughness: 1
+    metallic: 0
     bumpScale: 1.2
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1431,8 +1431,8 @@ MonoBehaviour:
   - type: 1
     name: Lunar Regolith
     primaryColor: {r: 0.42, g: 0.44, b: 0.48, a: 1}
-    roughness: 0.65
-    metallic: 0.15
+    roughness: 1
+    metallic: 0
     bumpScale: 0.8
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1441,8 +1441,8 @@ MonoBehaviour:
   - type: 2
     name: Volcanic Charcoal Basalt
     primaryColor: {r: 0.12, g: 0.13, b: 0.16, a: 1}
-    roughness: 0.92
-    metallic: 0.25
+    roughness: 1
+    metallic: 0
     bumpScale: 1.5
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1451,8 +1451,8 @@ MonoBehaviour:
   - type: 3
     name: Polar Cryo-Ice Cap
     primaryColor: {r: 0.68, g: 0.85, b: 0.95, a: 1}
-    roughness: 0.18
-    metallic: 0.1
+    roughness: 1
+    metallic: 0
     bumpScale: 0.4
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1461,8 +1461,8 @@ MonoBehaviour:
   - type: 4
     name: Red Sandstone Canyon
     primaryColor: {r: 0.72, g: 0.33, b: 0.21, a: 1}
-    roughness: 0.8
-    metallic: 0.08
+    roughness: 1
+    metallic: 0
     bumpScale: 1.4
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1471,8 +1471,8 @@ MonoBehaviour:
   - type: 5
     name: Topographic Grid
     primaryColor: {r: 0, g: 0.95, b: 1, a: 1}
-    roughness: 0.5
-    metallic: 0.1
+    roughness: 1
+    metallic: 0
     bumpScale: 0
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1481,8 +1481,8 @@ MonoBehaviour:
   - type: 6
     name: Surface Normal Inspector
     primaryColor: {r: 0.65, g: 0.33, b: 0.96, a: 1}
-    roughness: 0.5
-    metallic: 0.1
+    roughness: 1
+    metallic: 0
     bumpScale: 0
     tileSize: {x: 0, y: 0}
     customAlbedo: {fileID: 0}
@@ -1557,7 +1557,7 @@ MonoBehaviour:
     resolution: 513
     smoothingFactor: 1
     heightCurve: 0
-    materialType: 0
+    materialType: 5
     terrainWidth: 1000
     terrainLength: 1000
 --- !u!114 &1638835893
@@ -2057,7 +2057,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2143178996
 RectTransform:
   m_ObjectHideFlags: 0
