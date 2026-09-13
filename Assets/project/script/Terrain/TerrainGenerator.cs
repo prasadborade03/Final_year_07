@@ -104,7 +104,16 @@ namespace ProjectName.Terrain
 
             GameObject terrainObject = UnityEngine.Terrain.CreateTerrainGameObject(terrainData);
             terrainObject.name = "GeneratedPlanetaryTerrain";
-            terrainObject.tag = "Terrain";
+
+            // Safely assign Tag without breaking execution if tag is missing
+            try
+            {
+                terrainObject.tag = "Terrain";
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[TerrainGenerator] Could not set tag 'Terrain' ({ex.Message}). Ensure 'Terrain' tag is added in Tags and Layers.");
+            }
 
             // Apply base elevation baseline shift via world position
             terrainObject.transform.position = new Vector3(
@@ -116,6 +125,9 @@ namespace ProjectName.Terrain
             UnityEngine.Terrain terrain = terrainObject.GetComponent<UnityEngine.Terrain>();
             terrain.drawHeightmap = true;
             terrain.drawTreesAndFoliage = false;
+            terrain.allowAutoConnect = true;
+            terrain.drawInstanced = true;
+            terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
 
             // Ensure TerrainCollider is present and linked to terrainData
             TerrainCollider tCollider = terrainObject.GetComponent<TerrainCollider>();

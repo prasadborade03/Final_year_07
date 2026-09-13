@@ -110,3 +110,11 @@ InitTestScene*.unity*
 
 # GSD (Git. Ship. Done.) staging cache
 .agents/.gsd-staging/
+
+# Unity crash autosave scenes
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+
+# Temporary nested repos / clones
+final-year-prj/
+

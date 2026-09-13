@@ -463,12 +463,39 @@ namespace ProjectName.Terrain
         // -------------------------------------------------------------
         private void OnGenerateTerrainClicked()
         {
-            if (currentHeights == null) return;
-
-            UnityEngine.Terrain terrain = terrainGenerator.GenerateTerrain(currentHeights, tuningConfig);
-            if (terrain != null && flowController != null)
+            try
             {
-                flowController.OnTerrainReady();
+                if (currentHeights == null)
+                {
+                    Debug.LogWarning("[UploadHeightmapUIToolkit] Heights data is null. Generating preset heights...");
+                    currentHeights = HeightmapLoader.GeneratePresetHeights(
+                        currentPreset,
+                        tuningConfig.resolution,
+                        tuningConfig.smoothingFactor,
+                        tuningConfig.heightCurve
+                    );
+                }
+
+                if (terrainGenerator == null)
+                {
+                    terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
+                }
+
+                if (terrainGenerator == null)
+                {
+                    Debug.LogError("[UploadHeightmapUIToolkit] TerrainGenerator component not found in scene!");
+                    return;
+                }
+
+                UnityEngine.Terrain terrain = terrainGenerator.GenerateTerrain(currentHeights, tuningConfig);
+                if (terrain != null && flowController != null)
+                {
+                    flowController.OnTerrainReady();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[UploadHeightmapUIToolkit] Exception during terrain generation: {ex.Message}\n{ex.StackTrace}");
             }
         }
 

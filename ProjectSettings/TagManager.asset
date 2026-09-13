@@ -6,6 +6,7 @@ TagManager:
   tags:
   - robot
   - ground
+  - Terrain
   layers:
   - Default
   - TransparentFX
