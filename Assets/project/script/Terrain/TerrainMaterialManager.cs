@@ -244,6 +244,49 @@ namespace ProjectName.Terrain
                 }
 
                 DynamicGI.UpdateEnvironment();
+
+                // Enforce ultra-crisp shadows, 4 cascades, and anti-aliasing (prevents pixelated blocky shadows)
+                QualitySettings.shadows = ShadowQuality.All;
+                QualitySettings.shadowResolution = ShadowResolution.VeryHigh;
+                QualitySettings.shadowCascades = 4;
+                QualitySettings.shadowCascade4Split = new Vector3(0.05f, 0.15f, 0.35f);
+                QualitySettings.shadowDistance = 150f;
+                QualitySettings.shadowProjection = ShadowProjection.CloseFit;
+                QualitySettings.shadowNearPlaneOffset = 0.05f;
+                QualitySettings.antiAliasing = 8;
+                QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
+                QualitySettings.pixelLightCount = 8;
+
+                // Enforce sharp contact shadows on Directional Light
+                Light sun = RenderSettings.sun;
+                if (sun == null)
+                {
+                    Light[] lights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+                    for (int i = 0; i < lights.Length; i++)
+                    {
+                        if (lights[i].type == LightType.Directional)
+                        {
+                            sun = lights[i];
+                            break;
+                        }
+                    }
+                }
+                if (sun != null)
+                {
+                    sun.shadows = LightShadows.Soft;
+                    sun.shadowCustomResolution = 4096;
+                    sun.shadowBias = 0.005f;
+                    sun.shadowNormalBias = 0.1f;
+                    sun.shadowNearPlane = 0.1f;
+                }
+
+                // Enforce camera MSAA and HDR
+                Camera cam = Camera.main;
+                if (cam != null)
+                {
+                    cam.allowMSAA = true;
+                    cam.allowHDR = true;
+                }
             }
             catch (Exception ex)
             {

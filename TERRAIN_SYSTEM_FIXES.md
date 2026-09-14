@@ -21,6 +21,18 @@
 * **Root Cause**: In `Test_TerrainAndRover.unity`, environment lighting was unbaked (`giWorkflowMode = OnDemand`) with `defaultReflectionMode = Skybox`. When GI is unbaked, Unity falls back to its default internal daylight blue sky reflection cubemap, and `RenderSettings.ambientSkyColor` defaults to daylight cyan `RGBA(0.212, 0.227, 0.259)`. Any reflective surface (or unbaked terrain) reflected Earth's blue sky rather than the space nebula HDRI.
 * **Fix**: Switched `RenderSettings.defaultReflectionMode` to `Custom` and bound `Assets/project/materials/HDR_multi_nebulae_2.hdr` as `customReflectionTexture`. Set `RenderSettings.ambientMode` to `Flat` with a dark space starlight ambient (`RGBA(0.05, 0.05, 0.07)`). Implemented `EnforceSpaceLightingAndReflections()` in `TerrainMaterialManager.cs` to ensure space reflection and lighting settings are enforced at runtime.
 
+### F. Low Quality Blocky Shadows & Muddy Unclear Visuals
+* **Root Cause**:
+  1. `QualitySettings.shadowResolution` was set to `Medium` with only **2 shadow cascades**, causing rover shadows (wheels, robotic arms, antennas) to break down into giant 8-bit staircase pixel blocks.
+  2. `QualitySettings.antiAliasing` was disabled (`0x MSAA`), causing harsh pixel crawl and jagged edges on rover models and terrain silhouettes.
+  3. Terrain textures had `anisoLevel = 1` and were compressed with mobile `ASTC_6x6`. At acute camera angles, lack of anisotropic filtering blurred ground textures into muddy smears just a couple meters away from the rovers.
+  4. Directional Light had large shadow bias (`0.05`) and normal bias (`0.4`), causing floating "peter-panning" shadows and edge distortion.
+* **Fix**:
+  1. Configured **4 Shadow Cascades** with close-fit split ratios (`Vector3(0.05f, 0.15f, 0.35f)`) and `ShadowResolution.VeryHigh`.
+  2. Upgraded Directional Light to **4096 custom shadow resolution** with tight contact bias (`bias = 0.005f`, `normalBias = 0.1f`, `nearPlane = 0.1f`).
+  3. Enabled **8x MSAA** (Hardware Anti-Aliasing) and HDR across Camera and QualitySettings.
+  4. Upgraded all 15 terrain textures to **16x Anisotropic Filtering**, **Trilinear filtering**, and high-definition compression (`ASTC_4x4` / `BC7 HQ`).
+
 ---
 
 ## 2. Technical Changes Applied
@@ -45,14 +57,17 @@
   * **Procedural PBR Fallback**: Generates high-quality procedural albedo and normal textures with mipmaps and bilinear filtering, ensuring the terrain is **never pink** and **never flat**.
   * **CC0 Auto-Loader**: Automatically searches `Assets/project/materials/` for matching 2K/4K PBR textures by preset name and auto-invalidates procedural cache when real artist textures are dropped in.
   * **Ultra-Matte Guarantee**: Sets `smoothness = 0.0f`, `metallic = 0.0f`, `specular = Color.black`, and `smoothnessSource = ConstantOnly` to eliminate all glossy plastic streaks.
-  * **Space Lighting Guard**: `EnforceSpaceLightingAndReflections()` binds the `HDR_multi_nebulae_2.hdr` cubemap as custom environment reflection and establishes dark space ambient lighting.
+  * **Space Lighting Guard**: `EnforceSpaceLightingAndReflections()` binds the `HDR_multi_nebulae_2.hdr` cubemap as custom environment reflection, establishes dark space ambient lighting, and enforces 4-cascade 4K shadows + 8x MSAA.
 
 ### 3. Rover URDF Material Isolation
 * **Zero side-effects on rovers**: Rover materials in `Assets/project/data/URDF/` (Husky, M20, M2020 Perseverance) use the Built-in Standard shader (`fileID: 46`). Because pipeline settings were not modified globally, all rovers retain their original textures and will **never turn pink**.
 
-### 4. Lighting & Visual Settings
+### 4. Lighting, Shadow & Visual Fidelity
 * Set Main Camera `farClipPlane = 3000m` to prevent panoramic horizon clipping on 1000m planetary terrains.
-* Configured Directional Light soft shadows and shadow bias in `Test_TerrainAndRover.unity`.
+* Enabled Camera `allowMSAA = true` and `allowHDR = true`.
+* Directional Light configured with `shadowCustomResolution = 4096`, `shadowBias = 0.005f`, and `shadowNormalBias = 0.1f` for razor-sharp contact shadows.
+* Project `QualitySettings` configured with **4 Cascades**, **8x MSAA**, and **16x Anisotropic Filtering**.
+* Textures in `Assets/project/materials/` upgraded to `anisoLevel = 16`, `Trilinear` filtering, and `ASTC 4x4 / BC7 HQ` compression.
 * Set `RenderSettings.defaultReflectionMode = Custom` with `HDR_multi_nebulae_2.hdr` cubemap and `reflectionIntensity = 0.25f`.
 * Set `RenderSettings.ambientMode = Flat` with starlight neutral tone `RGBA(0.05, 0.05, 0.07)` and `subtractiveShadowColor = RGBA(0.02, 0.02, 0.03)`.
 

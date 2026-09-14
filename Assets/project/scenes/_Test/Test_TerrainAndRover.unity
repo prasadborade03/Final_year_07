@@ -205,8 +205,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 456356212}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.1736482, y: 0, z: 0, w: 0.9848078}
+  m_LocalPosition: {x: 0, y: 100, z: -200}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -570,11 +570,11 @@ Light:
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
-    m_CustomResolution: -1
+    m_CustomResolution: 4096
     m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_Bias: 0.005
+    m_NormalBias: 0.1
+    m_NearPlane: 0.1
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -1416,7 +1416,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Terrain.TerrainMaterialManager
   targetTerrain: {fileID: 0}
-  activeMaterialType: 0
+  activeMaterialType: 1
   materialConfigs:
   - type: 0
     name: Martian Rust Oxide
@@ -1557,7 +1557,7 @@ MonoBehaviour:
     resolution: 513
     smoothingFactor: 1
     heightCurve: 0
-    materialType: 5
+    materialType: 1
     terrainWidth: 1000
     terrainLength: 1000
 --- !u!114 &1638835893
