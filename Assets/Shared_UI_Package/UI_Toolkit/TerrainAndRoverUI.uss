@@ -1,0 +1,819 @@
+/* VR ROVER DIGITAL TWIN STUDIO - User Friendly Aerospace Mission Control Theme */
+
+/* ========================================================================= */
+/* 0. BASE CONTAINER & MODES                                                 */
+/* ========================================================================= */
+.studio-root {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    background-color: rgba(9, 14, 22, 0.90);
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: rgba(30, 48, 72, 0.7);
+    padding: 10px 12px;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Driving HUD Mode: 100% transparent backdrop so 3D simulation is unobstructed */
+.hud-mode-root {
+    background-color: transparent;
+    border-width: 0;
+    pointer-events: none;
+}
+
+/* Ensure interactive pods catch clicks in HUD mode */
+.hud-interactive {
+    pointer-events: auto;
+}
+
+/* Floating Mini-Dock when Studio is completely minimized */
+.floating-dock-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(14, 22, 34, 0.95);
+    border-width: 1.5px;
+    border-color: #00e5ff;
+    border-radius: 16px;
+    color: #00e5ff;
+    padding: 6px 14px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+.floating-dock-btn:hover {
+    background-color: rgba(0, 229, 255, 0.25);
+    color: #ffffff;
+}
+
+/* ========================================================================= */
+/* 1. TOP HEADER BAR                                                         */
+/* ========================================================================= */
+.studio-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(30, 41, 59, 0.6);
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    background-color: rgba(14, 21, 32, 0.85);
+    border-radius: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 4px;
+}
+
+.header-left {
+    flex-direction: row;
+    align-items: center;
+}
+
+.studio-logo-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    background-color: #00e5ff;
+    border-radius: 3px;
+    opacity: 0.9;
+}
+
+.studio-title {
+    font-size: 13px;
+    color: #f1f5f9;
+    -unity-font-style: bold;
+    letter-spacing: 0.6px;
+}
+
+.header-center {
+    flex-direction: row;
+    align-items: center;
+}
+
+.view-switch-pill {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 9px;
+    -unity-font-style: bold;
+    letter-spacing: 0.4px;
+    margin-left: 3px;
+    margin-right: 3px;
+    background-color: rgba(24, 34, 48, 0.85);
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.8);
+    color: #94a3b8;
+}
+
+.view-switch-pill:hover {
+    color: #ffffff;
+    background-color: rgba(0, 229, 255, 0.2);
+}
+
+.view-switch-active {
+    background-color: rgba(0, 229, 255, 0.25);
+    border-color: #00e5ff;
+    color: #ffffff;
+}
+
+.header-right {
+    flex-direction: row;
+    align-items: center;
+}
+
+.header-pill {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 9px;
+    -unity-font-style: bold;
+    letter-spacing: 0.4px;
+    margin-left: 6px;
+    border-width: 1px;
+}
+
+.pill-active {
+    background-color: rgba(6, 78, 59, 0.75);
+    border-color: rgba(52, 211, 153, 0.6);
+    color: #34d399;
+}
+
+.pill-planet {
+    background-color: rgba(30, 41, 59, 0.85);
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #cbd5e1;
+}
+
+.pill-planet:hover {
+    background-color: rgba(0, 229, 255, 0.25);
+    border-color: #00e5ff;
+    color: #ffffff;
+}
+
+.pill-mode {
+    background-color: rgba(30, 41, 59, 0.8);
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #94a3b8;
+}
+
+.window-minimize-btn {
+    width: 24px;
+    height: 20px;
+    background-color: rgba(30, 41, 59, 0.6);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.3);
+    border-radius: 5px;
+    color: #cbd5e1;
+    font-size: 11px;
+    -unity-text-align: middle-center;
+    margin-left: 8px;
+    padding: 0;
+}
+
+.window-minimize-btn:hover {
+    background-color: rgba(239, 68, 68, 0.35);
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+/* ========================================================================= */
+/* 2. MAIN 3-COLUMN GRID                                                     */
+/* ========================================================================= */
+.studio-main-grid {
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.studio-col {
+    flex-direction: column;
+}
+
+.col-left {
+    width: 31%;
+}
+
+.col-center {
+    width: 36%;
+}
+
+.col-right {
+    width: 31%;
+}
+
+/* Cards */
+.studio-card {
+    background-color: rgba(16, 23, 34, 0.86);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(30, 44, 64, 0.75);
+    padding: 7px 10px;
+    margin-bottom: 6px;
+}
+
+.card-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.card-title {
+    font-size: 9px;
+    color: #cbd5e1;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+.card-dots {
+    font-size: 9px;
+    color: #64748b;
+}
+
+.card-mini-btn {
+    background-color: rgba(30, 41, 59, 0.85);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.4);
+    border-radius: 5px;
+    color: #00e5ff;
+    padding: 2px 7px;
+    font-size: 8px;
+    -unity-font-style: bold;
+}
+
+.card-mini-btn:hover {
+    background-color: rgba(0, 229, 255, 0.25);
+    color: #ffffff;
+}
+
+/* Stat Grids */
+.stat-grid-2x2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.stat-grid-2x1 {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.stat-cell {
+    width: 48%;
+    margin-bottom: 3px;
+}
+
+.stat-label {
+    font-size: 8px;
+    color: #64748b;
+    -unity-font-style: bold;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
+}
+
+.val-unit-row {
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.stat-big-val {
+    font-size: 16px;
+    color: #ffffff;
+    -unity-font-style: bold;
+    letter-spacing: 0.2px;
+}
+
+.stat-med-val {
+    font-size: 12px;
+    color: #ffffff;
+    -unity-font-style: bold;
+}
+
+.stat-unit {
+    font-size: 8px;
+    color: #94a3b8;
+    margin-left: 3px;
+    margin-bottom: 1px;
+}
+
+.stat-coords-val {
+    font-size: 10px;
+    color: #80d8ff;
+    -unity-font-style: bold;
+    margin-top: 1px;
+}
+
+.val-green {
+    color: #34d399;
+}
+
+.val-cyan {
+    color: #00e5ff;
+}
+
+.val-gold {
+    color: #fbbf24;
+}
+
+/* Attitude Sub Row */
+.heading-sub-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.heading-bar-bg {
+    flex-grow: 1;
+    height: 3px;
+    background-color: rgba(30, 41, 59, 0.8);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.heading-bar-fill {
+    height: 100%;
+    background-color: #34d399;
+    border-radius: 2px;
+}
+
+.attitude-warn-icon {
+    font-size: 8px;
+    color: #ef4444;
+    margin-left: 4px;
+}
+
+/* ========================================================================= */
+/* CENTER COLUMN: RADAR & DEPLOY ROVER                                       */
+/* ========================================================================= */
+.center-radar-card {
+    align-items: center;
+}
+
+.radar-container {
+    width: 154px;
+    height: 154px;
+    border-radius: 77px;
+    background-color: rgba(6, 12, 18, 0.95);
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.8);
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+
+.radar-ring {
+    position: absolute;
+    border-radius: 999px;
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.6);
+}
+
+.radar-ring-4 {
+    width: 140px;
+    height: 140px;
+}
+
+.radar-ring-3 {
+    width: 105px;
+    height: 105px;
+}
+
+.radar-ring-2 {
+    width: 70px;
+    height: 70px;
+}
+
+.radar-ring-1 {
+    width: 35px;
+    height: 35px;
+}
+
+.radar-contour-shape {
+    position: absolute;
+    border-width: 1px;
+    border-color: rgba(52, 211, 153, 0.12);
+}
+
+.c1 {
+    width: 124px;
+    height: 114px;
+    border-radius: 60px;
+}
+
+.c2 {
+    width: 80px;
+    height: 74px;
+    border-radius: 40px;
+}
+
+.radar-crosshair-h {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: rgba(30, 41, 59, 0.4);
+}
+
+.radar-crosshair-v {
+    position: absolute;
+    height: 100%;
+    width: 1px;
+    background-color: rgba(30, 41, 59, 0.4);
+}
+
+.radar-heightmap-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0.35;
+}
+
+.radar-rover-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: #34d399;
+    border-width: 1.5px;
+    border-color: #ffffff;
+}
+
+.radar-legend-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-bottom: 5px;
+}
+
+.radar-legend-tag {
+    font-size: 8px;
+    color: #34d399;
+    -unity-font-style: bold;
+}
+
+.radar-range-tag {
+    font-size: 8px;
+    color: #64748b;
+    -unity-font-style: bold;
+}
+
+.center-presets-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.studio-preset-pill {
+    flex-grow: 1;
+    background-color: rgba(24, 34, 48, 0.85);
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.8);
+    border-radius: 5px;
+    color: #cbd5e1;
+    font-size: 8px;
+    padding: 3px 2px;
+    margin: 1px;
+    -unity-text-align: middle-center;
+}
+
+.studio-preset-pill:hover {
+    background-color: rgba(0, 229, 255, 0.2);
+    color: #ffffff;
+}
+
+.preset-active {
+    background-color: rgba(0, 229, 255, 0.25);
+    border-color: #00e5ff;
+    color: #ffffff;
+    -unity-font-style: bold;
+}
+
+.studio-generate-btn {
+    width: 100%;
+    background-color: rgba(0, 180, 216, 0.22);
+    border-width: 1.5px;
+    border-color: #00e5ff;
+    border-radius: 7px;
+    color: #ffffff;
+    font-size: 9px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    padding: 7px 4px;
+    -unity-text-align: middle-center;
+}
+
+.studio-generate-btn:hover {
+    background-color: rgba(0, 229, 255, 0.4);
+}
+
+/* Deploy Rover Card */
+.rover-list {
+    flex-direction: column;
+}
+
+.rover-item-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(24, 34, 48, 0.7);
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.6);
+    border-radius: 6px;
+    padding: 5px 8px;
+    margin-bottom: 3px;
+}
+
+.rover-item-row:hover {
+    background-color: rgba(0, 229, 255, 0.15);
+    border-color: #00e5ff;
+}
+
+.rover-active-row {
+    background-color: rgba(6, 78, 59, 0.25);
+    border-color: rgba(52, 211, 153, 0.5);
+}
+
+.rover-name-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.rover-item-name {
+    font-size: 9px;
+    color: #e2e8f0;
+    -unity-font-style: bold;
+}
+
+.rover-active-tag {
+    font-size: 8px;
+    color: #34d399;
+    background-color: rgba(6, 78, 59, 0.6);
+    border-radius: 6px;
+    padding: 2px 5px;
+    -unity-font-style: bold;
+}
+
+.rover-idle-tag {
+    font-size: 8px;
+    color: #94a3b8;
+    background-color: rgba(30, 41, 59, 0.6);
+    border-radius: 6px;
+    padding: 2px 5px;
+}
+
+/* ========================================================================= */
+/* RIGHT COLUMN: COMPASS, WHEELS, POWER, ENVIRONMENT                         */
+/* ========================================================================= */
+.compass-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 2px 0;
+}
+
+.compass-dial {
+    width: 58px;
+    height: 58px;
+    border-radius: 29px;
+    background-color: rgba(6, 12, 18, 0.95);
+    border-width: 1.5px;
+    border-color: rgba(30, 41, 59, 0.9);
+    position: relative;
+    justify-content: center;
+    align-items: center;
+}
+
+.compass-outer-ring {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.15);
+}
+
+.compass-needle {
+    width: 2px;
+    height: 24px;
+    background-color: #ef4444;
+    border-radius: 1px;
+}
+
+.compass-center-hub {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #00e5ff;
+}
+
+.compass-lbl {
+    position: absolute;
+    font-size: 7px;
+    color: #64748b;
+    -unity-font-style: bold;
+}
+
+.compass-n { top: 2px; color: #ef4444; }
+.compass-s { bottom: 2px; }
+.compass-w { left: 3px; }
+.compass-e { right: 3px; }
+
+.compass-big-text {
+    font-size: 15px;
+    color: #ffffff;
+    -unity-font-style: bold;
+}
+
+/* Wheel Actuators Discrete 5-Segment Grid */
+.wheel-grid-2x2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.wheel-cell {
+    width: 48%;
+    background-color: rgba(24, 34, 48, 0.6);
+    border-radius: 5px;
+    padding: 3px 5px;
+    margin-bottom: 3px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.wheel-info-col {
+    flex-direction: column;
+}
+
+.wheel-name {
+    font-size: 8px;
+    color: #cbd5e1;
+    -unity-font-style: bold;
+}
+
+.wheel-status {
+    font-size: 7px;
+    -unity-font-style: bold;
+    margin-top: 1px;
+}
+
+.tag-good { color: #34d399; }
+.tag-fair { color: #fbbf24; }
+.tag-slip { color: #f87171; }
+
+.wheel-segments-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.wheel-seg {
+    width: 5px;
+    height: 10px;
+    border-radius: 1px;
+    margin-left: 2px;
+}
+
+.seg-active {
+    background-color: #00e5ff;
+}
+
+.seg-fair {
+    background-color: #fbbf24;
+}
+
+.seg-slip {
+    background-color: #ef4444;
+}
+
+.seg-inactive {
+    background-color: rgba(30, 41, 59, 0.85);
+}
+
+/* Power & Thermal */
+.meter-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.meter-label {
+    font-size: 8px;
+    color: #94a3b8;
+    width: 65px;
+    -unity-font-style: bold;
+}
+
+.meter-track {
+    flex-grow: 1;
+    height: 5px;
+    background-color: rgba(30, 41, 59, 0.8);
+    border-radius: 3px;
+    margin-left: 6px;
+    margin-right: 6px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.fill-mint { background-color: #34d399; }
+.fill-cyan { background-color: #00e5ff; }
+
+.meter-val {
+    font-size: 9px;
+    color: #ffffff;
+    -unity-font-style: bold;
+    width: 35px;
+    -unity-text-align: middle-right;
+}
+
+/* ========================================================================= */
+/* 3. BOTTOM CONTROL BAR                                                     */
+/* ========================================================================= */
+.studio-bottom-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(14, 21, 32, 0.88);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.7);
+    padding: 5px 10px;
+    margin-top: 4px;
+}
+
+.bottom-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+.bottom-group-right {
+    flex-direction: row;
+    align-items: center;
+}
+
+.bottom-label {
+    font-size: 8px;
+    color: #64748b;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
+}
+
+.mode-pill {
+    background-color: rgba(24, 34, 48, 0.85);
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.8);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 8px;
+    padding: 3px 8px;
+    margin-right: 3px;
+    -unity-font-style: bold;
+}
+
+.mode-pill:hover {
+    color: #ffffff;
+    background-color: rgba(0, 229, 255, 0.2);
+}
+
+.mode-pill-active {
+    background-color: rgba(0, 229, 255, 0.18);
+    border-color: #00e5ff;
+    color: #00e5ff;
+}
+
+.hud-helper-hint {
+    font-size: 8px;
+    color: #64748b;
+    -unity-font-style: bold;
+    margin-right: 8px;
+}
+
+.hud-toggle-pill {
+    background-color: rgba(30, 41, 59, 0.85);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    color: #cbd5e1;
+    font-size: 8px;
+    padding: 3px 10px;
+    -unity-font-style: bold;
+}
+
+.hud-toggle-pill:hover {
+    background-color: rgba(0, 229, 255, 0.2);
+    color: #ffffff;
+}

@@ -11,6 +11,8 @@ public class OrbitCamera : MonoBehaviour
 
     void LateUpdate()
     {
+        if (target == null) return;
+
         if (Input.GetMouseButton(1))
         {
             yaw += Input.GetAxis("Mouse X") * rotationSpeed;

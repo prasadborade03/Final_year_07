@@ -121,4 +121,79 @@ public class FreeFlyCamera : MonoBehaviour
 
     public float GetMovementSpeed() => normalSpeed;
     public float GetCurrentCalculatedSpeed() => normalSpeed;
+
+    public enum CameraPerspective
+    {
+        Front,
+        Rear,
+        Left,
+        Right,
+        Top
+    }
+
+    public void SetCameraPerspective(CameraPerspective view)
+    {
+        Transform targetTransform = null;
+        var roverSync = FindAnyObjectByType<ProjectName.Rover.RoverPositionSync>();
+        if (roverSync != null) targetTransform = roverSync.transform;
+
+        if (targetTransform == null)
+        {
+            var telem = FindAnyObjectByType<ProjectName.Rover.RoverTelemetryProvider>();
+            if (telem != null) targetTransform = telem.transform;
+        }
+
+        if (targetTransform == null)
+        {
+            var artBodies = FindObjectsByType<ArticulationBody>();
+            foreach (var ab in artBodies)
+            {
+                if (ab.gameObject.name.Contains("Husky") || ab.gameObject.name.Contains("M20") || ab.isRoot)
+                {
+                    targetTransform = ab.transform;
+                    break;
+                }
+            }
+        }
+
+        Vector3 targetCenter = targetTransform != null ? targetTransform.position + Vector3.up * 0.5f : transform.position + transform.forward * 5f;
+        Vector3 forward = targetTransform != null ? targetTransform.forward : Vector3.forward;
+        Vector3 right = targetTransform != null ? targetTransform.right : Vector3.right;
+        Vector3 up = Vector3.up;
+
+        float dist = 4.5f;
+        float height = 2.0f;
+        Vector3 newPos = targetCenter;
+        Quaternion newRot = transform.rotation;
+
+        switch (view)
+        {
+            case CameraPerspective.Front:
+                newPos = targetCenter + forward * dist + up * (height * 0.6f);
+                newRot = Quaternion.LookRotation((targetCenter - newPos).normalized, up);
+                break;
+            case CameraPerspective.Rear:
+                newPos = targetCenter - forward * dist + up * height;
+                newRot = Quaternion.LookRotation((targetCenter - newPos).normalized, up);
+                break;
+            case CameraPerspective.Left:
+                newPos = targetCenter - right * dist + up * height;
+                newRot = Quaternion.LookRotation((targetCenter - newPos).normalized, up);
+                break;
+            case CameraPerspective.Right:
+                newPos = targetCenter + right * dist + up * height;
+                newRot = Quaternion.LookRotation((targetCenter - newPos).normalized, up);
+                break;
+            case CameraPerspective.Top:
+                newPos = targetCenter + up * (dist * 1.5f);
+                newRot = Quaternion.LookRotation(Vector3.down, forward);
+                break;
+        }
+
+        transform.position = newPos;
+        transform.rotation = newRot;
+        Vector3 euler = transform.eulerAngles;
+        pitch = euler.x > 180f ? euler.x - 360f : euler.x;
+        yaw = euler.y;
+    }
 }

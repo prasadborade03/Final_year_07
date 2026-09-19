@@ -119,52 +119,16 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &85229415 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5839806730945233724, guid: f43af5c891653b8479bde9320e59e17d, type: 3}
-  m_PrefabInstance: {fileID: 344622761}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &85229416 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6503472651252357510, guid: f43af5c891653b8479bde9320e59e17d, type: 3}
   m_PrefabInstance: {fileID: 344622761}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &85229417
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 85229415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e6080bfe874d7f428ce8c410aa2813f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
---- !u!1 &88410979 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7079380078146265417, guid: 624438fb9caa9304697d04d1c4176fa4, type: 3}
-  m_PrefabInstance: {fileID: 1104266158}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &88410980 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7598929372368796659, guid: 624438fb9caa9304697d04d1c4176fa4, type: 3}
   m_PrefabInstance: {fileID: 1104266158}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &88410981
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 88410979}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e6080bfe874d7f428ce8c410aa2813f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HandAnimation
-  gripActionRefrerence: {fileID: 0}
-  triggerActionRefrerence: {fileID: 0}
 --- !u!1001 &344622761
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -224,10 +188,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5839806730945233724, guid: f43af5c891653b8479bde9320e59e17d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 85229417}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f43af5c891653b8479bde9320e59e17d, type: 3}
 --- !u!1 &365490610
 GameObject:
@@ -678,6 +639,99 @@ MonoBehaviour:
   fastSpeed: 30
   climbSpeed: 10
   mouseSensitivity: 3
+--- !u!1 &461070658
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 461070662}
+  - component: {fileID: 461070661}
+  - component: {fileID: 461070660}
+  - component: {fileID: 461070659}
+  m_Layer: 0
+  m_Name: _EnvironmentSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &461070659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 461070658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e8ffaf88d09f4e4a902ae631531e785, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.UI.PlanetSelectionUI
+  toggleKey: 112
+  alternateCloseKey: 27
+  modalRoot: {fileID: 0}
+  planetListContainer: {fileID: 0}
+  diffInspectorText: {fileID: 0}
+  selectedPlanetTitleText: {fileID: 0}
+  selectedPlanetDescText: {fileID: 0}
+  btnApplyEnvironment: {fileID: 0}
+  btnApplyAndRespawn: {fileID: 0}
+  btnClose: {fileID: 0}
+  selectedProfile: {fileID: 0}
+  availableProfiles: []
+--- !u!114 &461070660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 461070658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b566e809ba77942b601c972feab756, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryParameterReader
+  terrainCollider: {fileID: 0}
+  terrain: {fileID: 0}
+  directionalLight: {fileID: 0}
+  windZone: {fileID: 0}
+  roverRigidbody: {fileID: 0}
+  roverArticulationBody: {fileID: 0}
+--- !u!114 &461070661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 461070658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9f619a8a44028f409c68cac57370342, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryParameterWriter
+  terrainCollider: {fileID: 0}
+  terrain: {fileID: 0}
+  directionalLight: {fileID: 0}
+  windZone: {fileID: 0}
+  currentProfile: {fileID: 11400000, guid: d71bc9e50293db64ca523d03dd0dca68, type: 2}
+--- !u!4 &461070662
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 461070658}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &728029409
 GameObject:
   m_ObjectHideFlags: 0
@@ -729,6 +783,8 @@ GameObject:
   - component: {fileID: 770217950}
   - component: {fileID: 770217958}
   - component: {fileID: 770217957}
+  - component: {fileID: 770217960}
+  - component: {fileID: 770217959}
   m_Layer: 0
   m_Name: _RoverModule
   m_TagString: Untagged
@@ -879,7 +935,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 770217949}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 424354bb7d69e5249ba8f9969af30820, type: 3}
   m_Name: 
@@ -918,7 +974,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 770217949}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5bf5ffa03344b7b449a10b102feef3e9, type: 3}
   m_Name: 
@@ -941,7 +997,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 770217949}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f908a1754b0398345af3e7ff419b479c, type: 3}
   m_Name: 
@@ -963,6 +1019,71 @@ MonoBehaviour:
   suspTargetElevationDeg: 0
   ignoreInternalCollisions: 1
   autoSpawnOnStart: 0
+--- !u!114 &770217959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 770217949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67f8ec19f5c86b048a8d35d2f45235fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverPositionSync
+  surfaceOffset: 0.25
+  desiredCoordinates: {x: 500, y: 500}
+  desiredHeadingYaw: 0
+  showPlacementGizmo: 1
+  enableRuntimeHotkeys: 1
+--- !u!114 &770217960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 770217949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b33b086372d2c84c97a95c934b60f5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverTelemetryProvider
+  roverName: 
+  telemetry:
+    roverName: Clearpath Husky A200
+    driveMode: Skid Steer (Differential)
+    speedMps: 0
+    speedKmph: 0
+    forwardAcceleration: 0
+    gForce: 1
+    pitchDeg: 0
+    rollDeg: 0
+    headingDeg: 0
+    headingCardinal: N
+    terrainSlopeDeg: 0
+    rolloverWarning: 0
+    worldPosition: {x: 0, y: 0, z: 0}
+    altitudeMeters: 0
+    odometerMeters: 0
+    missionTimeSeconds: 0
+    batteryPercent: 100
+    powerDrawWatts: 150
+    motorTempCelsius: 24
+    thermalWarning: 0
+    wheels: []
+    planetName: Mars
+    liveGravityMagnitude: 3.72
+    terrainStaticFriction: 0.7
+    terrainDynamicFriction: 0.55
+    roverDrag: 0.02
+    atmosDensityProxy: 0.008
+    liveWindSpeed: 4.5
+  wheelRadius: 0.165
+  batteryCapacityWh: 1200
+  ambientTempCelsius: 18
+  pitchWarningThresholdDeg: 25
+  rollWarningThresholdDeg: 22
+  thermalWarningThresholdCelsius: 60
 --- !u!1 &781041463
 GameObject:
   m_ObjectHideFlags: 0
@@ -1018,6 +1139,8 @@ MonoBehaviour:
   guideText: {fileID: 0}
   placementYOffset: 0.3
   showDebugLogs: 1
+  rightControllerTransform: {fileID: 0}
+  leftControllerTransform: {fileID: 0}
 --- !u!1001 &823837871
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1611,10 +1734,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7079380078146265417, guid: 624438fb9caa9304697d04d1c4176fa4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 88410981}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 624438fb9caa9304697d04d1c4176fa4, type: 3}
 --- !u!1 &1118798521
 GameObject:
@@ -2257,7 +2377,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1638835891}
   - component: {fileID: 1638835893}
-  - component: {fileID: 1638835892}
+  - component: {fileID: 1638835895}
+  - component: {fileID: 1638835894}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -2280,30 +2401,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1638835892
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1638835889}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7251a4a57382a745979e2d9caa4537b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Terrain.UploadHeightmapUIToolkit
-  terrainGenerator: {fileID: 1542374626}
-  flowController: {fileID: 781041466}
-  uiDocument: {fileID: 1638835893}
-  tuningConfig:
-    maxHeight: 120
-    baseOffset: 0
-    resolution: 513
-    smoothingFactor: 1
-    heightCurve: 0
-    materialType: 1
-    terrainWidth: 1000
-    terrainLength: 1000
 --- !u!114 &1638835893
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2316,10 +2413,10 @@ MonoBehaviour:
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
-  m_PanelSettings: {fileID: 11400000, guid: 458a7c2f6aafa2a4e802edbfd6d417b6, type: 2}
+  m_PanelSettings: {fileID: 11400000, guid: d68200cd412ffab44ab528cfd1324105, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 17f0f3996b4e1c14da81088101355b53, type: 3}
-  m_SortingOrder: 0
+  sourceAsset: {fileID: 9197481963319205126, guid: 77beda5dec8212b4797fd715d821348f, type: 3}
+  m_SortingOrder: 10
   m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
@@ -2327,6 +2424,67 @@ MonoBehaviour:
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &1638835894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1638835889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a164400aefc33464e8eb96b62aa8c91d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.UI.RoverTelemetryUI
+  telemetryProvider: {fileID: 0}
+  hudRootPanel: {fileID: 0}
+  telemetrySidebar: {fileID: 0}
+  standbyBadge: {fileID: 0}
+  miniHudPill: {fileID: 0}
+  toggleKey: 104
+  alternateToggleKey: 0
+  displayMode: 2
+  headerText: {fileID: 0}
+  speedText: {fileID: 0}
+  dynamicsText: {fileID: 0}
+  attitudeText: {fileID: 0}
+  compassSlopeText: {fileID: 0}
+  navCoordsText: {fileID: 0}
+  odoAltText: {fileID: 0}
+  wheelTelemetryText: {fileID: 0}
+  powerHealthText: {fileID: 0}
+  environmentText: {fileID: 0}
+  warningBannerText: {fileID: 0}
+  miniHudText: {fileID: 0}
+  speedProgressBar: {fileID: 0}
+  batteryProgressBar: {fileID: 0}
+  showKmph: 0
+  maxSpeedGauge: 6
+--- !u!114 &1638835895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1638835889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a41a97b1c910f241be7b1ae7c8a3ddc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Terrain.UploadHeightmapUIToolkit
+  terrainGenerator: {fileID: 1542374626}
+  flowController: {fileID: 781041466}
+  uiDocument: {fileID: 1638835893}
+  activeTelemetryProvider: {fileID: 0}
+  tuningConfig:
+    maxHeight: 120
+    baseOffset: 0
+    resolution: 513
+    smoothingFactor: 1
+    heightCurve: 0
+    materialType: 0
+    terrainWidth: 1000
+    terrainLength: 1000
 --- !u!1 &1754678196
 GameObject:
   m_ObjectHideFlags: 0
@@ -3307,7 +3465,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2143178996
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3382,3 +3540,4 @@ SceneRoots:
   - {fileID: 1754678200}
   - {fileID: 889850880}
   - {fileID: 823837871}
+  - {fileID: 461070662}

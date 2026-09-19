@@ -45,3 +45,5 @@ public class RoverController_husky : MonoBehaviour
             roverImporter.SetWheelSpeeds(-left, -right);
     }
 }
+
+public class HuskyController : RoverController_husky {}

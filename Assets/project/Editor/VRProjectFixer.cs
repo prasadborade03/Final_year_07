@@ -28,16 +28,16 @@ public static class VRProjectFixer
         Material mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
         if (mat != null)
         {
-            Shader urpLitShader = Shader.Find("Universal Render Pipeline/Lit");
-            if (urpLitShader != null)
+            Shader targetShader = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null ? Shader.Find("Universal Render Pipeline/Lit") : Shader.Find("Standard");
+            if (targetShader != null)
             {
-                mat.shader = urpLitShader;
+                mat.shader = targetShader;
                 EditorUtility.SetDirty(mat);
-                Debug.Log("[VRProjectFixer] Successfully converted HandMaterial.mat shader to Universal Render Pipeline/Lit.");
+                Debug.Log("[VRProjectFixer] Successfully converted HandMaterial.mat shader to: " + targetShader.name);
             }
             else
             {
-                Debug.LogError("[VRProjectFixer] Could not find 'Universal Render Pipeline/Lit' shader.");
+                Debug.LogError("[VRProjectFixer] Could not find appropriate target shader for HandMaterial.");
             }
         }
         else

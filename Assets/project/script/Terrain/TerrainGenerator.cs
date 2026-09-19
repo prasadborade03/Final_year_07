@@ -131,10 +131,11 @@ namespace ProjectName.Terrain
 
             // Ensure TerrainCollider is present and linked to terrainData
             TerrainCollider tCollider = terrainObject.GetComponent<TerrainCollider>();
-            if (tCollider != null)
+            if (tCollider == null)
             {
-                tCollider.terrainData = terrainData;
+                tCollider = terrainObject.AddComponent<TerrainCollider>();
             }
+            tCollider.terrainData = terrainData;
 
             // Apply planetary surface material (PBR layers or shader template)
             if (materialManager != null)

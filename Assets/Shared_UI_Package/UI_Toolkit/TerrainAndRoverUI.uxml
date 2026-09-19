@@ -1,0 +1,364 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="TerrainAndRoverUI.uss" />
+
+    <!-- Compact Floating Pill when Studio is completely minimized -->
+    <ui:Button name="BtnFloatingDock" text="VR ROVER STUDIO [Tab]" class="floating-dock-btn hud-interactive" style="display: none;" />
+
+    <ui:VisualElement name="StudioRoot" class="studio-root">
+        <!-- Top Header Bar -->
+        <ui:VisualElement class="studio-header hud-interactive">
+            <ui:VisualElement class="header-left">
+                <ui:VisualElement class="studio-logo-icon" />
+                <ui:Label text="VR ROVER DIGITAL TWIN STUDIO" class="studio-title" />
+            </ui:VisualElement>
+
+            <!-- Mode Switch: Driving HUD vs Full Studio -->
+            <ui:VisualElement class="header-center">
+                <ui:Button name="BtnModeDriving" text="DRIVING HUD" class="view-switch-pill" tooltip="Unobstructed 3D view for driving [Tab]" />
+                <ui:Button name="BtnModeStudio" text="FULL STUDIO" class="view-switch-pill view-switch-active" tooltip="Full mission control dashboard [Tab]" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="header-right">
+                <ui:Label name="BadgeStatus" text="● ACTIVE" class="header-pill pill-active" />
+                <ui:Button name="BtnPlanetBadge" text="MARS" class="header-pill pill-planet" tooltip="Click to open Planet Selection [P]" />
+                <ui:Label name="BadgeDriveMode" text="SKID-STEER 4WD" class="header-pill pill-mode" />
+                <ui:Button name="BtnMinimizeStudio" text="—" class="window-minimize-btn" tooltip="Minimize to floating dock [U]" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Main 3-Column Studio Grid -->
+        <ui:VisualElement name="StudioMainGrid" class="studio-main-grid">
+            <!-- COLUMN 1 (Left): Kinematics, Attitude, Position -->
+            <ui:VisualElement name="ColLeft" class="studio-col col-left hud-interactive">
+                <!-- Kinematics Card -->
+                <ui:VisualElement class="studio-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="KINEMATICS / SPEED" class="card-title" />
+                        <ui:Label text="•••" class="card-dots" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-grid-2x2">
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="SPEED (LINEAR)" class="stat-label" />
+                            <ui:VisualElement class="val-unit-row">
+                                <ui:Label name="ValLinearSpeed" text="0.00" class="stat-big-val" />
+                                <ui:Label text="m/s" class="stat-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="SPEED (GROUND)" class="stat-label" />
+                            <ui:VisualElement class="val-unit-row">
+                                <ui:Label name="ValGroundSpeed" text="0.00" class="stat-big-val" />
+                                <ui:Label text="km/h" class="stat-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="ACCELERATION" class="stat-label" />
+                            <ui:VisualElement class="val-unit-row">
+                                <ui:Label name="ValAcceleration" text="+0.00" class="stat-med-val val-green" />
+                                <ui:Label text="m/s²" class="stat-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="G-FORCE" class="stat-label" />
+                            <ui:VisualElement class="val-unit-row">
+                                <ui:Label name="ValGForce" text="1.00" class="stat-med-val" />
+                                <ui:Label text="G" class="stat-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Attitude & Orientation Card -->
+                <ui:VisualElement class="studio-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="ATTITUDE &amp; ORIENTATION" class="card-title" />
+                        <ui:Label text="•••" class="card-dots" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-grid-2x2">
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="PITCH" class="stat-label" />
+                            <ui:Label name="ValPitch" text="0.0°" class="stat-med-val" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="ROLL" class="stat-label" />
+                            <ui:Label name="ValRoll" text="0.0°" class="stat-med-val" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="HEADING" class="stat-label" />
+                            <ui:Label name="ValHeading" text="000° N" class="stat-med-val val-cyan" />
+                            <ui:VisualElement class="heading-sub-row">
+                                <ui:VisualElement class="heading-bar-bg">
+                                    <ui:VisualElement name="BarHeadingLevel" class="heading-bar-fill" style="width: 50%;" />
+                                </ui:VisualElement>
+                                <ui:Label name="IconAttitudeWarning" text="▲" class="attitude-warn-icon" style="display: none;" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="SLOPE" class="stat-label" />
+                            <ui:Label name="ValSlope" text="0.0°" class="stat-med-val" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Position & Odometry Card -->
+                <ui:VisualElement name="CardPosition" class="studio-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="POSITION &amp; ODOMETRY" class="card-title" />
+                        <ui:Label text="•••" class="card-dots" />
+                    </ui:VisualElement>
+                    <ui:Label text="WORLD COORDINATES (XYZ)" class="stat-label" />
+                    <ui:Label name="ValCoords" text="X 0.00 m   Y 0.00 m   Z 0.00 m" class="stat-coords-val" />
+                    <ui:VisualElement class="stat-grid-2x1" style="margin-top: 6px;">
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="DISTANCE TRAVELED" class="stat-label" />
+                            <ui:Label name="ValOdometer" text="0.00 m" class="stat-med-val" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="MISSION TIME" class="stat-label" />
+                            <ui:Label name="ValMissionTime" text="00:00:00" class="stat-med-val" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- COLUMN 2 (Center): Terrain Overview + Deploy Rover -->
+            <ui:VisualElement name="ColCenter" class="studio-col col-center hud-interactive">
+                <!-- Terrain Overview & Radar Card -->
+                <ui:VisualElement class="studio-card center-radar-card">
+                    <ui:VisualElement class="card-header" style="width: 100%;">
+                        <ui:Label text="TERRAIN OVERVIEW" class="card-title" />
+                        <ui:Button name="BtnBrowseFile" text="Upload Image..." class="card-mini-btn" />
+                    </ui:VisualElement>
+
+                    <!-- Circular Radar / Contour Visual -->
+                    <ui:VisualElement class="radar-container">
+                        <ui:VisualElement class="radar-ring radar-ring-4" />
+                        <ui:VisualElement class="radar-ring radar-ring-3" />
+                        <ui:VisualElement class="radar-ring radar-ring-2" />
+                        <ui:VisualElement class="radar-ring radar-ring-1" />
+                        <ui:VisualElement class="radar-contour-shape c1" />
+                        <ui:VisualElement class="radar-contour-shape c2" />
+                        <ui:VisualElement class="radar-crosshair-h" />
+                        <ui:VisualElement class="radar-crosshair-v" />
+                        <ui:Image name="HeightmapPreviewImage" class="radar-heightmap-overlay" />
+                        <ui:VisualElement name="RadarRoverDot" class="radar-rover-dot" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="radar-legend-row">
+                        <ui:Label text="● ROVER POSITION" class="radar-legend-tag" />
+                        <ui:Label name="LabelRadarRange" text="RANGE 50 m" class="radar-range-tag" />
+                    </ui:VisualElement>
+
+                    <!-- Planetary Presets Row -->
+                    <ui:VisualElement class="center-presets-row">
+                        <ui:Button name="BtnPresetGale" text="Gale Crater" class="studio-preset-pill preset-active" />
+                        <ui:Button name="BtnPresetOlympus" text="Olympus Mons" class="studio-preset-pill" />
+                        <ui:Button name="BtnPresetShackleton" text="Shackleton" class="studio-preset-pill" />
+                        <ui:Button name="BtnPresetValles" text="Valles" class="studio-preset-pill" />
+                        <ui:Button name="BtnPresetFractal" text="Plains" class="studio-preset-pill" />
+                    </ui:VisualElement>
+
+                    <!-- Primary Generate Terrain Action -->
+                    <ui:Button name="BtnGenerateTerrain" text="GENERATE NEW PLANETARY TERRAIN" class="studio-generate-btn" />
+                </ui:VisualElement>
+
+                <!-- Deploy Digital Twin Rover Card -->
+                <ui:VisualElement class="studio-card deploy-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="card-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="rover-list">
+                        <ui:Button name="BtnRoverHusky" class="rover-item-row rover-active-row">
+                            <ui:VisualElement class="rover-name-row">
+                                <ui:Label text="Clearpath Husky A200" class="rover-item-name" />
+                            </ui:VisualElement>
+                            <ui:Label name="TagHuskyActive" text="ACTIVE" class="rover-active-tag" />
+                        </ui:Button>
+
+                        <ui:Button name="BtnRoverM20" class="rover-item-row">
+                            <ui:VisualElement class="rover-name-row">
+                                <ui:Label text="Deep Robotics M20" class="rover-item-name" />
+                            </ui:VisualElement>
+                            <ui:Label name="TagM20Active" text="DEPLOY" class="rover-idle-tag" />
+                        </ui:Button>
+
+                        <ui:Button name="BtnRoverM2020" class="rover-item-row">
+                            <ui:VisualElement class="rover-name-row">
+                                <ui:Label text="NASA Perseverance M2020" class="rover-item-name" />
+                            </ui:VisualElement>
+                            <ui:Label name="TagM2020Active" text="DEPLOY" class="rover-idle-tag" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- COLUMN 3 (Right): Compass, Actuators, Power/Thermal, Planetary Environment -->
+            <ui:VisualElement name="ColRight" class="studio-col col-right hud-interactive">
+                <!-- Compass / Heading Card -->
+                <ui:VisualElement class="studio-card compass-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="COMPASS / HEADING" class="card-title" />
+                        <ui:Label text="•••" class="card-dots" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="compass-container">
+                        <ui:VisualElement class="compass-dial">
+                            <ui:VisualElement class="compass-outer-ring" />
+                            <ui:VisualElement name="CompassNeedle" class="compass-needle" />
+                            <ui:VisualElement class="compass-center-hub" />
+                            <ui:Label text="N" class="compass-lbl compass-n" />
+                            <ui:Label text="S" class="compass-lbl compass-s" />
+                            <ui:Label text="W" class="compass-lbl compass-w" />
+                            <ui:Label text="E" class="compass-lbl compass-e" />
+                        </ui:VisualElement>
+                        <ui:Label name="ValCompassBig" text="000° N" class="compass-big-text" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Actuators / Wheel Traction Card -->
+                <ui:VisualElement class="studio-card actuators-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="ACTUATORS / WHEEL TRACTION" class="card-title" />
+                        <ui:Label text="•••" class="card-dots" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="wheel-grid-2x2">
+                        <!-- FL -->
+                        <ui:VisualElement class="wheel-cell">
+                            <ui:VisualElement class="wheel-info-col">
+                                <ui:Label text="FL" class="wheel-name" />
+                                <ui:Label name="TagWheelFL" text="GOOD" class="wheel-status tag-good" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="SegsWheelFL" class="wheel-segments-row">
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <!-- FR -->
+                        <ui:VisualElement class="wheel-cell">
+                            <ui:VisualElement class="wheel-info-col">
+                                <ui:Label text="FR" class="wheel-name" />
+                                <ui:Label name="TagWheelFR" text="GOOD" class="wheel-status tag-good" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="SegsWheelFR" class="wheel-segments-row">
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <!-- RL -->
+                        <ui:VisualElement class="wheel-cell">
+                            <ui:VisualElement class="wheel-info-col">
+                                <ui:Label text="RL" class="wheel-name" />
+                                <ui:Label name="TagWheelRL" text="GOOD" class="wheel-status tag-good" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="SegsWheelRL" class="wheel-segments-row">
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <!-- RR -->
+                        <ui:VisualElement class="wheel-cell">
+                            <ui:VisualElement class="wheel-info-col">
+                                <ui:Label text="RR" class="wheel-name" />
+                                <ui:Label name="TagWheelRR" text="FAIR" class="wheel-status tag-fair" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="SegsWheelRR" class="wheel-segments-row">
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-active" />
+                                <ui:VisualElement class="wheel-seg seg-inactive" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Power & Thermal Card -->
+                <ui:VisualElement class="studio-card power-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="POWER &amp; THERMAL" class="card-title" />
+                        <ui:Label text="•••" class="card-dots" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="meter-row">
+                        <ui:Label text="BATTERY" class="meter-label" />
+                        <ui:VisualElement class="meter-track">
+                            <ui:VisualElement name="BarBattery" class="meter-fill fill-mint" style="width: 85%;" />
+                        </ui:VisualElement>
+                        <ui:Label name="ValBattery" text="85%" class="meter-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="meter-row" style="margin-top: 6px;">
+                        <ui:Label text="MOTOR TEMP" class="meter-label" />
+                        <ui:VisualElement class="meter-track">
+                            <ui:VisualElement name="BarMotorTemp" class="meter-fill fill-cyan" style="width: 42%;" />
+                        </ui:VisualElement>
+                        <ui:Label name="ValMotorTemp" text="42 °C" class="meter-val" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Planetary Environment Card -->
+                <ui:VisualElement name="CardEnvironment" class="studio-card env-card">
+                    <ui:VisualElement class="card-header">
+                        <ui:Label text="PLANETARY ENVIRONMENT" class="card-title" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-grid-2x2">
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="GRAVITY" class="stat-label" />
+                            <ui:Label name="ValEnvGravity" text="3.72 m/s²" class="stat-med-val val-gold" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="SURFACE TEMP" class="stat-label" />
+                            <ui:Label name="ValEnvTemp" text="-60°C" class="stat-med-val" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="ATM PRESS" class="stat-label" />
+                            <ui:Label name="ValEnvPress" text="0.6 kPa" class="stat-med-val" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="stat-cell">
+                            <ui:Label text="DUST STORM" class="stat-label" />
+                            <ui:Label name="ValEnvDust" text="No" class="stat-med-val val-green" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Bottom Control Bar -->
+        <ui:VisualElement class="studio-bottom-bar hud-interactive">
+            <!-- Drive Modes Group -->
+            <ui:VisualElement class="bottom-group">
+                <ui:Label text="DRIVE MODE" class="bottom-label" />
+                <ui:Button name="BtnModeStop" text="STOP" class="mode-pill" tooltip="Full stop / handbrake" />
+                <ui:Button name="BtnModeCruise" text="CRUISE" class="mode-pill mode-pill-active" tooltip="Standard 4WD cruise speed" />
+                <ui:Button name="BtnModeExplore" text="EXPLORE" class="mode-pill" tooltip="Fast exploration speed" />
+                <ui:Button name="BtnModePrecision" text="PRECISION" class="mode-pill" tooltip="Fine-tuned rock crawling" />
+            </ui:VisualElement>
+
+            <!-- Camera Perspectives Group -->
+            <ui:VisualElement class="bottom-group">
+                <ui:Label text="CAMERA" class="bottom-label" />
+                <ui:Button name="BtnCamFront" text="● FRONT" class="mode-pill mode-pill-active" tooltip="Front rover view" />
+                <ui:Button name="BtnCamRear" text="REAR" class="mode-pill" tooltip="Rear chase view" />
+                <ui:Button name="BtnCamLeft" text="LEFT" class="mode-pill" tooltip="Left flank view" />
+                <ui:Button name="BtnCamRight" text="RIGHT" class="mode-pill" tooltip="Right flank view" />
+                <ui:Button name="BtnCamTop" text="TOP" class="mode-pill" tooltip="Top-down satellite view" />
+            </ui:VisualElement>
+
+            <!-- Controls Helper & View Toggle -->
+            <ui:VisualElement class="bottom-group-right">
+                <ui:Label text="[W,A,S,D] Drive | [V] Cam | [P] Planet" class="hud-helper-hint" />
+                <ui:Button name="BtnToggleHUD" text="VIEW [Tab]" class="hud-toggle-pill" tooltip="Toggle between Driving HUD and Full Studio [Tab]" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

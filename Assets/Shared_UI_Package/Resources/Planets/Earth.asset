@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e99b7989d3012640bb0a876bf01ce17, type: 3}
+  m_Name: Earth
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryProfile
+  planetName: Earth
+  planetIcon: {fileID: 0}
+  description: 'Terrestrial Proving Ground: Standard 1G gravity, dense nitrogen-oxygen
+    atmosphere, moderate terrain traction.'
+  isDefault: 0
+  gravityY: 9.81
+  terrainStaticFriction: 0.8
+  terrainDynamicFriction: 0.65
+  terrainBounciness: 0.08
+  roverDrag: 0.1
+  roverAngularDrag: 0.1
+  sunColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  sunIntensity: 1
+  ambientColor: {r: 0.15, g: 0.2, b: 0.28, a: 1}
+  ambientIntensity: 1
+  fogColor: {r: 0.65, g: 0.75, b: 0.88, a: 1}
+  fogDensity: 0.002
+  fogEnabled: 1
+  skyboxMaterial: {fileID: 0}
+  windMain: 2
+  windTurbulence: 0.5
+  windPulseMagnitude: 0.5
+  heightmapPreset: {fileID: 0}
+  terrainHeightScale: 100

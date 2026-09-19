@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
 
@@ -45,22 +45,65 @@ public class SimulationFlowController : MonoBehaviour
 
     private string selectedRobot = "";
     private GameObject pendingRobot = null;
+    private GameObject activeSpawnedRover = null;
 
     private Vector3 lastHitPoint;      // for debug gizmo
     private bool hasLastHit = false;
 
+    [Header("VR Interaction")]
+    public Transform rightControllerTransform;
+    public Transform leftControllerTransform;
+    private bool wasVRTriggerPressedLastFrame = false;
+
     void Start()
     {
+        if (rightControllerTransform == null)
+        {
+            var rightGO = GameObject.Find("Right Controller");
+            if (rightGO != null) rightControllerTransform = rightGO.transform;
+        }
+        if (leftControllerTransform == null)
+        {
+            var leftGO = GameObject.Find("Left Controller");
+            if (leftGO != null) leftControllerTransform = leftGO.transform;
+        }
+
         SetState(State.WaitingForTerrain);
         SetGuideText("Configure heightmap tuning & click Generate to begin.");
     }
 
     void Update()
     {
-        if (currentState == State.WaitingForClickToPlace && Input.GetMouseButtonDown(0))
+        if (currentState == State.WaitingForClickToPlace)
         {
-            TryPlaceRobotAtMouseClick();
+            bool vrTriggerDown = CheckVRTriggerJustPressed();
+            if (Input.GetMouseButtonDown(0) || vrTriggerDown)
+            {
+                TryPlaceRobot(vrTriggerDown);
+            }
         }
+    }
+
+    private bool CheckVRTriggerJustPressed()
+    {
+        bool isTriggerPressed = false;
+        var rightHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+        if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out bool rPressed) && rPressed)
+        {
+            isTriggerPressed = true;
+        }
+        else
+        {
+            var leftHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.LeftHand);
+            if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out bool lPressed) && lPressed)
+            {
+                isTriggerPressed = true;
+            }
+        }
+
+        bool justPressed = isTriggerPressed && !wasVRTriggerPressedLastFrame;
+        wasVRTriggerPressedLastFrame = isTriggerPressed;
+        return justPressed;
     }
 
     private void SetState(State newState)
@@ -135,31 +178,76 @@ public class SimulationFlowController : MonoBehaviour
             return;
         }
 
-        // Freeze physics completely while the robot waits off-screen.
-        SetRoverFrozen(pendingRobot, true);
-        TeleportRover(pendingRobot, new Vector3(0f, 500f, 0f));
+        activeSpawnedRover = pendingRobot;
+        var telem = pendingRobot.GetComponent<ProjectName.Rover.RoverTelemetryProvider>();
+        if (telem == null) telem = pendingRobot.AddComponent<ProjectName.Rover.RoverTelemetryProvider>();
 
-        SetState(State.WaitingForClickToPlace);
-        SetGuideText($"Click anywhere on the terrain surface to place the {selectedRobot.ToUpper()}.");
-        Log($"{selectedRobot} spawned and frozen at holding position. Waiting for click to place.");
+        var sync = pendingRobot.GetComponent<ProjectName.Rover.RoverPositionSync>();
+        if (sync == null) sync = pendingRobot.AddComponent<ProjectName.Rover.RoverPositionSync>();
+
+        var terrain = Terrain.activeTerrain ?? FindAnyObjectByType<Terrain>();
+        if (terrain != null)
+        {
+            Vector3 tPos = terrain.transform.position;
+            Vector3 tSize = terrain.terrainData.size;
+            Vector3 spawnPos = new Vector3(tPos.x + tSize.x * 0.5f, 0f, tPos.z + tSize.z * 0.5f);
+            spawnPos.y = terrain.SampleHeight(spawnPos) + tPos.y + sync.surfaceOffset;
+
+            sync.TeleportTo(spawnPos, Quaternion.identity);
+            SetRoverFrozen(pendingRobot, false);
+
+            if (selectedRobot == "husky" && huskyController != null)
+                huskyController.enabled = true;
+            else if (selectedRobot == "m20" && m20Controller != null)
+                m20Controller.enabled = true;
+            else if (selectedRobot == "m2020" && m2020Controller != null)
+                m2020Controller.enabled = true;
+
+            SetState(State.ActiveDriving);
+            SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD / Arrows. Shift+Click on terrain to relocate.");
+            Log($"{selectedRobot} spawned and placed on terrain at {spawnPos}. Active driving enabled.");
+            pendingRobot = null;
+        }
+        else
+        {
+            SetRoverFrozen(pendingRobot, true);
+            sync.TeleportTo(new Vector3(0f, 2f, 0f), Quaternion.identity);
+            SetState(State.WaitingForClickToPlace);
+            SetGuideText($"Generate terrain and click on the surface to place the {selectedRobot.ToUpper()}.");
+            Log($"{selectedRobot} spawned. Waiting for terrain and click to place.");
+        }
     }
 
-    private void TryPlaceRobotAtMouseClick()
+    private void TryPlaceRobot(bool fromVR = false)
     {
-        // Ignore clicks that land on UI elements rather than the 3D world.
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        if (pendingRobot == null) return;
+
+        bool isShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (!isShift && !fromVR && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            Log("Click ignored — pointer was over a UI element.");
+            Log("Click ignored — pointer was over an interactive UI element.");
             return;
         }
 
-        if (pendingRobot == null)
+        Ray ray;
+        if (fromVR)
         {
-            LogWarning("TryPlaceRobotAtMouseClick called but pendingRobot is null.");
-            return;
+            if (rightControllerTransform != null)
+                ray = new Ray(rightControllerTransform.position, rightControllerTransform.forward);
+            else if (leftControllerTransform != null)
+                ray = new Ray(leftControllerTransform.position, leftControllerTransform.forward);
+            else if (Camera.main != null)
+                ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
+            else
+                return;
         }
-
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        else
+        {
+            if (Camera.main != null)
+                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            else
+                return;
+        }
 
         if (Physics.Raycast(ray, out RaycastHit hit, 2000f))
         {
@@ -199,6 +287,13 @@ public class SimulationFlowController : MonoBehaviour
 
     private void TeleportRover(GameObject rover, Vector3 position)
     {
+        var sync = rover.GetComponent<ProjectName.Rover.RoverPositionSync>();
+        if (sync != null)
+        {
+            sync.TeleportTo(position, rover.transform.rotation);
+            return;
+        }
+
         ArticulationBody rootBody = FindRootArticulationBody(rover);
 
         if (rootBody == null)
@@ -228,6 +323,10 @@ public class SimulationFlowController : MonoBehaviour
 
         foreach (var body in bodies)
         {
+            if (body.isRoot)
+            {
+                body.immovable = frozen;
+            }
             body.useGravity = !frozen;
             if (frozen)
             {
@@ -247,6 +346,71 @@ public class SimulationFlowController : MonoBehaviour
         if (m20Controller != null) m20Controller.enabled = false;
         if (m2020Importer != null) m2020Importer.enabled = false;
         if (m2020Controller != null) m2020Controller.enabled = false;
+    }
+
+    public GameObject ActiveRover => activeSpawnedRover;
+
+    public void ToggleRelocateMode()
+    {
+        if (currentState == State.WaitingForClickToPlace)
+        {
+            SetState(State.ActiveDriving);
+            SetGuideText("Relocate mode exited.");
+        }
+        else
+        {
+            if (activeSpawnedRover == null)
+            {
+                var sync = FindAnyObjectByType<ProjectName.Rover.RoverPositionSync>();
+                if (sync != null) activeSpawnedRover = sync.gameObject;
+            }
+
+            if (activeSpawnedRover != null)
+            {
+                pendingRobot = activeSpawnedRover;
+                SetRoverFrozen(pendingRobot, true);
+                SetState(State.WaitingForClickToPlace);
+                SetGuideText("Relocate mode active. Click anywhere on the terrain to relocate.");
+            }
+            else
+            {
+                SetGuideText("No active rover found to relocate. Select and deploy a rover first.");
+            }
+        }
+    }
+
+    public void CenterActiveRoverOnTerrain()
+    {
+        if (activeSpawnedRover == null)
+        {
+            var sync = FindAnyObjectByType<ProjectName.Rover.RoverPositionSync>();
+            if (sync != null) activeSpawnedRover = sync.gameObject;
+        }
+
+        if (activeSpawnedRover != null)
+        {
+            var sync = activeSpawnedRover.GetComponent<ProjectName.Rover.RoverPositionSync>();
+            if (sync == null) sync = activeSpawnedRover.AddComponent<ProjectName.Rover.RoverPositionSync>();
+            sync.CenterOnTerrain();
+            SetGuideText("Rover centered on terrain.");
+        }
+        else
+        {
+            SetGuideText("No active rover found to center. Deploy a rover first.");
+        }
+    }
+
+    public void RespawnActiveRover()
+    {
+        if (!string.IsNullOrEmpty(selectedRobot))
+        {
+            StartPlacementMode();
+        }
+        else if (activeSpawnedRover != null)
+        {
+            var sync = activeSpawnedRover.GetComponent<ProjectName.Rover.RoverPositionSync>();
+            if (sync != null) sync.SnapToTerrainSurface();
+        }
     }
 
     public void SetGuideText(string message)
