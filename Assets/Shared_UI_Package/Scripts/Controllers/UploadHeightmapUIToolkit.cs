@@ -119,6 +119,15 @@ namespace ProjectName.Terrain
         private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop;
         private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Rear;
 
+        // Placement Mode Banner & Controls
+        private VisualElement placementBanner;
+        private Label lblPlacementBannerText;
+        private Button btnPlacementQuickCentre;
+        private Button btnPlacementCancel;
+        private Button btnQuickSpawnCentre;
+        private VisualElement studioBottomBar;
+        public bool isPlacementMode = false;
+
         private void Awake()
         {
             if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
@@ -267,6 +276,48 @@ namespace ProjectName.Terrain
             var btnCenter = root.Q<Button>("BtnCenterRover");
             if (btnCenter != null) btnCenter.clicked += OnCenterRoverClicked;
 
+            btnQuickSpawnCentre = root.Q<Button>("BtnQuickSpawnCentre");
+            if (btnQuickSpawnCentre != null)
+            {
+                btnQuickSpawnCentre.clicked += () =>
+                {
+                    if (RoverPlacementController.Instance != null)
+                        RoverPlacementController.Instance.QuickSpawnTerrainCentre();
+                };
+            }
+
+            // Minimap click placement
+            if (heightmapPreviewImage != null)
+            {
+                heightmapPreviewImage.RegisterCallback<ClickEvent>(OnMinimapImageClicked);
+            }
+
+            // Placement Mode Banner Elements
+            placementBanner = root.Q<VisualElement>("PlacementBanner");
+            lblPlacementBannerText = root.Q<Label>("LblPlacementBannerText");
+            btnPlacementQuickCentre = root.Q<Button>("BtnPlacementQuickCentre");
+            btnPlacementCancel = root.Q<Button>("BtnPlacementCancel");
+
+            if (btnPlacementQuickCentre != null)
+            {
+                btnPlacementQuickCentre.clicked += () =>
+                {
+                    if (RoverPlacementController.Instance != null)
+                        RoverPlacementController.Instance.QuickSpawnTerrainCentre();
+                };
+            }
+
+            if (btnPlacementCancel != null)
+            {
+                btnPlacementCancel.clicked += () =>
+                {
+                    if (RoverPlacementController.Instance != null)
+                        RoverPlacementController.Instance.CancelPlacement();
+                };
+            }
+
+            studioBottomBar = root.Q<VisualElement>(className: "studio-bottom-bar");
+
             // Col 3: Compass, Actuators, Power, Environment
             compassNeedle = root.Q<VisualElement>("CompassNeedle");
             valCompassBig = root.Q<Label>("ValCompassBig");
@@ -409,6 +460,149 @@ namespace ProjectName.Terrain
             if (btnFloatingDock != null)
             {
                 btnFloatingDock.style.display = minimized ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+        }
+
+        public bool IsTextInputFocused()
+        {
+            return uiDocument != null && uiDocument.rootVisualElement != null &&
+                   uiDocument.rootVisualElement.focusController != null &&
+                   uiDocument.rootVisualElement.focusController.focusedElement != null &&
+                   (uiDocument.rootVisualElement.focusController.focusedElement.GetType().Name.Contains("Text") ||
+                    uiDocument.rootVisualElement.focusController.focusedElement.GetType().Name.Contains("Input"));
+        }
+
+        public bool IsPointerOverUI(Vector2 screenPos)
+        {
+            if (uiDocument == null || uiDocument.rootVisualElement == null) return false;
+            var panel = uiDocument.rootVisualElement.panel;
+            if (panel == null) return false;
+
+            Vector2 panelPos = new Vector2(screenPos.x, Screen.height - screenPos.y);
+            VisualElement picked = panel.Pick(panelPos);
+            if (picked == null) return false;
+            if (picked == uiDocument.rootVisualElement) return false;
+
+            if (isPlacementMode)
+            {
+                if (picked == studioRoot || picked == studioMainGrid) return false;
+                if (placementBanner != null && (picked == placementBanner || placementBanner.Contains(picked))) return true;
+                if (btnFloatingDock != null && (picked == btnFloatingDock || btnFloatingDock.Contains(picked))) return true;
+                return false;
+            }
+
+            if (isDrivingHudMode)
+            {
+                if (picked == studioRoot) return false;
+                VisualElement cur = picked;
+                while (cur != null && cur != studioRoot && cur != uiDocument.rootVisualElement)
+                {
+                    if (cur.ClassListContains("hud-interactive")) return true;
+                    cur = cur.parent;
+                }
+                return false;
+            }
+
+            return true;
+        }
+
+        public void SetPlacementBannerActive(bool active, string roverName)
+        {
+            isPlacementMode = active;
+
+            if (studioRoot == null && uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                BindUIElements();
+            }
+
+            if (placementBanner != null)
+            {
+                placementBanner.style.display = active ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (lblPlacementBannerText != null && active)
+            {
+                lblPlacementBannerText.text = $"Click terrain to place {roverName} · [Q,E] or Scroll rotates · [Esc] cancels";
+            }
+
+            if (studioMainGrid != null)
+            {
+                studioMainGrid.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            if (studioBottomBar != null)
+            {
+                studioBottomBar.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            var header = studioRoot != null ? studioRoot.Q<VisualElement>(className: "studio-header") : null;
+            if (header != null)
+            {
+                header.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            if (studioRoot != null)
+            {
+                if (active)
+                {
+                    studioRoot.AddToClassList("hud-mode-root");
+                    studioRoot.pickingMode = PickingMode.Ignore;
+                }
+                else if (!isDrivingHudMode)
+                {
+                    studioRoot.RemoveFromClassList("hud-mode-root");
+                    studioRoot.pickingMode = PickingMode.Position;
+                }
+            }
+        }
+
+        public void ShowNotification(string message)
+        {
+            if (lblHelperHint != null)
+            {
+                lblHelperHint.text = message;
+            }
+            Debug.Log($"[Studio Notification] {message}");
+        }
+
+        private void OnMinimapImageClicked(ClickEvent evt)
+        {
+            if (heightmapPreviewImage == null) return;
+            Vector2 localPos = evt.localPosition;
+            float w = heightmapPreviewImage.resolvedStyle.width;
+            float h = heightmapPreviewImage.resolvedStyle.height;
+            if (w <= 0f || h <= 0f) return;
+
+            float normX = Mathf.Clamp01(localPos.x / w);
+            float normZ = Mathf.Clamp01(1f - (localPos.y / h));
+
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            if (terrain == null) return;
+
+            Vector3 tPos = terrain.transform.position;
+            Vector3 tSize = terrain.terrainData.size;
+
+            float worldX = tPos.x + normX * tSize.x;
+            float worldZ = tPos.z + normZ * tSize.z;
+            float worldY = terrain.SampleHeight(new Vector3(worldX, 0f, worldZ)) + tPos.y;
+            Vector3 targetPoint = new Vector3(worldX, worldY, worldZ);
+
+            Debug.Log($"[Minimap] Clicked at norm ({normX:F2}, {normZ:F2}) -> World {targetPoint}");
+
+            if (RoverPlacementController.Instance != null)
+            {
+                if (RoverPlacementController.Instance.IsPlacementActive)
+                {
+                    RoverPlacementController.Instance.ConfirmPlacementAtPoint(targetPoint);
+                }
+                else if (ActiveRoverContext.HasActiveRover)
+                {
+                    RoverPlacementController.Instance.TeleportActiveRover(targetPoint);
+                }
+                else
+                {
+                    RoverPlacementController.Instance.ConfirmPlacementAtPoint(targetPoint, 0f, "husky");
+                }
             }
         }
 
@@ -1061,15 +1255,23 @@ namespace ProjectName.Terrain
             activeRoverId = roverId;
             UpdateRoverSelectionUI();
 
-            if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
-            if (flowController == null) return;
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            if (terrain == null)
+            {
+                ShowNotification("Generate planetary terrain first before deploying rovers.");
+                return;
+            }
 
-            if (roverId == "husky") flowController.OnSelectHusky();
-            else if (roverId == "m20") flowController.OnSelectM20();
-            else if (roverId == "m2020") flowController.OnSelectM2020();
-
-            // Auto-switch to HUD mode so 3D viewport is clear and UI doesn't block clicks/driving
-            SetDrivingHudMode(true);
+            if (RoverPlacementController.Instance != null)
+            {
+                RoverPlacementController.Instance.StartPlacement(roverId);
+            }
+            else if (flowController != null)
+            {
+                if (roverId == "husky") flowController.OnSelectHusky();
+                else if (roverId == "m20") flowController.OnSelectM20();
+                else if (roverId == "m2020") flowController.OnSelectM2020();
+            }
         }
 
         private void UpdateRoverSelectionUI()

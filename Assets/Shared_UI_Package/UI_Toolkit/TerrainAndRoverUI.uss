@@ -817,3 +817,56 @@
     background-color: rgba(0, 229, 255, 0.2);
     color: #ffffff;
 }
+
+/* ========================================================================= */
+/* 8. PLACEMENT MODE BANNER                                                  */
+/* ========================================================================= */
+.placement-banner {
+    position: absolute;
+    top: 14px;
+    align-self: center;
+    background-color: rgba(9, 14, 22, 0.94);
+    border-radius: 20px;
+    border-width: 1.5px;
+    border-color: #00e5ff;
+    padding: 8px 16px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.placement-banner-text {
+    font-size: 11px;
+    color: #f1f5f9;
+    -unity-font-style: bold;
+    margin-right: 14px;
+}
+
+.placement-banner-btn {
+    background-color: rgba(0, 229, 255, 0.15);
+    border-width: 1px;
+    border-color: #00e5ff;
+    border-radius: 12px;
+    color: #00e5ff;
+    font-size: 9px;
+    padding: 4px 10px;
+    margin-left: 6px;
+    -unity-font-style: bold;
+}
+
+.placement-banner-btn:hover {
+    background-color: rgba(0, 229, 255, 0.35);
+    color: #ffffff;
+}
+
+.placement-banner-btn.btn-cancel {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.placement-banner-btn.btn-cancel:hover {
+    background-color: rgba(239, 68, 68, 0.35);
+    color: #ffffff;
+}
+

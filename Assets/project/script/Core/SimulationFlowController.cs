@@ -132,19 +132,40 @@ public class SimulationFlowController : MonoBehaviour
     public void OnSelectHusky()
     {
         selectedRobot = "husky";
-        StartPlacementMode();
+        if (RoverPlacementController.Instance != null)
+        {
+            RoverPlacementController.Instance.StartPlacement("husky");
+        }
+        else
+        {
+            StartPlacementMode();
+        }
     }
 
     public void OnSelectM20()
     {
         selectedRobot = "m20";
-        StartPlacementMode();
+        if (RoverPlacementController.Instance != null)
+        {
+            RoverPlacementController.Instance.StartPlacement("m20");
+        }
+        else
+        {
+            StartPlacementMode();
+        }
     }
 
     public void OnSelectM2020()
     {
         selectedRobot = "m2020";
-        StartPlacementMode();
+        if (RoverPlacementController.Instance != null)
+        {
+            RoverPlacementController.Instance.StartPlacement("m2020");
+        }
+        else
+        {
+            StartPlacementMode();
+        }
     }
 
     private void StartPlacementMode()

@@ -5,6 +5,13 @@
     <ui:Button name="BtnFloatingDock" text="VR ROVER STUDIO [Tab]" class="floating-dock-btn hud-interactive" style="display: none;" />
 
     <ui:VisualElement name="StudioRoot" class="studio-root">
+        <!-- Slim Placement Mode Banner -->
+        <ui:VisualElement name="PlacementBanner" class="placement-banner hud-interactive" style="display: none;">
+            <ui:Label name="LblPlacementBannerText" text="Click terrain to place rover · [Q,E] or Scroll to Rotate · [Esc] Cancel" class="placement-banner-text" />
+            <ui:Button name="BtnPlacementQuickCentre" text="QUICK SPAWN (CENTRE)" class="placement-banner-btn" tooltip="Spawn directly at the center of the terrain" />
+            <ui:Button name="BtnPlacementCancel" text="CANCEL [Esc]" class="placement-banner-btn btn-cancel" tooltip="Cancel placement and return to studio" />
+        </ui:VisualElement>
+
         <!-- Top Header Bar -->
         <ui:VisualElement class="studio-header hud-interactive">
             <ui:VisualElement class="header-left">
@@ -190,6 +197,7 @@
                             <ui:Label name="TagM2020Active" text="DEPLOY" class="rover-idle-tag" />
                         </ui:Button>
                     </ui:VisualElement>
+                    <ui:Button name="BtnQuickSpawnCentre" text="QUICK SPAWN AT CENTRE" class="card-mini-btn" style="margin-top: 6px; width: 100%; height: 26px;" tooltip="Spawn the selected rover directly at terrain centre" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
