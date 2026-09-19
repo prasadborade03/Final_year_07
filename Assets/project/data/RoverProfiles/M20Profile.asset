@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dd61a31cc45434429537e9e270f4073, type: 3}
+  m_Name: M20Profile
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverProfile
+  id: m20
+  displayName: Deep Robotics M20
+  steeringLabel: WHEELED QUADRUPED
+  prefab: {fileID: 6958254401805051133, guid: 12a23abf62a913a44bb11be1fa5ed99b, type: 3}
+  wheelRadius: 0.15
+  wheels:
+  - linkName: fl_wheel
+    displayName: FL
+    isSteered: 0
+  - linkName: fr_wheel
+    displayName: FR
+    isSteered: 0
+  - linkName: hl_wheel
+    displayName: RL
+    isSteered: 0
+  - linkName: hr_wheel
+    displayName: RR
+    isSteered: 0
+  maxSpeed: 2.5
+  spawnClearance: 0.4
+  maxSafeSlopeDeg: 28
+  slipGoodThreshold: 0.15
+  slipFairThreshold: 0.4
+  batteryWh: 1500
+  driveModes: []
+  cameraOffsets: []

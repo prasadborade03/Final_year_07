@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -92,8 +93,18 @@ namespace ProjectName.Terrain
         private VisualElement compassNeedle;
         private Label valCompassBig;
 
-        private Label tagWheelFL, tagWheelFR, tagWheelRL, tagWheelRR;
-        private VisualElement segsWheelFL, segsWheelFR, segsWheelRL, segsWheelRR;
+        private VisualElement wheelContainer;
+        private class WheelUIItem
+        {
+            public Label nameLabel;
+            public Label tag;
+            public VisualElement segsContainer;
+            public VisualElement[] segs;
+        }
+        private readonly List<WheelUIItem> activeWheelUIs = new List<WheelUIItem>();
+        private string lastWheelRoverId = "";
+        private float uiUpdateTimer = 0f;
+        private const float UI_UPDATE_INTERVAL = 0.1f; // 10 Hz throttle
 
         private VisualElement barBattery, barMotorTemp;
         private Label valBattery, valMotorTemp;
@@ -120,6 +131,9 @@ namespace ProjectName.Terrain
 
         private void OnEnable()
         {
+            ActiveRoverContext.OnRoverActivated += HandleRoverActivated;
+            ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
+
             BindUIElements();
             RefreshPreview();
             UpdatePresetButtonsUI();
@@ -127,6 +141,15 @@ namespace ProjectName.Terrain
             UpdateDriveModeUI();
             UpdateCameraButtonsUI();
             SetDrivingHudMode(false); // Default to Studio view on open, user can switch to Driving HUD with [Tab]
+
+            if (ActiveRoverContext.HasActiveRover)
+            {
+                HandleRoverActivated(ActiveRoverContext.Current);
+            }
+            else
+            {
+                SetTelemetryStandbyState();
+            }
         }
 
         private void BindUIElements()
@@ -238,15 +261,7 @@ namespace ProjectName.Terrain
             compassNeedle = root.Q<VisualElement>("CompassNeedle");
             valCompassBig = root.Q<Label>("ValCompassBig");
 
-            tagWheelFL = root.Q<Label>("TagWheelFL");
-            tagWheelFR = root.Q<Label>("TagWheelFR");
-            tagWheelRL = root.Q<Label>("TagWheelRL");
-            tagWheelRR = root.Q<Label>("TagWheelRR");
-
-            segsWheelFL = root.Q<VisualElement>("SegsWheelFL");
-            segsWheelFR = root.Q<VisualElement>("SegsWheelFR");
-            segsWheelRL = root.Q<VisualElement>("SegsWheelRL");
-            segsWheelRR = root.Q<VisualElement>("SegsWheelRR");
+            wheelContainer = root.Q<VisualElement>("WheelContainer") ?? root.Q<VisualElement>(className: "wheel-grid-2x2");
 
             barBattery = root.Q<VisualElement>("BarBattery");
             barMotorTemp = root.Q<VisualElement>("BarMotorTemp");
@@ -299,15 +314,14 @@ namespace ProjectName.Terrain
 
             if (isStudioMinimized) return;
 
-            // Re-acquire active telemetry provider if needed
-            if (activeTelemetryProvider == null || !activeTelemetryProvider.gameObject.activeInHierarchy)
+            // Stream live telemetry at <= 10 Hz into Studio elements (Rule R7: Zero garbage, low overhead)
+            uiUpdateTimer += Time.unscaledDeltaTime;
+            if (uiUpdateTimer >= UI_UPDATE_INTERVAL)
             {
-                activeTelemetryProvider = FindAnyObjectByType<RoverTelemetryProvider>();
+                uiUpdateTimer = 0f;
+                UpdateLiveTelemetryUI();
+                UpdatePlanetaryEnvironmentUI();
             }
-
-            // Stream live telemetry into Studio elements
-            UpdateLiveTelemetryUI();
-            UpdatePlanetaryEnvironmentUI();
         }
 
         public void SetDrivingHudMode(bool hudMode)
@@ -362,49 +376,196 @@ namespace ProjectName.Terrain
             }
         }
 
+        private void HandleRoverActivated(RoverHandle handle)
+        {
+            if (handle == null) return;
+            activeRoverId = handle.roverId;
+            UpdateRoverSelectionUI();
+
+            if (badgeStatus != null) badgeStatus.text = "● ACTIVE";
+            if (badgeDriveMode != null && handle.profile != null)
+            {
+                badgeDriveMode.text = handle.profile.steeringLabel.ToUpper();
+            }
+
+            RebuildWheelUI(handle);
+            UpdateLiveTelemetryUI();
+        }
+
+        private void HandleRoverDestroyed()
+        {
+            activeRoverId = "";
+            UpdateRoverSelectionUI();
+            SetTelemetryStandbyState();
+        }
+
+        private void SetTelemetryStandbyState()
+        {
+            if (badgeStatus != null) badgeStatus.text = "● STANDBY";
+            if (badgeDriveMode != null) badgeDriveMode.text = "—";
+
+            if (valLinearSpeed != null) valLinearSpeed.text = "—";
+            if (valGroundSpeed != null) valGroundSpeed.text = "—";
+            if (valAcceleration != null) valAcceleration.text = "—";
+            if (valGForce != null) valGForce.text = "—";
+
+            if (valPitch != null) valPitch.text = "—";
+            if (valRoll != null) valRoll.text = "—";
+            if (valHeading != null) valHeading.text = "—";
+            if (valSlope != null) valSlope.text = "—";
+            if (barHeadingLevel != null) barHeadingLevel.style.width = Length.Percent(0);
+            if (iconAttitudeWarning != null) iconAttitudeWarning.style.display = DisplayStyle.None;
+
+            if (valCoords != null) valCoords.text = "X —   Y —   Z —";
+            if (valOdometer != null) valOdometer.text = "—";
+            if (valMissionTime != null) valMissionTime.text = "—";
+            if (valCompassBig != null) valCompassBig.text = "—";
+
+            if (barBattery != null) barBattery.style.width = Length.Percent(0);
+            if (valBattery != null) valBattery.text = "—";
+            if (barMotorTemp != null) barMotorTemp.style.width = Length.Percent(0);
+            if (valMotorTemp != null) valMotorTemp.text = "—";
+
+            if (radarRoverDot != null) radarRoverDot.style.translate = new Translate(0, 0);
+
+            for (int i = 0; i < activeWheelUIs.Count; i++)
+            {
+                var item = activeWheelUIs[i];
+                if (item.tag != null)
+                {
+                    item.tag.text = "—";
+                    item.tag.RemoveFromClassList("tag-good");
+                    item.tag.RemoveFromClassList("tag-fair");
+                    item.tag.RemoveFromClassList("tag-slip");
+                }
+                if (item.segs != null)
+                {
+                    for (int s = 0; s < item.segs.Length; s++)
+                    {
+                        item.segs[s].RemoveFromClassList("seg-active");
+                        item.segs[s].RemoveFromClassList("seg-fair");
+                        item.segs[s].RemoveFromClassList("seg-slip");
+                        item.segs[s].AddToClassList("seg-inactive");
+                    }
+                }
+            }
+        }
+
+        private void RebuildWheelUI(RoverHandle handle)
+        {
+            if (wheelContainer == null) return;
+            if (handle == null || handle.wheelDefs == null || handle.wheelDefs.Length == 0) return;
+
+            wheelContainer.Clear();
+            activeWheelUIs.Clear();
+
+            for (int i = 0; i < handle.wheelDefs.Length; i++)
+            {
+                var def = handle.wheelDefs[i];
+                var cell = new VisualElement();
+                cell.AddToClassList("wheel-cell");
+
+                var infoCol = new VisualElement();
+                infoCol.AddToClassList("wheel-info-col");
+
+                string abbr = !string.IsNullOrEmpty(def.abbreviation) ? def.abbreviation : def.displayName;
+                var nameLbl = new Label(abbr);
+                nameLbl.AddToClassList("wheel-name");
+
+                var tagLbl = new Label("GOOD");
+                tagLbl.AddToClassList("wheel-status");
+                tagLbl.AddToClassList("tag-good");
+
+                infoCol.Add(nameLbl);
+                infoCol.Add(tagLbl);
+                cell.Add(infoCol);
+
+                var segsRow = new VisualElement();
+                segsRow.AddToClassList("wheel-segments-row");
+
+                var segList = new VisualElement[5];
+                for (int s = 0; s < 5; s++)
+                {
+                    var seg = new VisualElement();
+                    seg.AddToClassList("wheel-seg");
+                    seg.AddToClassList("seg-active");
+                    segsRow.Add(seg);
+                    segList[s] = seg;
+                }
+
+                cell.Add(segsRow);
+                wheelContainer.Add(cell);
+
+                activeWheelUIs.Add(new WheelUIItem
+                {
+                    nameLabel = nameLbl,
+                    tag = tagLbl,
+                    segsContainer = segsRow,
+                    segs = segList
+                });
+            }
+
+            lastWheelRoverId = handle.roverId;
+        }
+
         private void UpdateLiveTelemetryUI()
         {
-            if (activeTelemetryProvider == null || activeTelemetryProvider.telemetry == null)
+            if (!ActiveRoverContext.HasActiveRover)
             {
-                if (badgeStatus != null) badgeStatus.text = "● STANDBY";
+                SetTelemetryStandbyState();
                 return;
             }
 
-            var d = activeTelemetryProvider.telemetry;
-            if (badgeStatus != null) badgeStatus.text = "● ACTIVE";
-            if (badgeDriveMode != null) badgeDriveMode.text = string.IsNullOrEmpty(d.driveMode) ? "SKID-STEER 4WD" : d.driveMode.ToUpper();
+            var handle = ActiveRoverContext.Current;
+            var t = handle.telemetry;
+            if (t == null)
+            {
+                SetTelemetryStandbyState();
+                return;
+            }
 
-            // Kinematics
-            if (valLinearSpeed != null) valLinearSpeed.text = $"{d.speedMps:F2}";
-            if (valGroundSpeed != null) valGroundSpeed.text = $"{d.speedKmph:F2}";
-            if (valAcceleration != null) valAcceleration.text = $"{d.forwardAcceleration:+0.00;-0.00}";
-            if (valGForce != null) valGForce.text = $"{d.gForce:F2}";
+            if (lastWheelRoverId != handle.roverId || (handle.wheelDefs != null && activeWheelUIs.Count != handle.wheelDefs.Length))
+            {
+                RebuildWheelUI(handle);
+            }
+
+            if (badgeStatus != null) badgeStatus.text = "● ACTIVE";
+            if (badgeDriveMode != null && handle.profile != null)
+            {
+                badgeDriveMode.text = handle.profile.steeringLabel.ToUpper();
+            }
+
+            // Kinematics (Measured truthful physics data)
+            if (valLinearSpeed != null) valLinearSpeed.text = $"{t.linearSpeedMps:F2}";
+            if (valGroundSpeed != null) valGroundSpeed.text = $"{t.groundSpeedKmph:F2}";
+            if (valAcceleration != null) valAcceleration.text = $"{t.forwardAcceleration:+0.00;-0.00}";
+            if (valGForce != null) valGForce.text = $"{t.gForceLoad:F2}";
 
             // Attitude
-            if (valPitch != null) valPitch.text = $"{d.pitchDeg:+0.0;-0.0}°";
-            if (valRoll != null) valRoll.text = $"{d.rollDeg:+0.0;-0.0}°";
-            if (valHeading != null) valHeading.text = $"{d.headingDeg:000}° {d.headingCardinal}";
-            if (valSlope != null) valSlope.text = $"{d.terrainSlopeDeg:F1}°";
+            if (valPitch != null) valPitch.text = $"{t.pitchDeg:+0.0;-0.0}°";
+            if (valRoll != null) valRoll.text = $"{t.rollDeg:+0.0;-0.0}°";
+            if (valHeading != null) valHeading.text = $"{t.headingDeg:000}° {t.headingCardinal}";
+            if (valSlope != null) valSlope.text = $"{t.terrainSlopeDeg:F1}°";
 
             // Attitude Level Bar & Warning
             if (barHeadingLevel != null)
             {
-                float normHeading = Mathf.Repeat(d.headingDeg, 360f) / 360f;
+                float normHeading = Mathf.Repeat(t.headingDeg, 360f) / 360f;
                 barHeadingLevel.style.width = Length.Percent(normHeading * 100f);
             }
             if (iconAttitudeWarning != null)
             {
-                bool isWarning = d.rolloverWarning || d.terrainSlopeDeg > 35f || Mathf.Abs(d.pitchDeg) > 30f || Mathf.Abs(d.rollDeg) > 30f;
+                bool isWarning = t.isRolloverWarning || t.isSteepSlopeWarning;
                 iconAttitudeWarning.style.display = isWarning ? DisplayStyle.Flex : DisplayStyle.None;
             }
 
             // Position & Odometry
-            if (valCoords != null) valCoords.text = $"X {d.worldPosition.x:F2} m   Y {d.worldPosition.y:F2} m   Z {d.worldPosition.z:F2} m";
-            if (valOdometer != null) valOdometer.text = d.odometerMeters >= 1000f ? $"{d.odometerMeters / 1000f:F2} km" : $"{d.odometerMeters:F1} m";
+            if (valCoords != null) valCoords.text = $"X {t.worldPosition.x:F2} m   Y {t.worldPosition.y:F2} m   Z {t.worldPosition.z:F2} m";
+            if (valOdometer != null) valOdometer.text = t.odometerMeters >= 1000f ? $"{t.odometerMeters / 1000f:F2} km" : $"{t.odometerMeters:F1} m";
 
             if (valMissionTime != null)
             {
-                int totSec = Mathf.FloorToInt(d.missionTimeSeconds);
+                int totSec = Mathf.FloorToInt(t.missionTimeSeconds);
                 int hrs = totSec / 3600;
                 int mins = (totSec % 3600) / 60;
                 int secs = totSec % 60;
@@ -412,38 +573,39 @@ namespace ProjectName.Terrain
             }
 
             // Compass Needle & Big Deg
-            if (valCompassBig != null) valCompassBig.text = $"{d.headingDeg:000}° {d.headingCardinal}";
+            if (valCompassBig != null) valCompassBig.text = $"{t.headingDeg:000}° {t.headingCardinal}";
             if (compassNeedle != null)
             {
-                compassNeedle.style.rotate = new Rotate(d.headingDeg);
+                compassNeedle.style.rotate = new Rotate(t.headingDeg);
             }
 
-            // Wheel Actuators Matrix (5 Discrete Segments)
-            if (d.wheels != null && d.wheels.Length >= 4)
+            // Wheel Actuators Matrix (Dynamic count, discrete 5 segments)
+            if (t.wheelStates != null && activeWheelUIs.Count > 0)
             {
-                UpdateWheelSegmentsCell(d.wheels[0], tagWheelFL, segsWheelFL);
-                UpdateWheelSegmentsCell(d.wheels[1], tagWheelFR, segsWheelFR);
-                UpdateWheelSegmentsCell(d.wheels[2], tagWheelRL, segsWheelRL);
-                UpdateWheelSegmentsCell(d.wheels[3], tagWheelRR, segsWheelRR);
+                int count = Mathf.Min(t.wheelStates.Length, activeWheelUIs.Count);
+                for (int i = 0; i < count; i++)
+                {
+                    UpdateWheelCell(t.wheelStates[i], activeWheelUIs[i]);
+                }
             }
 
             // Power & Thermal
-            if (barBattery != null) barBattery.style.width = Length.Percent(Mathf.Clamp01(d.batteryPercent / 100f) * 100f);
-            if (valBattery != null) valBattery.text = $"{d.batteryPercent:F0}%";
+            if (barBattery != null) barBattery.style.width = Length.Percent(Mathf.Clamp01(t.batteryPercent / 100f) * 100f);
+            if (valBattery != null) valBattery.text = $"{t.batteryPercent:F0}%";
 
-            if (barMotorTemp != null) barMotorTemp.style.width = Length.Percent(Mathf.Clamp01(d.motorTempCelsius / 100f) * 100f);
-            if (valMotorTemp != null) valMotorTemp.text = $"{d.motorTempCelsius:F0} °C";
+            if (barMotorTemp != null) barMotorTemp.style.width = Length.Percent(Mathf.Clamp01(t.motorTempCelsius / 100f) * 100f);
+            if (valMotorTemp != null) valMotorTemp.text = $"{t.motorTempCelsius:F0} °C";
 
             // Radar Dot Position
             if (radarRoverDot != null)
             {
-                var t = UnityEngine.Terrain.activeTerrain;
-                if (t != null)
+                var tTerrain = UnityEngine.Terrain.activeTerrain;
+                if (tTerrain != null)
                 {
-                    Vector3 tPos = t.transform.position;
-                    Vector3 tSize = t.terrainData.size;
-                    float normX = Mathf.Clamp01((d.worldPosition.x - tPos.x) / tSize.x);
-                    float normZ = Mathf.Clamp01((d.worldPosition.z - tPos.z) / tSize.z);
+                    Vector3 tPos = tTerrain.transform.position;
+                    Vector3 tSize = tTerrain.terrainData.size;
+                    float normX = Mathf.Clamp01((t.worldPosition.x - tPos.x) / tSize.x);
+                    float normZ = Mathf.Clamp01((t.worldPosition.z - tPos.z) / tSize.z);
 
                     // Radar is 154x154 px
                     float radarPxX = (normX - 0.5f) * 130f;
@@ -453,30 +615,30 @@ namespace ProjectName.Terrain
             }
         }
 
-        private void UpdateWheelSegmentsCell(WheelTelemetry w, Label tag, VisualElement segsContainer)
+        private void UpdateWheelCell(WheelTelemetryState w, WheelUIItem item)
         {
-            if (tag == null || segsContainer == null) return;
+            if (item.tag == null || item.segs == null) return;
 
-            string statusText = "GOOD";
+            string statusText = string.IsNullOrEmpty(w.status) ? "GOOD" : w.status;
             string statusTagClass = "tag-good";
             int activeSegs = 5;
             string segClass = "seg-active";
 
-            if (!w.isGrounded)
+            if (!w.isGrounded || statusText == "AIR")
             {
                 statusText = "AIR";
                 statusTagClass = "tag-fair";
                 activeSegs = 1;
                 segClass = "seg-fair";
             }
-            else if (w.slipRatio > 0.35f)
+            else if (statusText == "SLIP" || w.slipRatio > 0.35f)
             {
                 statusText = "SLIP";
                 statusTagClass = "tag-slip";
                 activeSegs = 2;
                 segClass = "seg-slip";
             }
-            else if (w.slipRatio > 0.15f)
+            else if (statusText == "FAIR" || w.slipRatio > 0.15f)
             {
                 statusText = "FAIR";
                 statusTagClass = "tag-fair";
@@ -484,15 +646,15 @@ namespace ProjectName.Terrain
                 segClass = "seg-fair";
             }
 
-            tag.text = statusText;
-            tag.RemoveFromClassList("tag-good");
-            tag.RemoveFromClassList("tag-fair");
-            tag.RemoveFromClassList("tag-slip");
-            tag.AddToClassList(statusTagClass);
+            item.tag.text = statusText;
+            item.tag.RemoveFromClassList("tag-good");
+            item.tag.RemoveFromClassList("tag-fair");
+            item.tag.RemoveFromClassList("tag-slip");
+            item.tag.AddToClassList(statusTagClass);
 
-            for (int i = 0; i < segsContainer.childCount; i++)
+            for (int i = 0; i < item.segs.Length; i++)
             {
-                var seg = segsContainer[i];
+                var seg = item.segs[i];
                 seg.RemoveFromClassList("seg-active");
                 seg.RemoveFromClassList("seg-fair");
                 seg.RemoveFromClassList("seg-slip");
@@ -778,13 +940,16 @@ namespace ProjectName.Terrain
 
         private void UpdateRoverSelectionUI()
         {
-            SetBtnClass(btnRoverHusky, "rover-active-row", activeRoverId == "husky");
-            SetBtnClass(btnRoverM20, "rover-active-row", activeRoverId == "m20");
-            SetBtnClass(btnRoverM2020, "rover-active-row", activeRoverId == "m2020");
+            bool hasRover = ActiveRoverContext.HasActiveRover;
+            string curId = hasRover ? ActiveRoverContext.Current.roverId : "";
 
-            UpdateTagClass(tagHuskyActive, activeRoverId == "husky");
-            UpdateTagClass(tagM20Active, activeRoverId == "m20");
-            UpdateTagClass(tagM2020Active, activeRoverId == "m2020");
+            SetBtnClass(btnRoverHusky, "rover-active-row", hasRover && curId == "husky");
+            SetBtnClass(btnRoverM20, "rover-active-row", hasRover && curId == "m20");
+            SetBtnClass(btnRoverM2020, "rover-active-row", hasRover && curId == "m2020");
+
+            UpdateTagClass(tagHuskyActive, hasRover && curId == "husky");
+            UpdateTagClass(tagM20Active, hasRover && curId == "m20");
+            UpdateTagClass(tagM2020Active, hasRover && curId == "m2020");
         }
 
         private void UpdateTagClass(Label tag, bool isActive)
@@ -818,6 +983,9 @@ namespace ProjectName.Terrain
 
         private void OnDisable()
         {
+            ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
+            ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
+
             if (previewTexture != null)
             {
                 DestroyImmediate(previewTexture);

@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+using ProjectName.Rover;
+
 /// <summary>
 /// Runtime importer & physics setup for the Deep Robotics M20.
 /// 
@@ -10,11 +12,13 @@ using System.Collections.Generic;
 /// 2. Make the true root movable + gravity ON (prevents floating)
 /// 3. Configure the 4 continuous wheels for pure velocity control
 /// 4. Optionally lock the leg joints (hipx / hipy / knee) in a standing pose
-///    so the robot behaves like a wheeled rover instead of collapsing
+/// 5. Register with ActiveRoverContext and attach RoverTelemetry
 /// </summary>
 public class RoverImporter_m20 : MonoBehaviour
 {
-    [Header("Prefab")]
+    [Header("Profile & Prefab")]
+    public RoverProfile profile;
+
     [Tooltip("Drag the imported M20 prefab here (after URDF import)")]
     public GameObject roverPrefab;
 
@@ -48,15 +52,23 @@ public class RoverImporter_m20 : MonoBehaviour
     // Optional: keep references to leg joints if you want to unlock later
     private List<ArticulationBody> legBodies = new List<ArticulationBody>();
 
-    // void Start()
-    // {
-    //     SpawnRover();
-    // }
-
     public GameObject SpawnRover()
     {
         if (currentRoverObject != null)
+        {
+            ActiveRoverContext.Unregister();
             Destroy(currentRoverObject);
+        }
+
+        if (profile == null)
+        {
+            profile = Resources.Load<RoverProfile>("RoverProfiles/M20Profile");
+        }
+
+        if (roverPrefab == null && profile != null)
+        {
+            roverPrefab = profile.prefab;
+        }
 
         if (roverPrefab == null)
         {
@@ -102,12 +114,12 @@ public class RoverImporter_m20 : MonoBehaviour
         }
 
         // Wait a couple of physics frames so Unity finishes building the articulation tree
-        StartCoroutine(SetupAfterPhysicsFrame(currentRoverObject));
+        StartCoroutine(SetupAfterPhysicsFrame(currentRoverObject, trueRoot));
 
         return currentRoverObject;
     }
 
-    private IEnumerator SetupAfterPhysicsFrame(GameObject rover)
+    private IEnumerator SetupAfterPhysicsFrame(GameObject rover, ArticulationBody trueRoot)
     {
         yield return new WaitForFixedUpdate();
         yield return new WaitForFixedUpdate();
@@ -143,6 +155,31 @@ public class RoverImporter_m20 : MonoBehaviour
             LockLeg(rover, "hr_knee", kneeAngle);
 
             Debug.Log("[M20] Legs locked in standing pose");
+        }
+
+        // Rule R2: Register into ActiveRoverContext
+        var handle = new RoverHandle
+        {
+            rootGameObject = rover,
+            rootBody = trueRoot,
+            profile = profile,
+            wheelBodies = new ArticulationBody[] { flWheel, frWheel, hlWheel, hrWheel },
+            wheelDefs = profile != null ? profile.wheels : null,
+            isFrozen = false
+        };
+
+        var telemetry = rover.AddComponent<RoverTelemetry>();
+        telemetry.Initialize(handle);
+        handle.telemetry = telemetry;
+
+        ActiveRoverContext.Register(handle);
+    }
+
+    private void OnDestroy()
+    {
+        if (currentRoverObject != null)
+        {
+            ActiveRoverContext.Unregister();
         }
     }
 

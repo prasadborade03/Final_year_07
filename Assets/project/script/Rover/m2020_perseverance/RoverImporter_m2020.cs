@@ -2,6 +2,9 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+using ProjectName.Rover;
+using System.Linq;
+
 /// <summary>
 /// FIXED Perseverance M2020 Importer – ArticulationBody Rocker-Bogie System.
 /// Key Fixes:
@@ -10,10 +13,12 @@ using System.Collections.Generic;
 /// 3. Removes jointPosition target override in velocity drives.
 /// 4. Auto-ignores internal collisions between wheel / bogie / chassis colliders.
 /// 5. Includes invert option for right-side wheel revolute axes.
+/// 6. Registers into ActiveRoverContext with 6-wheel telemetry.
 /// </summary>
 public class RoverImporter_m2020 : MonoBehaviour
 {
-    [Header("Prefab & Spawn")]
+    [Header("Profile & Prefab")]
+    public RoverProfile profile;
     public GameObject roverPrefab;
     public Vector3 spawnPosition = new Vector3(0f, 2.5f, 0f);
 
@@ -62,7 +67,20 @@ public class RoverImporter_m2020 : MonoBehaviour
     public GameObject SpawnRover()
     {
         if (currentRoverObject != null)
+        {
+            ActiveRoverContext.Unregister();
             Destroy(currentRoverObject);
+        }
+
+        if (profile == null)
+        {
+            profile = Resources.Load<RoverProfile>("RoverProfiles/M2020Profile");
+        }
+
+        if (roverPrefab == null && profile != null)
+        {
+            roverPrefab = profile.prefab;
+        }
 
         if (roverPrefab == null)
         {
@@ -103,7 +121,7 @@ public class RoverImporter_m2020 : MonoBehaviour
             IgnoreInternalCollisions(allBodies);
         }
 
-        StartCoroutine(SetupAfterPhysics(allBodies));
+        StartCoroutine(SetupAfterPhysics(allBodies, root));
         return currentRoverObject;
     }
 
@@ -126,7 +144,7 @@ public class RoverImporter_m2020 : MonoBehaviour
         }
     }
 
-    private IEnumerator SetupAfterPhysics(ArticulationBody[] allBodies)
+    private IEnumerator SetupAfterPhysics(ArticulationBody[] allBodies, ArticulationBody root)
     {
         yield return new WaitForFixedUpdate();
         yield return new WaitForFixedUpdate();
@@ -172,6 +190,40 @@ public class RoverImporter_m2020 : MonoBehaviour
         }
 
         Debug.Log($"[M2020] Setup Complete: Drive Left={leftWheels.Count}, Right={rightWheels.Count} | Steers LF={steerLF!=null} LR={steerLR!=null} RF={steerRF!=null} RR={steerRR!=null}");
+
+        // Rule R2: Order wheels for telemetry: FL, FR, ML, MR, RL, RR
+        ArticulationBody wLF = allBodies.FirstOrDefault(b => b.name == "Body_WheelLeftFront");
+        ArticulationBody wRF = allBodies.FirstOrDefault(b => b.name == "Body_WheelRightFront");
+        ArticulationBody wLM = allBodies.FirstOrDefault(b => b.name == "Body_WheelLeftMiddle");
+        ArticulationBody wRM = allBodies.FirstOrDefault(b => b.name == "Body_WheelRightMiddle");
+        ArticulationBody wLR = allBodies.FirstOrDefault(b => b.name == "Body_WheelLeftRear");
+        ArticulationBody wRR = allBodies.FirstOrDefault(b => b.name == "Body_WheelRightRear");
+
+        var orderedWheels = new ArticulationBody[] { wLF, wRF, wLM, wRM, wLR, wRR };
+
+        var handle = new RoverHandle
+        {
+            rootGameObject = currentRoverObject,
+            rootBody = root,
+            profile = profile,
+            wheelBodies = orderedWheels,
+            wheelDefs = profile != null ? profile.wheels : null,
+            isFrozen = false
+        };
+
+        var telemetry = currentRoverObject.AddComponent<RoverTelemetry>();
+        telemetry.Initialize(handle);
+        handle.telemetry = telemetry;
+
+        ActiveRoverContext.Register(handle);
+    }
+
+    private void OnDestroy()
+    {
+        if (currentRoverObject != null)
+        {
+            ActiveRoverContext.Unregister();
+        }
     }
 
     private void ConfigureVelocityDrive(ArticulationBody body)

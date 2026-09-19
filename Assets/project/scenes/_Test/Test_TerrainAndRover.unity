@@ -778,13 +778,10 @@ GameObject:
   - component: {fileID: 770217955}
   - component: {fileID: 770217954}
   - component: {fileID: 770217953}
-  - component: {fileID: 770217952}
   - component: {fileID: 770217951}
   - component: {fileID: 770217950}
   - component: {fileID: 770217958}
   - component: {fileID: 770217957}
-  - component: {fileID: 770217960}
-  - component: {fileID: 770217959}
   m_Layer: 0
   m_Name: _RoverModule
   m_TagString: Untagged
@@ -804,6 +801,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 865df54742148b746a8417f5a908f1f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoverImporter_husky
+  profile: {fileID: 0}
   roverPrefab: {fileID: 1015257308883720614, guid: 93444881b7464864899a10b62a7f1cbb, type: 3}
   linearDamping: 1.5
   angularDamping: 1.5
@@ -826,72 +824,6 @@ MonoBehaviour:
   roverImporter: {fileID: 770217950}
   maxWheelSpeed: 400
   invertWheelMapping: 0
---- !u!171741748 &770217952
-ArticulationBody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 770217949}
-  m_Enabled: 1
-  serializedVersion: 6
-  m_Mass: 1
-  m_ParentAnchorPosition: {x: 0, y: 0, z: 0}
-  m_ParentAnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
-  m_AnchorPosition: {x: 0, y: 0, z: 0}
-  m_AnchorRotation: {x: 0, y: 0, z: 0.70710677, w: 0.70710677}
-  m_MatchAnchors: 1
-  m_ArticulationJointType: 0
-  m_LinearX: 2
-  m_LinearY: 2
-  m_LinearZ: 2
-  m_SwingY: 2
-  m_SwingZ: 2
-  m_Twist: 2
-  m_XDrive:
-    lowerLimit: 0
-    upperLimit: 0
-    stiffness: 0
-    damping: 0
-    forceLimit: 3.4028235e+38
-    target: 0
-    targetVelocity: 0
-    driveType: 0
-  m_YDrive:
-    lowerLimit: 0
-    upperLimit: 0
-    stiffness: 0
-    damping: 0
-    forceLimit: 3.4028235e+38
-    target: 0
-    targetVelocity: 0
-    driveType: 0
-  m_ZDrive:
-    lowerLimit: 0
-    upperLimit: 0
-    stiffness: 0
-    damping: 0
-    forceLimit: 3.4028235e+38
-    target: 0
-    targetVelocity: 0
-    driveType: 0
-  m_LinearDamping: 0.05
-  m_AngularDamping: 0.05
-  m_JointFriction: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_Immovable: 0
-  m_UseGravity: 1
-  m_CollisionDetectionMode: 0
 --- !u!114 &770217953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -940,6 +872,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424354bb7d69e5249ba8f9969af30820, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoverImporter_m20
+  profile: {fileID: 0}
   roverPrefab: {fileID: 6958254401805051133, guid: 12a23abf62a913a44bb11be1fa5ed99b, type: 3}
   linearDamping: 1.5
   angularDamping: 1.5
@@ -1002,6 +935,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f908a1754b0398345af3e7ff419b479c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoverImporter_m2020
+  profile: {fileID: 0}
   roverPrefab: {fileID: 382677692533115045, guid: d7d9d0d500cb17349b6647f4c7639fcc, type: 3}
   spawnPosition: {x: 0, y: 2.5, z: 0}
   linearDamping: 0.5
@@ -1019,71 +953,6 @@ MonoBehaviour:
   suspTargetElevationDeg: 0
   ignoreInternalCollisions: 1
   autoSpawnOnStart: 0
---- !u!114 &770217959
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 770217949}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67f8ec19f5c86b048a8d35d2f45235fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverPositionSync
-  surfaceOffset: 0.25
-  desiredCoordinates: {x: 500, y: 500}
-  desiredHeadingYaw: 0
-  showPlacementGizmo: 1
-  enableRuntimeHotkeys: 1
---- !u!114 &770217960
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 770217949}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b33b086372d2c84c97a95c934b60f5a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverTelemetryProvider
-  roverName: 
-  telemetry:
-    roverName: Clearpath Husky A200
-    driveMode: Skid Steer (Differential)
-    speedMps: 0
-    speedKmph: 0
-    forwardAcceleration: 0
-    gForce: 1
-    pitchDeg: 0
-    rollDeg: 0
-    headingDeg: 0
-    headingCardinal: N
-    terrainSlopeDeg: 0
-    rolloverWarning: 0
-    worldPosition: {x: 0, y: 0, z: 0}
-    altitudeMeters: 0
-    odometerMeters: 0
-    missionTimeSeconds: 0
-    batteryPercent: 100
-    powerDrawWatts: 150
-    motorTempCelsius: 24
-    thermalWarning: 0
-    wheels: []
-    planetName: Mars
-    liveGravityMagnitude: 3.72
-    terrainStaticFriction: 0.7
-    terrainDynamicFriction: 0.55
-    roverDrag: 0.02
-    atmosDensityProxy: 0.008
-    liveWindSpeed: 4.5
-  wheelRadius: 0.165
-  batteryCapacityWh: 1200
-  ambientTempCelsius: 18
-  pitchWarningThresholdDeg: 25
-  rollWarningThresholdDeg: 22
-  thermalWarningThresholdCelsius: 60
 --- !u!1 &781041463
 GameObject:
   m_ObjectHideFlags: 0
@@ -1094,6 +963,7 @@ GameObject:
   m_Component:
   - component: {fileID: 781041465}
   - component: {fileID: 781041466}
+  - component: {fileID: 781041467}
   m_Layer: 0
   m_Name: _SimulationFlow
   m_TagString: Untagged
@@ -1141,6 +1011,20 @@ MonoBehaviour:
   showDebugLogs: 1
   rightControllerTransform: {fileID: 0}
   leftControllerTransform: {fileID: 0}
+--- !u!114 &781041467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781041463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85a74421d9523034983bd94b58468b24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.F3DebugOverlay
+  toggleKey: 284
+  showOverlay: 0
 --- !u!1001 &823837871
 PrefabInstance:
   m_ObjectHideFlags: 0

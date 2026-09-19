@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
+using ProjectName.Rover;
+
 /// <summary>
 /// Runtime importer & physics setup for the Clearpath Husky A200.
 /// 
@@ -8,11 +10,14 @@ using System.Collections;
 /// 1. Spawn the Husky prefab
 /// 2. Make the true root movable + gravity ON (prevents floating)
 /// 3. Configure the 4 continuous wheels for velocity control
-/// 4. Provide SetWheelSpeeds() for the controller
+/// 4. Register with ActiveRoverContext and attach RoverTelemetry
+/// 5. Provide SetWheelSpeeds() for the controller
 /// </summary>
 public class RoverImporter_husky : MonoBehaviour
 {
-    [Header("Prefab")]
+    [Header("Profile & Prefab")]
+    public RoverProfile profile;
+
     [Tooltip("Drag the imported Husky prefab here (after URDF import)")]
     public GameObject roverPrefab;
 
@@ -35,15 +40,23 @@ public class RoverImporter_husky : MonoBehaviour
     private ArticulationBody rearLeftWheel;
     private ArticulationBody rearRightWheel;
 
-    // void Start()
-    // {
-    //     SpawnRover();
-    // }
-
     public GameObject SpawnRover()
     {
         if (currentRoverObject != null)
+        {
+            ActiveRoverContext.Unregister();
             Destroy(currentRoverObject);
+        }
+
+        if (profile == null)
+        {
+            profile = Resources.Load<RoverProfile>("RoverProfiles/HuskyProfile");
+        }
+
+        if (roverPrefab == null && profile != null)
+        {
+            roverPrefab = profile.prefab;
+        }
 
         if (roverPrefab == null)
         {
@@ -89,12 +102,12 @@ public class RoverImporter_husky : MonoBehaviour
         }
 
         // Wait a few physics frames so Unity finishes building the articulation tree
-        StartCoroutine(SetupAfterPhysicsFrame(currentRoverObject));
+        StartCoroutine(SetupAfterPhysicsFrame(currentRoverObject, trueRoot));
 
         return currentRoverObject;
     }
 
-    private IEnumerator SetupAfterPhysicsFrame(GameObject rover)
+    private IEnumerator SetupAfterPhysicsFrame(GameObject rover, ArticulationBody trueRoot)
     {
         yield return new WaitForFixedUpdate();
         yield return new WaitForFixedUpdate();
@@ -110,6 +123,31 @@ public class RoverImporter_husky : MonoBehaviour
             Debug.Log("[Husky] All 4 wheels configured for velocity control");
         else
             Debug.LogError("[Husky] One or more wheels not found! Check link names.");
+
+        // Rule R2: Register into ActiveRoverContext
+        var handle = new RoverHandle
+        {
+            rootGameObject = rover,
+            rootBody = trueRoot,
+            profile = profile,
+            wheelBodies = new ArticulationBody[] { frontLeftWheel, frontRightWheel, rearLeftWheel, rearRightWheel },
+            wheelDefs = profile != null ? profile.wheels : null,
+            isFrozen = false
+        };
+
+        var telemetry = rover.AddComponent<RoverTelemetry>();
+        telemetry.Initialize(handle);
+        handle.telemetry = telemetry;
+
+        ActiveRoverContext.Register(handle);
+    }
+
+    private void OnDestroy()
+    {
+        if (currentRoverObject != null)
+        {
+            ActiveRoverContext.Unregister();
+        }
     }
 
     // -------------------------------------------------

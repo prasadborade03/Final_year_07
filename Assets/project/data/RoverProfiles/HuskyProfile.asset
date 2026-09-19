@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dd61a31cc45434429537e9e270f4073, type: 3}
+  m_Name: HuskyProfile
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverProfile
+  id: husky
+  displayName: Clearpath Husky A200
+  steeringLabel: SKID-STEER 4WD
+  prefab: {fileID: 1015257308883720614, guid: 93444881b7464864899a10b62a7f1cbb, type: 3}
+  wheelRadius: 0.165
+  wheels:
+  - linkName: front_left_wheel_link
+    displayName: FL
+    isSteered: 0
+  - linkName: front_right_wheel_link
+    displayName: FR
+    isSteered: 0
+  - linkName: rear_left_wheel_link
+    displayName: RL
+    isSteered: 0
+  - linkName: rear_right_wheel_link
+    displayName: RR
+    isSteered: 0
+  maxSpeed: 1
+  spawnClearance: 0.35
+  maxSafeSlopeDeg: 30
+  slipGoodThreshold: 0.15
+  slipFairThreshold: 0.4
+  batteryWh: 1200
+  driveModes: []
+  cameraOffsets: []

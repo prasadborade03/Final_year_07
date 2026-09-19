@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
+using ProjectName.Rover;
 
 public class SimulationFlowController : MonoBehaviour
 {
@@ -179,21 +180,16 @@ public class SimulationFlowController : MonoBehaviour
         }
 
         activeSpawnedRover = pendingRobot;
-        var telem = pendingRobot.GetComponent<ProjectName.Rover.RoverTelemetryProvider>();
-        if (telem == null) telem = pendingRobot.AddComponent<ProjectName.Rover.RoverTelemetryProvider>();
 
-        var sync = pendingRobot.GetComponent<ProjectName.Rover.RoverPositionSync>();
-        if (sync == null) sync = pendingRobot.AddComponent<ProjectName.Rover.RoverPositionSync>();
-
-        var terrain = Terrain.activeTerrain ?? FindAnyObjectByType<Terrain>();
+        var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
         if (terrain != null)
         {
             Vector3 tPos = terrain.transform.position;
             Vector3 tSize = terrain.terrainData.size;
             Vector3 spawnPos = new Vector3(tPos.x + tSize.x * 0.5f, 0f, tPos.z + tSize.z * 0.5f);
-            spawnPos.y = terrain.SampleHeight(spawnPos) + tPos.y + sync.surfaceOffset;
+            spawnPos.y = terrain.SampleHeight(spawnPos) + tPos.y + 0.35f;
 
-            sync.TeleportTo(spawnPos, Quaternion.identity);
+            TeleportRover(pendingRobot, spawnPos);
             SetRoverFrozen(pendingRobot, false);
 
             if (selectedRobot == "husky" && huskyController != null)
@@ -204,14 +200,14 @@ public class SimulationFlowController : MonoBehaviour
                 m2020Controller.enabled = true;
 
             SetState(State.ActiveDriving);
-            SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD / Arrows. Shift+Click on terrain to relocate.");
+            SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD / Arrows.");
             Log($"{selectedRobot} spawned and placed on terrain at {spawnPos}. Active driving enabled.");
             pendingRobot = null;
         }
         else
         {
             SetRoverFrozen(pendingRobot, true);
-            sync.TeleportTo(new Vector3(0f, 2f, 0f), Quaternion.identity);
+            TeleportRover(pendingRobot, new Vector3(0f, 2f, 0f));
             SetState(State.WaitingForClickToPlace);
             SetGuideText($"Generate terrain and click on the surface to place the {selectedRobot.ToUpper()}.");
             Log($"{selectedRobot} spawned. Waiting for terrain and click to place.");
@@ -254,7 +250,7 @@ public class SimulationFlowController : MonoBehaviour
             lastHitPoint = hit.point;
             hasLastHit = true;
 
-            if (hit.collider.GetComponent<Terrain>() != null || hit.collider.CompareTag("Terrain"))
+            if (hit.collider.GetComponent<UnityEngine.Terrain>() != null || hit.collider.CompareTag("Terrain"))
             {
                 Vector3 placementPoint = hit.point + Vector3.up * placementYOffset;
                 TeleportRover(pendingRobot, placementPoint);
@@ -348,7 +344,7 @@ public class SimulationFlowController : MonoBehaviour
         if (m2020Controller != null) m2020Controller.enabled = false;
     }
 
-    public GameObject ActiveRover => activeSpawnedRover;
+    public GameObject ActiveRover => ActiveRoverContext.HasActiveRover ? ActiveRoverContext.Current.gameObject : activeSpawnedRover;
 
     public void ToggleRelocateMode()
     {
@@ -359,15 +355,10 @@ public class SimulationFlowController : MonoBehaviour
         }
         else
         {
-            if (activeSpawnedRover == null)
+            GameObject rover = ActiveRover;
+            if (rover != null)
             {
-                var sync = FindAnyObjectByType<ProjectName.Rover.RoverPositionSync>();
-                if (sync != null) activeSpawnedRover = sync.gameObject;
-            }
-
-            if (activeSpawnedRover != null)
-            {
-                pendingRobot = activeSpawnedRover;
+                pendingRobot = rover;
                 SetRoverFrozen(pendingRobot, true);
                 SetState(State.WaitingForClickToPlace);
                 SetGuideText("Relocate mode active. Click anywhere on the terrain to relocate.");
@@ -381,18 +372,19 @@ public class SimulationFlowController : MonoBehaviour
 
     public void CenterActiveRoverOnTerrain()
     {
-        if (activeSpawnedRover == null)
+        GameObject rover = ActiveRover;
+        if (rover != null)
         {
-            var sync = FindAnyObjectByType<ProjectName.Rover.RoverPositionSync>();
-            if (sync != null) activeSpawnedRover = sync.gameObject;
-        }
-
-        if (activeSpawnedRover != null)
-        {
-            var sync = activeSpawnedRover.GetComponent<ProjectName.Rover.RoverPositionSync>();
-            if (sync == null) sync = activeSpawnedRover.AddComponent<ProjectName.Rover.RoverPositionSync>();
-            sync.CenterOnTerrain();
-            SetGuideText("Rover centered on terrain.");
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            if (terrain != null)
+            {
+                Vector3 tPos = terrain.transform.position;
+                Vector3 tSize = terrain.terrainData.size;
+                Vector3 spawnPos = new Vector3(tPos.x + tSize.x * 0.5f, 0f, tPos.z + tSize.z * 0.5f);
+                spawnPos.y = terrain.SampleHeight(spawnPos) + tPos.y + 0.35f;
+                TeleportRover(rover, spawnPos);
+                SetGuideText("Rover centered on terrain.");
+            }
         }
         else
         {
@@ -402,14 +394,39 @@ public class SimulationFlowController : MonoBehaviour
 
     public void RespawnActiveRover()
     {
-        if (!string.IsNullOrEmpty(selectedRobot))
+        if (ActiveRoverContext.HasActiveRover)
+        {
+            var handle = ActiveRoverContext.Current;
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            Vector3 spawnPos = Vector3.up * 2f;
+            if (terrain != null)
+            {
+                Vector3 tPos = terrain.transform.position;
+                Vector3 tSize = terrain.terrainData.size;
+                spawnPos = new Vector3(tPos.x + tSize.x * 0.5f, 0f, tPos.z + tSize.z * 0.5f);
+                spawnPos.y = terrain.SampleHeight(spawnPos) + tPos.y + (handle.profile != null ? handle.profile.wheelRadius + 0.15f : 0.35f);
+            }
+
+            if (handle.rootBody != null)
+            {
+                handle.rootBody.TeleportRoot(spawnPos, Quaternion.identity);
+                handle.rootBody.linearVelocity = Vector3.zero;
+                handle.rootBody.angularVelocity = Vector3.zero;
+            }
+            else if (handle.gameObject != null)
+            {
+                TeleportRover(handle.gameObject, spawnPos);
+            }
+
+            if (handle.telemetry != null)
+            {
+                handle.telemetry.ResetMissionTimeAndOdometer();
+            }
+            Log($"Active rover '{handle.roverId}' respawned at {spawnPos}. Telemetry reset.");
+        }
+        else if (!string.IsNullOrEmpty(selectedRobot))
         {
             StartPlacementMode();
-        }
-        else if (activeSpawnedRover != null)
-        {
-            var sync = activeSpawnedRover.GetComponent<ProjectName.Rover.RoverPositionSync>();
-            if (sync != null) sync.SnapToTerrainSurface();
         }
     }
 

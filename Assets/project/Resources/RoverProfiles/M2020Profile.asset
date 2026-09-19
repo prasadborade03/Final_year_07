@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dd61a31cc45434429537e9e270f4073, type: 3}
+  m_Name: M2020Profile
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverProfile
+  id: m2020
+  displayName: NASA Perseverance M2020
+  steeringLabel: "ROCKER-BOGIE 6WD \xB7 4-WS"
+  prefab: {fileID: 382677692533115045, guid: d7d9d0d500cb17349b6647f4c7639fcc, type: 3}
+  wheelRadius: 0.26
+  wheels:
+  - linkName: Body_WheelLeftFront
+    displayName: FL
+    isSteered: 1
+  - linkName: Body_WheelRightFront
+    displayName: FR
+    isSteered: 1
+  - linkName: Body_WheelLeftMiddle
+    displayName: ML
+    isSteered: 0
+  - linkName: Body_WheelRightMiddle
+    displayName: MR
+    isSteered: 0
+  - linkName: Body_WheelLeftRear
+    displayName: RL
+    isSteered: 1
+  - linkName: Body_WheelRightRear
+    displayName: RR
+    isSteered: 1
+  maxSpeed: 0.15
+  spawnClearance: 0.6
+  maxSafeSlopeDeg: 35
+  slipGoodThreshold: 0.12
+  slipFairThreshold: 0.35
+  batteryWh: 4000
+  driveModes: []
+  cameraOffsets: []

@@ -20,19 +20,34 @@ public class RoverController_husky : MonoBehaviour
     [Tooltip("Tick this if the robot drives backward when you press W")]
     public bool invertWheelMapping = false;
 
+    [Header("Overrides (Automation / Testing)")]
+    public float overrideThrottle = 0f;
+    public float overrideSteer = 0f;
+
     void Update()
     {
-        if (roverImporter == null || Keyboard.current == null)
+        if (roverImporter == null)
             return;
 
-        // 1. Read keys
-        float throttle = 0f;
-        if (Keyboard.current.wKey.isPressed) throttle += 1f;
-        if (Keyboard.current.sKey.isPressed) throttle -= 1f;
+        // 1. Read keys with fallback
+        float throttle = overrideThrottle;
+        float steer = overrideSteer;
 
-        float steer = 0f;
-        if (Keyboard.current.dKey.isPressed) steer += 1f;
-        if (Keyboard.current.aKey.isPressed) steer -= 1f;
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.wKey.isPressed) throttle += 1f;
+            if (Keyboard.current.sKey.isPressed) throttle -= 1f;
+            if (Keyboard.current.dKey.isPressed) steer += 1f;
+            if (Keyboard.current.aKey.isPressed) steer -= 1f;
+        }
+        else
+        {
+            throttle += Input.GetAxis("Vertical");
+            steer += Input.GetAxis("Horizontal");
+        }
+
+        throttle = Mathf.Clamp(throttle, -1f, 1f);
+        steer = Mathf.Clamp(steer, -1f, 1f);
 
         // 2. Classic tank / skid-steer mix
         float left  = (throttle + steer) * maxWheelSpeed;

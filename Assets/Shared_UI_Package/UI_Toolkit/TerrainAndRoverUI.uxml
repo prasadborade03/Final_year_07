@@ -221,7 +221,7 @@
                         <ui:Label text="ACTUATORS / WHEEL TRACTION" class="card-title" />
                         <ui:Label text="•••" class="card-dots" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="wheel-grid-2x2">
+                    <ui:VisualElement name="WheelContainer" class="wheel-grid-2x2">
                         <!-- FL -->
                         <ui:VisualElement class="wheel-cell">
                             <ui:VisualElement class="wheel-info-col">
