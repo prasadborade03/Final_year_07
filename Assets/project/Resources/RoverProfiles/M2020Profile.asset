@@ -42,5 +42,40 @@ MonoBehaviour:
   slipGoodThreshold: 0.12
   slipFairThreshold: 0.35
   batteryWh: 4000
-  driveModes: []
-  cameraOffsets: []
+  driveModes:
+  - label: ACKERMANN
+    kind: 2
+    value: 0
+    description: Ackermann 4-wheel curved steering
+  - label: POINT TURN
+    kind: 2
+    value: 1
+    description: Zero-radius 360-deg pivot in place
+  - label: CRAB
+    kind: 2
+    value: 2
+    description: Diagonal parallel crab translation
+  - label: TANK DRIVE
+    kind: 2
+    value: 3
+    description: Differential skid steer
+  - label: STOP
+    kind: 0
+    value: -1
+    description: Full stop / handbrake
+  cameraOffsets:
+  - perspectiveName: Rear
+    positionOffset: {x: 0, y: 2.8, z: -6.8}
+    lookAtOffset: {x: 0, y: 0.6, z: 0}
+  - perspectiveName: Front
+    positionOffset: {x: 0, y: 2, z: 6.8}
+    lookAtOffset: {x: 0, y: 0.6, z: 0}
+  - perspectiveName: Left
+    positionOffset: {x: -6.8, y: 2.8, z: 0}
+    lookAtOffset: {x: 0, y: 0.6, z: 0}
+  - perspectiveName: Right
+    positionOffset: {x: 6.8, y: 2.8, z: 0}
+    lookAtOffset: {x: 0, y: 0.6, z: 0}
+  - perspectiveName: Top
+    positionOffset: {x: 0, y: 10.8, z: 0}
+    lookAtOffset: {x: 0, y: 0.6, z: 0}

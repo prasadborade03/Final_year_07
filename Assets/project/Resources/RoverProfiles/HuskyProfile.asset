@@ -36,5 +36,36 @@ MonoBehaviour:
   slipGoodThreshold: 0.15
   slipFairThreshold: 0.4
   batteryWh: 1200
-  driveModes: []
-  cameraOffsets: []
+  driveModes:
+  - label: STOP
+    kind: 0
+    value: 0
+    description: Full stop / handbrake
+  - label: PRECISION
+    kind: 0
+    value: 100
+    description: Fine-tuned rock crawling
+  - label: EXPLORE
+    kind: 0
+    value: 240
+    description: Fast exploration speed
+  - label: CRUISE
+    kind: 0
+    value: 400
+    description: Standard 4WD cruise speed
+  cameraOffsets:
+  - perspectiveName: Rear
+    positionOffset: {x: 0, y: 1.6, z: -3.6}
+    lookAtOffset: {x: 0, y: 0.4, z: 0}
+  - perspectiveName: Front
+    positionOffset: {x: 0, y: 1.1, z: 3.6}
+    lookAtOffset: {x: 0, y: 0.4, z: 0}
+  - perspectiveName: Left
+    positionOffset: {x: -3.6, y: 1.6, z: 0}
+    lookAtOffset: {x: 0, y: 0.4, z: 0}
+  - perspectiveName: Right
+    positionOffset: {x: 3.6, y: 1.6, z: 0}
+    lookAtOffset: {x: 0, y: 0.4, z: 0}
+  - perspectiveName: Top
+    positionOffset: {x: 0, y: 5.8, z: 0}
+    lookAtOffset: {x: 0, y: 0.4, z: 0}

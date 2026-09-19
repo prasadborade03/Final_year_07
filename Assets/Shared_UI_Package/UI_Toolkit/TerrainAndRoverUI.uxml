@@ -336,8 +336,8 @@
         <!-- Bottom Control Bar -->
         <ui:VisualElement class="studio-bottom-bar hud-interactive">
             <!-- Drive Modes Group -->
-            <ui:VisualElement class="bottom-group">
-                <ui:Label text="DRIVE MODE" class="bottom-label" />
+            <ui:VisualElement name="GroupDriveModes" class="bottom-group">
+                <ui:Label name="LblDriveGroup" text="DRIVE MODE" class="bottom-label" />
                 <ui:Button name="BtnModeStop" text="STOP" class="mode-pill" tooltip="Full stop / handbrake" />
                 <ui:Button name="BtnModeCruise" text="CRUISE" class="mode-pill mode-pill-active" tooltip="Standard 4WD cruise speed" />
                 <ui:Button name="BtnModeExplore" text="EXPLORE" class="mode-pill" tooltip="Fast exploration speed" />
@@ -347,8 +347,8 @@
             <!-- Camera Perspectives Group -->
             <ui:VisualElement class="bottom-group">
                 <ui:Label text="CAMERA" class="bottom-label" />
-                <ui:Button name="BtnCamFront" text="● FRONT" class="mode-pill mode-pill-active" tooltip="Front rover view" />
-                <ui:Button name="BtnCamRear" text="REAR" class="mode-pill" tooltip="Rear chase view" />
+                <ui:Button name="BtnCamFront" text="FRONT" class="mode-pill" tooltip="Front rover view" />
+                <ui:Button name="BtnCamRear" text="● REAR" class="mode-pill mode-pill-active" tooltip="Rear chase view" />
                 <ui:Button name="BtnCamLeft" text="LEFT" class="mode-pill" tooltip="Left flank view" />
                 <ui:Button name="BtnCamRight" text="RIGHT" class="mode-pill" tooltip="Right flank view" />
                 <ui:Button name="BtnCamTop" text="TOP" class="mode-pill" tooltip="Top-down satellite view" />
@@ -356,7 +356,7 @@
 
             <!-- Controls Helper & View Toggle -->
             <ui:VisualElement class="bottom-group-right">
-                <ui:Label text="[W,A,S,D] Drive | [V] Cam | [P] Planet" class="hud-helper-hint" />
+                <ui:Label name="LblHelperHint" text="[W,A,S,D] Drive | [V] Cam Presets | [Tab] HUD Toggle" class="hud-helper-hint" />
                 <ui:Button name="BtnToggleHUD" text="VIEW [Tab]" class="hud-toggle-pill" tooltip="Toggle between Driving HUD and Full Studio [Tab]" />
             </ui:VisualElement>
         </ui:VisualElement>

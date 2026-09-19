@@ -1,11 +1,15 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+#endif
 
 /// <summary>
-/// Simple keyboard controller for the Deep Robotics M20.
+/// Production controller for Deep Robotics M20 Wheeled Quadruped.
 /// 
-/// W/A/S/D  = drive the 4 wheels (tank / skid-steer mix)
-/// Q / E    = raise / lower all knees
+/// Controls:
+/// W/A/S/D: Drive 4 wheels (skid-steer mix)
+/// Q / E: Raise / lower all 4 knees
+/// 1 / 2 / 3 / 4: Drive Mode presets (Stop, Precision, Explore, Cruise)
 /// </summary>
 public class RoverController_m20 : MonoBehaviour
 {
@@ -13,8 +17,14 @@ public class RoverController_m20 : MonoBehaviour
     [Tooltip("Drag the RoverImporter_m20 component here")]
     public RoverImporter_m20 roverImporter;
 
-    [Header("Wheel Drive")]
-    [Tooltip("Wheel speed in rad/s (or deg/s depending on your Articulation setup)")]
+    [Header("Wheel Drive & Speed Regimes")]
+    [Tooltip("Current operational drive mode")]
+    public string currentDriveMode = "CRUISE";
+
+    [Tooltip("Base rated wheel speed in rad/s")]
+    public float baseWheelSpeed = 25f;
+
+    [Tooltip("Effective wheel speed in rad/s")]
     public float maxWheelSpeed = 25f;
 
     [Tooltip("Tick this if the robot drives backward when you press W")]
@@ -31,32 +41,98 @@ public class RoverController_m20 : MonoBehaviour
     public float kneeMin = -2.5f;
     public float kneeMax = 0.5f;
 
+    [Header("Input Blocking (UI Focus)")]
+    public bool isInputBlocked = false;
+
+    [Header("Overrides (Automation / Testing)")]
+    public float overrideThrottle = 0f;
+    public float overrideSteer = 0f;
+
     // Cached knee bodies (found once after the importer has spawned the robot)
     private ArticulationBody flKnee, frKnee, hlKnee, hrKnee;
     private bool kneesFound = false;
 
+    public void SetDriveMode(string mode)
+    {
+        currentDriveMode = mode.ToUpperInvariant();
+        switch (currentDriveMode)
+        {
+            case "STOP":
+                maxWheelSpeed = 0f;
+                break;
+            case "PRECISION":
+                maxWheelSpeed = baseWheelSpeed * 0.25f; // 6.25 rad/s
+                break;
+            case "EXPLORE":
+                maxWheelSpeed = baseWheelSpeed * 0.60f; // 15 rad/s
+                break;
+            case "CRUISE":
+            default:
+                maxWheelSpeed = baseWheelSpeed; // 25 rad/s
+                break;
+        }
+        Debug.Log($"[M20] Drive mode set to: {currentDriveMode} (maxWheelSpeed: {maxWheelSpeed})");
+    }
+
+    public void SetSpeedLimit(float factor)
+    {
+        maxWheelSpeed = baseWheelSpeed * Mathf.Clamp01(factor);
+    }
+
     void Update()
     {
-        if (roverImporter == null || Keyboard.current == null)
+        if (roverImporter == null)
             return;
+
+        if (isInputBlocked)
+        {
+            roverImporter.SetWheelSpeeds(0f, 0f, 0f, 0f);
+            return;
+        }
+
+        // Numeric key shortcuts (1 = STOP, 2 = PRECISION, 3 = EXPLORE, 4 = CRUISE)
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.digit1Key.wasPressedThisFrame) SetDriveMode("STOP");
+            else if (Keyboard.current.digit2Key.wasPressedThisFrame) SetDriveMode("PRECISION");
+            else if (Keyboard.current.digit3Key.wasPressedThisFrame) SetDriveMode("EXPLORE");
+            else if (Keyboard.current.digit4Key.wasPressedThisFrame) SetDriveMode("CRUISE");
+        }
+#endif
+        if (Input.GetKeyDown(KeyCode.Alpha1)) SetDriveMode("STOP");
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) SetDriveMode("PRECISION");
+        else if (Input.GetKeyDown(KeyCode.Alpha3)) SetDriveMode("EXPLORE");
+        else if (Input.GetKeyDown(KeyCode.Alpha4)) SetDriveMode("CRUISE");
 
         // -------------------------------------------------
         // 1. Wheel drive (W A S D)
         // -------------------------------------------------
-        float throttle = 0f;
-        if (Keyboard.current.wKey.isPressed) throttle += 1f;
-        if (Keyboard.current.sKey.isPressed) throttle -= 1f;
+        float throttle = overrideThrottle;
+        float steer = overrideSteer;
 
-        float steer = 0f;
-        if (Keyboard.current.dKey.isPressed) steer += 1f;
-        if (Keyboard.current.aKey.isPressed) steer -= 1f;
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) throttle += 1f;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) throttle -= 1f;
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) steer += 1f;
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) steer -= 1f;
+        }
+        else
+#endif
+        {
+            throttle += Input.GetAxis("Vertical");
+            steer += Input.GetAxis("Horizontal");
+        }
+
+        throttle = Mathf.Clamp(throttle, -1f, 1f);
+        steer = Mathf.Clamp(steer, -1f, 1f);
 
         // Classic tank / skid-steer mix for 4 wheels
         float left  = (throttle + steer) * maxWheelSpeed;
         float right = (throttle - steer) * maxWheelSpeed;
 
-        // All four wheel axes in the URDF are the same direction (0 -1 0),
-        // so we can send the same left/right values to front and rear.
         if (!invertWheelMapping)
             roverImporter.SetWheelSpeeds(left, right, left, right);   // FL, FR, HL, HR
         else
@@ -72,15 +148,33 @@ public class RoverController_m20 : MonoBehaviour
         {
             bool changed = false;
 
-            if (Keyboard.current.qKey.isPressed)
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null)
             {
-                kneeTarget += kneeMoveSpeed * Time.deltaTime;
-                changed = true;
+                if (Keyboard.current.qKey.isPressed)
+                {
+                    kneeTarget += kneeMoveSpeed * Time.deltaTime;
+                    changed = true;
+                }
+                if (Keyboard.current.eKey.isPressed)
+                {
+                    kneeTarget -= kneeMoveSpeed * Time.deltaTime;
+                    changed = true;
+                }
             }
-            if (Keyboard.current.eKey.isPressed)
+            else
+#endif
             {
-                kneeTarget -= kneeMoveSpeed * Time.deltaTime;
-                changed = true;
+                if (Input.GetKey(KeyCode.Q))
+                {
+                    kneeTarget += kneeMoveSpeed * Time.deltaTime;
+                    changed = true;
+                }
+                if (Input.GetKey(KeyCode.E))
+                {
+                    kneeTarget -= kneeMoveSpeed * Time.deltaTime;
+                    changed = true;
+                }
             }
 
             if (changed)
@@ -96,9 +190,6 @@ public class RoverController_m20 : MonoBehaviour
     // -------------------------------------------------
     private void TryCacheKnees()
     {
-        // The robot is spawned by the importer, so we search from the scene root
-        // or from the importer's generated object if you expose it later.
-        // For simplicity we search the whole scene for the named links.
         flKnee = FindBody("fl_knee");
         frKnee = FindBody("fr_knee");
         hlKnee = FindBody("hl_knee");
@@ -113,7 +204,6 @@ public class RoverController_m20 : MonoBehaviour
 
     private ArticulationBody FindBody(string linkName)
     {
-        // Search under every ArticulationBody in the scene (safe for one robot)
         var bodies = FindObjectsByType<ArticulationBody>(FindObjectsSortMode.None);
         foreach (var b in bodies)
         {
@@ -136,7 +226,6 @@ public class RoverController_m20 : MonoBehaviour
         if (body == null) return;
 
         ArticulationDrive drive = body.xDrive;
-        // Keep high stiffness so the knee holds the new angle
         drive.stiffness = 2000f;
         drive.damping = 200f;
         drive.forceLimit = 200f;

@@ -112,8 +112,12 @@ namespace ProjectName.Terrain
         private Label valEnvGravity, valEnvTemp, valEnvPress, valEnvDust;
 
         // Bottom Bar: Modes & Perspectives
+        private VisualElement groupDriveModes;
+        private Label lblDriveGroup;
+        private Label lblHelperHint;
         private Button btnModeStop, btnModeCruise, btnModeExplore, btnModePrecision;
         private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop;
+        private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Rear;
 
         private void Awake()
         {
@@ -133,14 +137,19 @@ namespace ProjectName.Terrain
         {
             ActiveRoverContext.OnRoverActivated += HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
+            RoverCameraRig.OnPerspectiveChanged += HandleRigPerspectiveChanged;
 
             BindUIElements();
             RefreshPreview();
             UpdatePresetButtonsUI();
             UpdateRoverSelectionUI();
-            UpdateDriveModeUI();
-            UpdateCameraButtonsUI();
             SetDrivingHudMode(false); // Default to Studio view on open, user can switch to Driving HUD with [Tab]
+
+            if (RoverCameraRig.Instance != null)
+            {
+                currentCamPerspective = RoverCameraRig.Instance.currentPerspective;
+            }
+            UpdateCameraButtonsUI();
 
             if (ActiveRoverContext.HasActiveRover)
             {
@@ -149,6 +158,7 @@ namespace ProjectName.Terrain
             else
             {
                 SetTelemetryStandbyState();
+                ConfigureDriveBarForStandby();
             }
         }
 
@@ -273,16 +283,21 @@ namespace ProjectName.Terrain
             valEnvPress = root.Q<Label>("ValEnvPress");
             valEnvDust = root.Q<Label>("ValEnvDust");
 
+            // Bottom Bar: Labels & Groups
+            groupDriveModes = root.Q<VisualElement>("GroupDriveModes");
+            lblDriveGroup = root.Q<Label>("LblDriveGroup");
+            lblHelperHint = root.Q<Label>("LblHelperHint");
+
             // Bottom Bar: Modes
             btnModeStop = root.Q<Button>("BtnModeStop");
             btnModeCruise = root.Q<Button>("BtnModeCruise");
             btnModeExplore = root.Q<Button>("BtnModeExplore");
             btnModePrecision = root.Q<Button>("BtnModePrecision");
 
-            if (btnModeStop != null) btnModeStop.clicked += () => SetDriveMode("STOP");
-            if (btnModeCruise != null) btnModeCruise.clicked += () => SetDriveMode("CRUISE");
-            if (btnModeExplore != null) btnModeExplore.clicked += () => SetDriveMode("EXPLORE");
-            if (btnModePrecision != null) btnModePrecision.clicked += () => SetDriveMode("PRECISION");
+            if (btnModeStop != null) btnModeStop.clicked += () => OnDriveButtonClicked(0);
+            if (btnModeCruise != null) btnModeCruise.clicked += () => OnDriveButtonClicked(1);
+            if (btnModeExplore != null) btnModeExplore.clicked += () => OnDriveButtonClicked(2);
+            if (btnModePrecision != null) btnModePrecision.clicked += () => OnDriveButtonClicked(3);
 
             // Bottom Bar: Camera Perspectives
             btnCamFront = root.Q<Button>("BtnCamFront");
@@ -291,15 +306,35 @@ namespace ProjectName.Terrain
             btnCamRight = root.Q<Button>("BtnCamRight");
             btnCamTop = root.Q<Button>("BtnCamTop");
 
-            if (btnCamFront != null) btnCamFront.clicked += () => SetCameraPerspective(FreeFlyCamera.CameraPerspective.Front);
-            if (btnCamRear != null) btnCamRear.clicked += () => SetCameraPerspective(FreeFlyCamera.CameraPerspective.Rear);
-            if (btnCamLeft != null) btnCamLeft.clicked += () => SetCameraPerspective(FreeFlyCamera.CameraPerspective.Left);
-            if (btnCamRight != null) btnCamRight.clicked += () => SetCameraPerspective(FreeFlyCamera.CameraPerspective.Right);
-            if (btnCamTop != null) btnCamTop.clicked += () => SetCameraPerspective(FreeFlyCamera.CameraPerspective.Top);
+            if (btnCamFront != null) btnCamFront.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Front);
+            if (btnCamRear != null) btnCamRear.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Rear);
+            if (btnCamLeft != null) btnCamLeft.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Left);
+            if (btnCamRight != null) btnCamRight.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Right);
+            if (btnCamTop != null) btnCamTop.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Top);
         }
 
         private void Update()
         {
+            // Input blocking guard: If typing in UI, block driving inputs on active rover
+            bool isTypingInUI = uiDocument != null && uiDocument.rootVisualElement != null &&
+                                uiDocument.rootVisualElement.focusController != null &&
+                                uiDocument.rootVisualElement.focusController.focusedElement != null &&
+                                (uiDocument.rootVisualElement.focusController.focusedElement.GetType().Name.Contains("Text") ||
+                                 uiDocument.rootVisualElement.focusController.focusedElement.GetType().Name.Contains("Input"));
+
+            if (ActiveRoverContext.HasActiveRover)
+            {
+                var handle = ActiveRoverContext.Current;
+                var h = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_husky>() : null) ?? FindAnyObjectByType<RoverController_husky>();
+                if (h != null) h.isInputBlocked = isTypingInUI;
+
+                var m = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m20>() : null) ?? FindAnyObjectByType<RoverController_m20>();
+                if (m != null) m.isInputBlocked = isTypingInUI;
+
+                var m20 = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m2020>() : null) ?? FindAnyObjectByType<RoverController_m2020>();
+                if (m20 != null) m20.isInputBlocked = isTypingInUI;
+            }
+
             // [Tab] switches between Driving HUD and Full Studio view
             if (Input.GetKeyDown(KeyCode.Tab))
             {
@@ -321,6 +356,7 @@ namespace ProjectName.Terrain
                 uiUpdateTimer = 0f;
                 UpdateLiveTelemetryUI();
                 UpdatePlanetaryEnvironmentUI();
+                UpdateDriveModeUI();
             }
         }
 
@@ -389,6 +425,7 @@ namespace ProjectName.Terrain
             }
 
             RebuildWheelUI(handle);
+            ConfigureDriveBarForRover(handle.profile);
             UpdateLiveTelemetryUI();
         }
 
@@ -397,6 +434,7 @@ namespace ProjectName.Terrain
             activeRoverId = "";
             UpdateRoverSelectionUI();
             SetTelemetryStandbyState();
+            ConfigureDriveBarForStandby();
         }
 
         private void SetTelemetryStandbyState()
@@ -723,96 +761,192 @@ namespace ProjectName.Terrain
         }
 
         // -------------------------------------------------------------
-        // Drive Modes & Camera Controls
+        // Rover-Aware Drive Modes & Camera Controls
         // -------------------------------------------------------------
+        private void OnDriveButtonClicked(int index)
+        {
+            if (!ActiveRoverContext.HasActiveRover) return;
+
+            var handle = ActiveRoverContext.Current;
+            if (handle.profile != null && handle.profile.id == "m2020")
+            {
+                var m2020 = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m2020>() : null) ?? FindAnyObjectByType<RoverController_m2020>();
+                if (m2020 != null)
+                {
+                    switch (index)
+                    {
+                        case 0: m2020.SetSteeringMode(RoverController_m2020.DriveMode.Ackermann); break;
+                        case 1: m2020.SetSteeringMode(RoverController_m2020.DriveMode.PointTurn); break;
+                        case 2: m2020.SetSteeringMode(RoverController_m2020.DriveMode.Crab); break;
+                        case 3: m2020.SetSteeringMode(RoverController_m2020.DriveMode.TankDrive); break;
+                    }
+                }
+                UpdateDriveModeUI();
+            }
+            else
+            {
+                switch (index)
+                {
+                    case 0: SetDriveMode("STOP"); break;
+                    case 1: SetDriveMode("CRUISE"); break;
+                    case 2: SetDriveMode("EXPLORE"); break;
+                    case 3: SetDriveMode("PRECISION"); break;
+                }
+            }
+        }
+
         public void SetDriveMode(string mode)
         {
             currentDriveMode = mode.ToUpperInvariant();
+
+            if (ActiveRoverContext.HasActiveRover)
+            {
+                var handle = ActiveRoverContext.Current;
+                var husky = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_husky>() : null) ?? FindAnyObjectByType<RoverController_husky>();
+                if (husky != null) husky.SetDriveMode(currentDriveMode);
+
+                var m20 = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m20>() : null) ?? FindAnyObjectByType<RoverController_m20>();
+                if (m20 != null) m20.SetDriveMode(currentDriveMode);
+
+                var m2020 = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m2020>() : null) ?? FindAnyObjectByType<RoverController_m2020>();
+                if (m2020 != null) m20.SetDriveMode(currentDriveMode);
+            }
+
             UpdateDriveModeUI();
-
-            var husky = FindAnyObjectByType<HuskyController>();
-            if (husky != null)
-            {
-                switch (currentDriveMode)
-                {
-                    case "STOP": husky.maxWheelSpeed = 0f; break;
-                    case "CRUISE": husky.maxWheelSpeed = 400f; break;
-                    case "EXPLORE": husky.maxWheelSpeed = 650f; break;
-                    case "PRECISION": husky.maxWheelSpeed = 160f; break;
-                }
-            }
-
-            var huskyOld = FindAnyObjectByType<RoverController_husky>();
-            if (huskyOld != null)
-            {
-                switch (currentDriveMode)
-                {
-                    case "STOP": huskyOld.maxWheelSpeed = 0f; break;
-                    case "CRUISE": huskyOld.maxWheelSpeed = 400f; break;
-                    case "EXPLORE": huskyOld.maxWheelSpeed = 650f; break;
-                    case "PRECISION": huskyOld.maxWheelSpeed = 160f; break;
-                }
-            }
-
-            var m20 = FindAnyObjectByType<RoverController_m20>();
-            if (m20 != null)
-            {
-                switch (currentDriveMode)
-                {
-                    case "STOP": m20.maxWheelSpeed = 0f; break;
-                    case "CRUISE": m20.maxWheelSpeed = 25f; break;
-                    case "EXPLORE": m20.maxWheelSpeed = 45f; break;
-                    case "PRECISION": m20.maxWheelSpeed = 10f; break;
-                }
-            }
-
-            var m2020 = FindAnyObjectByType<RoverController_m2020>();
-            if (m2020 != null)
-            {
-                switch (currentDriveMode)
-                {
-                    case "STOP": m2020.maxSpeedDegPerSec = 0f; break;
-                    case "CRUISE": m2020.maxSpeedDegPerSec = 240f; break;
-                    case "EXPLORE": m2020.maxSpeedDegPerSec = 400f; break;
-                    case "PRECISION": m2020.maxSpeedDegPerSec = 100f; break;
-                }
-            }
-
             Debug.Log($"[Studio] Rover drive mode set to: {currentDriveMode}");
+        }
+
+        private void ConfigureDriveBarForRover(RoverProfile profile)
+        {
+            if (profile == null)
+            {
+                ConfigureDriveBarForStandby();
+                return;
+            }
+
+            if (profile.id == "m2020")
+            {
+                if (lblDriveGroup != null) lblDriveGroup.text = "STEERING MODE";
+                if (btnModeStop != null) { btnModeStop.text = "ACKERMANN"; btnModeStop.tooltip = "Ackermann 4-wheel curved steering [1]"; }
+                if (btnModeCruise != null) { btnModeCruise.text = "POINT TURN"; btnModeCruise.tooltip = "Zero-radius 360-deg spin [2]"; }
+                if (btnModeExplore != null) { btnModeExplore.text = "CRAB"; btnModeExplore.tooltip = "Diagonal parallel crab translation [3]"; }
+                if (btnModePrecision != null) { btnModePrecision.text = "TANK DRIVE"; btnModePrecision.tooltip = "Differential skid steer [4]"; }
+                if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [M] Steer Mode | [Space] Clearance | [V] Cam | [Tab] HUD";
+            }
+            else
+            {
+                if (lblDriveGroup != null) lblDriveGroup.text = "DRIVE MODE";
+                if (btnModeStop != null) { btnModeStop.text = "STOP"; btnModeStop.tooltip = "Full stop / handbrake [1]"; }
+                if (btnModeCruise != null) { btnModeCruise.text = "CRUISE"; btnModeCruise.tooltip = "Standard cruise speed [4]"; }
+                if (btnModeExplore != null) { btnModeExplore.text = "EXPLORE"; btnModeExplore.tooltip = "Fast exploration speed [3]"; }
+                if (btnModePrecision != null) { btnModePrecision.text = "PRECISION"; btnModePrecision.tooltip = "Fine-tuned rock crawling [2]"; }
+
+                if (profile.id == "m20")
+                {
+                    if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [Q,E] Knees | [1..4] Speed | [V] Cam | [Tab] HUD";
+                }
+                else
+                {
+                    if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [1..4] Speed | [V] Cam Presets | [Tab] HUD Toggle";
+                }
+            }
+
+            UpdateDriveModeUI();
+        }
+
+        private void ConfigureDriveBarForStandby()
+        {
+            if (lblDriveGroup != null) lblDriveGroup.text = "DRIVE MODE";
+            if (btnModeStop != null) { btnModeStop.text = "STOP"; btnModeStop.tooltip = "Full stop"; }
+            if (btnModeCruise != null) { btnModeCruise.text = "CRUISE"; btnModeCruise.tooltip = "Standard speed"; }
+            if (btnModeExplore != null) { btnModeExplore.text = "EXPLORE"; btnModeExplore.tooltip = "Exploration speed"; }
+            if (btnModePrecision != null) { btnModePrecision.text = "PRECISION"; btnModePrecision.tooltip = "Precision speed"; }
+
+            SetBtnClass(btnModeStop, "mode-pill-active", false);
+            SetBtnClass(btnModeCruise, "mode-pill-active", false);
+            SetBtnClass(btnModeExplore, "mode-pill-active", false);
+            SetBtnClass(btnModePrecision, "mode-pill-active", false);
+
+            if (lblHelperHint != null) lblHelperHint.text = "[Deploy a Rover from the sidebar to drive]";
         }
 
         private void UpdateDriveModeUI()
         {
-            SetBtnClass(btnModeStop, "mode-pill-active", currentDriveMode == "STOP");
-            SetBtnClass(btnModeCruise, "mode-pill-active", currentDriveMode == "CRUISE");
-            SetBtnClass(btnModeExplore, "mode-pill-active", currentDriveMode == "EXPLORE");
-            SetBtnClass(btnModePrecision, "mode-pill-active", currentDriveMode == "PRECISION");
+            if (!ActiveRoverContext.HasActiveRover)
+            {
+                ConfigureDriveBarForStandby();
+                return;
+            }
+
+            var handle = ActiveRoverContext.Current;
+            if (handle.profile != null && handle.profile.id == "m2020")
+            {
+                var m2020 = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m2020>() : null) ?? FindAnyObjectByType<RoverController_m2020>();
+                var mode = m2020 != null ? m2020.driveMode : RoverController_m2020.DriveMode.Ackermann;
+
+                SetBtnClass(btnModeStop, "mode-pill-active", mode == RoverController_m2020.DriveMode.Ackermann);
+                SetBtnClass(btnModeCruise, "mode-pill-active", mode == RoverController_m2020.DriveMode.PointTurn);
+                SetBtnClass(btnModeExplore, "mode-pill-active", mode == RoverController_m2020.DriveMode.Crab);
+                SetBtnClass(btnModePrecision, "mode-pill-active", mode == RoverController_m2020.DriveMode.TankDrive);
+            }
+            else
+            {
+                var h = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_husky>() : null) ?? FindAnyObjectByType<RoverController_husky>();
+                var m = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m20>() : null) ?? FindAnyObjectByType<RoverController_m20>();
+                string activeMode = h != null ? h.currentDriveMode : (m != null ? m.currentDriveMode : currentDriveMode);
+
+                SetBtnClass(btnModeStop, "mode-pill-active", activeMode == "STOP");
+                SetBtnClass(btnModeCruise, "mode-pill-active", activeMode == "CRUISE");
+                SetBtnClass(btnModeExplore, "mode-pill-active", activeMode == "EXPLORE");
+                SetBtnClass(btnModePrecision, "mode-pill-active", activeMode == "PRECISION");
+            }
+        }
+
+        private void HandleRigPerspectiveChanged(RoverCameraRig.Perspective p)
+        {
+            currentCamPerspective = p;
+            UpdateCameraButtonsUI();
+        }
+
+        public void SetCameraPerspective(RoverCameraRig.Perspective view)
+        {
+            currentCamPerspective = view;
+            UpdateCameraButtonsUI();
+
+            if (RoverCameraRig.Instance != null)
+            {
+                RoverCameraRig.Instance.SetPerspective(view);
+            }
         }
 
         public void SetCameraPerspective(FreeFlyCamera.CameraPerspective view)
         {
-            currentCamView = view;
-            UpdateCameraButtonsUI();
-
-            if (FreeFlyCamera.Instance != null)
+            RoverCameraRig.Perspective p;
+            switch (view)
             {
-                FreeFlyCamera.Instance.SetCameraPerspective(view);
+                case FreeFlyCamera.CameraPerspective.Front: p = RoverCameraRig.Perspective.Front; break;
+                case FreeFlyCamera.CameraPerspective.Left: p = RoverCameraRig.Perspective.Left; break;
+                case FreeFlyCamera.CameraPerspective.Right: p = RoverCameraRig.Perspective.Right; break;
+                case FreeFlyCamera.CameraPerspective.Top: p = RoverCameraRig.Perspective.Top; break;
+                case FreeFlyCamera.CameraPerspective.Rear:
+                default: p = RoverCameraRig.Perspective.Rear; break;
             }
+            SetCameraPerspective(p);
         }
 
         private void UpdateCameraButtonsUI()
         {
-            SetBtnClass(btnCamFront, "mode-pill-active", currentCamView == FreeFlyCamera.CameraPerspective.Front);
-            SetBtnClass(btnCamRear, "mode-pill-active", currentCamView == FreeFlyCamera.CameraPerspective.Rear);
-            SetBtnClass(btnCamLeft, "mode-pill-active", currentCamView == FreeFlyCamera.CameraPerspective.Left);
-            SetBtnClass(btnCamRight, "mode-pill-active", currentCamView == FreeFlyCamera.CameraPerspective.Right);
-            SetBtnClass(btnCamTop, "mode-pill-active", currentCamView == FreeFlyCamera.CameraPerspective.Top);
+            SetBtnClass(btnCamFront, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Front);
+            SetBtnClass(btnCamRear, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Rear);
+            SetBtnClass(btnCamLeft, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
+            SetBtnClass(btnCamRight, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
+            SetBtnClass(btnCamTop, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
 
-            if (btnCamFront != null) btnCamFront.text = (currentCamView == FreeFlyCamera.CameraPerspective.Front) ? "● FRONT" : "FRONT";
-            if (btnCamRear != null) btnCamRear.text = (currentCamView == FreeFlyCamera.CameraPerspective.Rear) ? "● REAR" : "REAR";
-            if (btnCamLeft != null) btnCamLeft.text = (currentCamView == FreeFlyCamera.CameraPerspective.Left) ? "● LEFT" : "LEFT";
-            if (btnCamRight != null) btnCamRight.text = (currentCamView == FreeFlyCamera.CameraPerspective.Right) ? "● RIGHT" : "RIGHT";
-            if (btnCamTop != null) btnCamTop.text = (currentCamView == FreeFlyCamera.CameraPerspective.Top) ? "● TOP" : "TOP";
+            if (btnCamFront != null) btnCamFront.text = (currentCamPerspective == RoverCameraRig.Perspective.Front) ? "● FRONT" : "FRONT";
+            if (btnCamRear != null) btnCamRear.text = (currentCamPerspective == RoverCameraRig.Perspective.Rear) ? "● REAR" : "REAR";
+            if (btnCamLeft != null) btnCamLeft.text = (currentCamPerspective == RoverCameraRig.Perspective.Left) ? "● LEFT" : "LEFT";
+            if (btnCamRight != null) btnCamRight.text = (currentCamPerspective == RoverCameraRig.Perspective.Right) ? "● RIGHT" : "RIGHT";
+            if (btnCamTop != null) btnCamTop.text = (currentCamPerspective == RoverCameraRig.Perspective.Top) ? "● TOP" : "TOP";
         }
 
         // -------------------------------------------------------------
@@ -985,6 +1119,7 @@ namespace ProjectName.Terrain
         {
             ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
+            RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
 
             if (previewTexture != null)
             {

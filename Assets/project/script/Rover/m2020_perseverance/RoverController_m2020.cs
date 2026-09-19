@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -16,10 +16,10 @@ public class RoverController_m2020 : MonoBehaviour
 {
     public enum DriveMode
     {
-        Ackermann,
-        PointTurn,
-        Crab,
-        TankDrive
+        Ackermann = 0,
+        PointTurn = 1,
+        Crab = 2,
+        TankDrive = 3
     }
 
     [Header("Importer Reference")]
@@ -27,6 +27,8 @@ public class RoverController_m2020 : MonoBehaviour
 
     [Header("Control Parameters")]
     public DriveMode driveMode = DriveMode.Ackermann;
+    public string currentSpeedMode = "CRUISE";
+    public float baseSpeedDegPerSec = 240f;
     public float maxSpeedDegPerSec = 240f; // Wheel rotation velocity in deg/s
     public float maxSteerAngleDeg = 40f;   // Max steer angle in degrees
     public float inputSmoothing = 8f;      // Smooth acceleration ramps
@@ -40,6 +42,13 @@ public class RoverController_m2020 : MonoBehaviour
     public string steerAxis = "Horizontal";
     public KeyCode toggleModeKey = KeyCode.M;
     public KeyCode liftChassisKey = KeyCode.Space;
+
+    [Header("Input Blocking (UI Focus)")]
+    public bool isInputBlocked = false;
+
+    [Header("Overrides (Automation / Testing)")]
+    public float overrideThrottle = 0f;
+    public float overrideSteer = 0f;
 
     // Smoothed inputs
     private float currentThrottle = 0f;
@@ -58,10 +67,46 @@ public class RoverController_m2020 : MonoBehaviour
         }
     }
 
+    public void SetSteeringMode(DriveMode mode)
+    {
+        driveMode = mode;
+        Debug.Log($"[RoverController_m2020] Steering mode set to: {driveMode}");
+    }
+
+    public void SetDriveMode(string mode)
+    {
+        currentSpeedMode = mode.ToUpperInvariant();
+        switch (currentSpeedMode)
+        {
+            case "STOP":
+                maxSpeedDegPerSec = 0f;
+                break;
+            case "PRECISION":
+                maxSpeedDegPerSec = baseSpeedDegPerSec * 0.25f; // 60 deg/s
+                break;
+            case "EXPLORE":
+                maxSpeedDegPerSec = baseSpeedDegPerSec * 0.60f; // 144 deg/s
+                break;
+            case "CRUISE":
+            default:
+                maxSpeedDegPerSec = baseSpeedDegPerSec; // 240 deg/s
+                break;
+        }
+        Debug.Log($"[RoverController_m2020] Speed regime set to: {currentSpeedMode} (maxSpeed: {maxSpeedDegPerSec} deg/s)");
+    }
+
     void Update()
     {
-        float rawThrottle = 0f;
-        float rawSteer = 0f;
+        if (importer == null) return;
+
+        if (isInputBlocked)
+        {
+            importer.SetWheelSpeeds(0f, 0f);
+            return;
+        }
+
+        float rawThrottle = overrideThrottle;
+        float rawSteer = overrideSteer;
         bool modeToggled = false;
         bool liftToggled = false;
 
@@ -75,16 +120,27 @@ public class RoverController_m2020 : MonoBehaviour
 
             if (Keyboard.current.mKey.wasPressedThisFrame) modeToggled = true;
             if (Keyboard.current.spaceKey.wasPressedThisFrame) liftToggled = true;
+
+            // Numeric keys 1..4 select steering mode directly
+            if (Keyboard.current.digit1Key.wasPressedThisFrame) SetSteeringMode(DriveMode.Ackermann);
+            else if (Keyboard.current.digit2Key.wasPressedThisFrame) SetSteeringMode(DriveMode.PointTurn);
+            else if (Keyboard.current.digit3Key.wasPressedThisFrame) SetSteeringMode(DriveMode.Crab);
+            else if (Keyboard.current.digit4Key.wasPressedThisFrame) SetSteeringMode(DriveMode.TankDrive);
         }
         else
 #endif
         {
             try
             {
-                rawThrottle = Input.GetAxisRaw(throttleAxis);
-                rawSteer = Input.GetAxisRaw(steerAxis);
+                rawThrottle += Input.GetAxisRaw(throttleAxis);
+                rawSteer += Input.GetAxisRaw(steerAxis);
                 if (Input.GetKeyDown(toggleModeKey)) modeToggled = true;
                 if (Input.GetKeyDown(liftChassisKey)) liftToggled = true;
+
+                if (Input.GetKeyDown(KeyCode.Alpha1)) SetSteeringMode(DriveMode.Ackermann);
+                else if (Input.GetKeyDown(KeyCode.Alpha2)) SetSteeringMode(DriveMode.PointTurn);
+                else if (Input.GetKeyDown(KeyCode.Alpha3)) SetSteeringMode(DriveMode.Crab);
+                else if (Input.GetKeyDown(KeyCode.Alpha4)) SetSteeringMode(DriveMode.TankDrive);
             }
             catch
             {
@@ -92,14 +148,14 @@ public class RoverController_m2020 : MonoBehaviour
             }
         }
 
-        // Toggle Steering Mode with key press
+        // Toggle Steering Mode with key press [M]
         if (modeToggled)
         {
             driveMode = (DriveMode)(((int)driveMode + 1) % 4);
             Debug.Log($"[RoverController_m2020] Switched Drive Mode to: {driveMode}");
         }
 
-        // Lift/Lower chassis ground clearance
+        // Lift/Lower chassis ground clearance [Space]
         if (liftToggled)
         {
             isChassisLifted = !isChassisLifted;
@@ -111,8 +167,8 @@ public class RoverController_m2020 : MonoBehaviour
         }
 
         // Smooth inputs to prevent abrupt physical jerks
-        currentThrottle = Mathf.Lerp(currentThrottle, rawThrottle, Time.deltaTime * inputSmoothing);
-        currentSteering = Mathf.Lerp(currentSteering, rawSteer, Time.deltaTime * inputSmoothing);
+        currentThrottle = Mathf.Lerp(currentThrottle, Mathf.Clamp(rawThrottle, -1f, 1f), Time.deltaTime * inputSmoothing);
+        currentSteering = Mathf.Lerp(currentSteering, Mathf.Clamp(rawSteer, -1f, 1f), Time.deltaTime * inputSmoothing);
 
         ProcessDriveAndSteer();
     }
