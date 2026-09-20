@@ -212,6 +212,12 @@ namespace ProjectName.Terrain
         {
             try
             {
+                // Single Writer Rule R3: Do not overwrite lighting if a planetary profile is active
+                if (ProjectName.Planetary.PlanetEnvironmentController.Instance != null && ProjectName.Planetary.PlanetEnvironmentController.Instance.currentProfile != null)
+                {
+                    return;
+                }
+
                 if (RenderSettings.customReflectionTexture == null)
                 {
                     Cubemap hdrCubemap = null;

@@ -204,6 +204,39 @@ namespace ProjectName.Terrain
                 heights = ApplyGaussianSmoothing(heights, resolution, smoothingFactor);
             }
 
+            // Smoothly taper border edges to zero elevation to blend seamlessly with the horizon (fixes E9)
+            heights = ApplyEdgeFade(heights, resolution, 0.08f);
+
+            return heights;
+        }
+
+        /// <summary>
+        /// Smoothly eases heights to baseline zero at the extreme outer perimeter of the terrain.
+        /// Eliminates square box cliff edges on the horizon (fixes E9).
+        /// </summary>
+        public static float[,] ApplyEdgeFade(float[,] heights, int resolution, float edgeFraction = 0.08f)
+        {
+            if (heights == null || resolution <= 1 || edgeFraction <= 0f) return heights;
+
+            int edgePixels = Mathf.Max(2, Mathf.RoundToInt(resolution * edgeFraction));
+
+            for (int y = 0; y < resolution; y++)
+            {
+                int distY = Mathf.Min(y, resolution - 1 - y);
+                float fadeY = distY < edgePixels ? (float)distY / edgePixels : 1.0f;
+                fadeY = fadeY * fadeY * (3f - 2f * fadeY); // Smooth cubic easing
+
+                for (int x = 0; x < resolution; x++)
+                {
+                    int distX = Mathf.Min(x, resolution - 1 - x);
+                    float fadeX = distX < edgePixels ? (float)distX / edgePixels : 1.0f;
+                    fadeX = fadeX * fadeX * (3f - 2f * fadeX); // Smooth cubic easing
+
+                    float factor = fadeX * fadeY;
+                    heights[y, x] *= factor;
+                }
+            }
+
             return heights;
         }
 

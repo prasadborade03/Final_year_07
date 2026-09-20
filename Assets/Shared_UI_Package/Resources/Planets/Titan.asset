@@ -13,26 +13,51 @@ MonoBehaviour:
   m_Name: Titan
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryProfile
   planetName: Titan
+  displayName: Titan
   planetIcon: {fileID: 0}
-  description: 'Saturn''s Moon: Super-dense cryogenic nitrogen atmosphere, low gravity,
-    thick orange hydrocarbon haze.'
+  description: 'Titan: Saturn''s largest moon with dense nitrogen atmosphere, hydrocarbon
+    lakes, methane cycle, cryogenic temperatures.'
   isDefault: 0
+  nasaFactSheetUrl: https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturnfact.html
+  notes: 'NASA Titan Fact Sheet: Gravity 1.352 m/s2, surface temp 94 K (-179C), pressure
+    1.45 atm (146.7 kPa), dense nitrogen-methane photochemical smog.'
   gravityY: 1.35
-  terrainStaticFriction: 0.55
-  terrainDynamicFriction: 0.45
-  terrainBounciness: 0.12
-  roverDrag: 0.45
-  roverAngularDrag: 0.35
-  sunColor: {r: 0.95, g: 0.65, b: 0.35, a: 1}
-  sunIntensity: 0.35
-  ambientColor: {r: 0.25, g: 0.14, b: 0.05, a: 1}
-  ambientIntensity: 0.9
-  fogColor: {r: 0.85, g: 0.52, b: 0.22, a: 1}
-  fogDensity: 0.035
-  fogEnabled: 1
-  skyboxMaterial: {fileID: 0}
+  soilStaticFriction: 0.55
+  soilDynamicFriction: 0.4
+  soilRestitution: 0.08
+  roverDragMultiplier: 3.5
   windMain: 7
   windTurbulence: 2
   windPulseMagnitude: 1.5
+  surfaceTemperature: "\u2248 \u2212179 \xB0C"
+  pressureKPa: 146.7
+  sunlightPercentOfEarth: 1
+  hazardTitle: HAZE
+  hazardValue: Methane drizzle
+  skyboxMaterial: {fileID: 2100000, guid: 02d386cc93dd9e14ca1b306343903ba8, type: 2}
+  sunDiskMode: 1
+  sunSize: 0.05
+  sunSizeConvergence: 5
+  atmosphereThickness: 0.7
+  skyTint: {r: 0.77, g: 0.48, b: 0.28, a: 1}
+  groundColor: {r: 0.42, g: 0.22, b: 0.09, a: 1}
+  skyExposure: 0.85
+  sunColor: {r: 0.95, g: 0.65, b: 0.25, a: 1}
+  sunIntensity: 0.2
+  sunDefaultElevationDeg: 30
+  sunDefaultAzimuthDeg: 40
+  shadowStrength: 0.35
+  ambientMode: 1
+  ambientSkyColor: {r: 0.4, g: 0.22, b: 0.08, a: 1}
+  ambientEquatorColor: {r: 0.35, g: 0.18, b: 0.06, a: 1}
+  ambientGroundColor: {r: 0.2, g: 0.1, b: 0.04, a: 1}
+  ambientIntensity: 1
+  reflectionIntensity: 0.5
+  fogEnabled: 1
+  fogMode: 3
+  fogColor: {r: 0.68, g: 0.42, b: 0.16, a: 1}
+  fogDensity: 0.008
+  defaultMaterialPreset: 2
+  roverAngularDrag: 0.12
   heightmapPreset: {fileID: 0}
   terrainHeightScale: 80

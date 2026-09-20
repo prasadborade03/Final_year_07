@@ -13,26 +13,51 @@ MonoBehaviour:
   m_Name: Mars
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryProfile
   planetName: Mars
+  displayName: Mars
   planetIcon: {fileID: 0}
   description: 'The Red Planet: Low gravity, thin CO2 atmosphere, red iron oxide
-    dust and basalt rock.'
+    dust, cold desert conditions.'
   isDefault: 1
+  nasaFactSheetUrl: https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html
+  notes: 'NASA Mars Fact Sheet: Gravity 3.72 m/s2, mean temp -60C, surface pressure
+    6.36 mb (~0.64 kPa), solar irradiance ~590 W/m2 (~43% Earth).'
   gravityY: 3.72
-  terrainStaticFriction: 0.7
-  terrainDynamicFriction: 0.55
-  terrainBounciness: 0.05
-  roverDrag: 0.02
-  roverAngularDrag: 0.05
-  sunColor: {r: 1, g: 0.92, b: 0.82, a: 1}
-  sunIntensity: 0.85
-  ambientColor: {r: 0.12, g: 0.08, b: 0.06, a: 1}
-  ambientIntensity: 0.8
-  fogColor: {r: 0.72, g: 0.45, b: 0.3, a: 1}
-  fogDensity: 0.008
-  fogEnabled: 1
-  skyboxMaterial: {fileID: 0}
+  soilStaticFriction: 0.7
+  soilDynamicFriction: 0.55
+  soilRestitution: 0.05
+  roverDragMultiplier: 1
   windMain: 4.5
   windTurbulence: 1.2
   windPulseMagnitude: 0.8
+  surfaceTemperature: "\u2248 \u221260 \xB0C"
+  pressureKPa: 0.636
+  sunlightPercentOfEarth: 43
+  hazardTitle: DUST STORM
+  hazardValue: No
+  skyboxMaterial: {fileID: 2100000, guid: 4e06706cfbf23d54289f9ff8c8f83e99, type: 2}
+  sunDiskMode: 1
+  sunSize: 0.35
+  sunSizeConvergence: 5
+  atmosphereThickness: 0.7
+  skyTint: {r: 0.77, g: 0.48, b: 0.28, a: 1}
+  groundColor: {r: 0.42, g: 0.22, b: 0.09, a: 1}
+  skyExposure: 0.85
+  sunColor: {r: 1, g: 0.88, b: 0.76, a: 1}
+  sunIntensity: 0.75
+  sunDefaultElevationDeg: 35
+  sunDefaultAzimuthDeg: 50
+  shadowStrength: 0.85
+  ambientMode: 1
+  ambientSkyColor: {r: 0.35, g: 0.22, b: 0.14, a: 1}
+  ambientEquatorColor: {r: 0.24, g: 0.16, b: 0.12, a: 1}
+  ambientGroundColor: {r: 0.14, g: 0.1, b: 0.08, a: 1}
+  ambientIntensity: 1
+  reflectionIntensity: 0.5
+  fogEnabled: 1
+  fogMode: 3
+  fogColor: {r: 0.72, g: 0.48, b: 0.32, a: 1}
+  fogDensity: 0.003
+  defaultMaterialPreset: 0
+  roverAngularDrag: 0.05
   heightmapPreset: {fileID: 0}
   terrainHeightScale: 120

@@ -13,26 +13,51 @@ MonoBehaviour:
   m_Name: Earth
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryProfile
   planetName: Earth
+  displayName: Earth
   planetIcon: {fileID: 0}
-  description: 'Terrestrial Proving Ground: Standard 1G gravity, dense nitrogen-oxygen
-    atmosphere, moderate terrain traction.'
+  description: 'Earth: Standard terrestrial gravity, 1 atm nitrogen-oxygen atmosphere,
+    blue Rayleigh sky, temperate climate.'
   isDefault: 0
+  nasaFactSheetUrl: https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
+  notes: 'NASA Earth Fact Sheet: Gravity 9.807 m/s2, mean temp 15C, surface pressure
+    101.3 kPa, solar irradiance 1361 W/m2 (100%).'
   gravityY: 9.81
-  terrainStaticFriction: 0.8
-  terrainDynamicFriction: 0.65
-  terrainBounciness: 0.08
-  roverDrag: 0.1
-  roverAngularDrag: 0.1
-  sunColor: {r: 1, g: 0.96, b: 0.88, a: 1}
-  sunIntensity: 1
-  ambientColor: {r: 0.15, g: 0.2, b: 0.28, a: 1}
-  ambientIntensity: 1
-  fogColor: {r: 0.65, g: 0.75, b: 0.88, a: 1}
-  fogDensity: 0.002
-  fogEnabled: 1
-  skyboxMaterial: {fileID: 0}
+  soilStaticFriction: 0.8
+  soilDynamicFriction: 0.6
+  soilRestitution: 0.1
+  roverDragMultiplier: 1.5
   windMain: 2
   windTurbulence: 0.5
   windPulseMagnitude: 0.5
+  surfaceTemperature: "\u2248 +15 \xB0C"
+  pressureKPa: 101.3
+  sunlightPercentOfEarth: 100
+  hazardTitle: WEATHER
+  hazardValue: Clear
+  skyboxMaterial: {fileID: 2100000, guid: f2aa223e9c9f445459ae127b056ae349, type: 2}
+  sunDiskMode: 1
+  sunSize: 0.53
+  sunSizeConvergence: 5
+  atmosphereThickness: 0.7
+  skyTint: {r: 0.77, g: 0.48, b: 0.28, a: 1}
+  groundColor: {r: 0.42, g: 0.22, b: 0.09, a: 1}
+  skyExposure: 0.85
+  sunColor: {r: 1, g: 0.98, b: 0.92, a: 1}
+  sunIntensity: 1
+  sunDefaultElevationDeg: 55
+  sunDefaultAzimuthDeg: 45
+  shadowStrength: 0.9
+  ambientMode: 1
+  ambientSkyColor: {r: 0.25, g: 0.35, b: 0.5, a: 1}
+  ambientEquatorColor: {r: 0.3, g: 0.35, b: 0.38, a: 1}
+  ambientGroundColor: {r: 0.18, g: 0.15, b: 0.12, a: 1}
+  ambientIntensity: 1
+  reflectionIntensity: 0.5
+  fogEnabled: 1
+  fogMode: 3
+  fogColor: {r: 0.68, g: 0.8, b: 0.92, a: 1}
+  fogDensity: 0.0012
+  defaultMaterialPreset: 3
+  roverAngularDrag: 0.05
   heightmapPreset: {fileID: 0}
   terrainHeightScale: 100

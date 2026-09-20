@@ -496,8 +496,8 @@
                             <ui:Label name="ValEnvPress" text="0.6 kPa" class="stat-med-val" />
                         </ui:VisualElement>
                         <ui:VisualElement class="stat-cell">
-                            <ui:Label text="DUST STORM" class="stat-label" />
-                            <ui:Label name="ValEnvDust" text="No" class="stat-med-val val-green" />
+                            <ui:Label name="LabelEnvHazardTitle" text="DUST STORM" class="stat-label" />
+                            <ui:Label name="ValEnvHazard" text="No" class="stat-med-val val-green" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

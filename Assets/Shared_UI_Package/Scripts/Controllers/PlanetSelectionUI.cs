@@ -157,7 +157,11 @@ namespace ProjectName.UI
         {
             if (selectedProfile == null) return;
 
-            if (PlanetaryParameterWriter.Instance != null)
+            if (PlanetEnvironmentController.Instance != null)
+            {
+                PlanetEnvironmentController.Instance.ApplyProfile(selectedProfile);
+            }
+            else if (PlanetaryParameterWriter.Instance != null)
             {
                 PlanetaryParameterWriter.Instance.ApplyProfile(selectedProfile);
             }
@@ -212,6 +216,17 @@ namespace ProjectName.UI
 
             // 8. Surface Wind Speed
             FormatDiffRow("Wind Velocity (windMain)", $"{cur.windSpeed:F1} m/s", $"{selectedProfile.windMain:F1} m/s", Mathf.Abs(cur.windSpeed - selectedProfile.windMain) > 0.2f);
+
+            // Truthful facts section
+            sb.AppendLine("\n<b><color=#FFD54F>VERIFIED ATMOSPHERIC & DISPLAY FACTS</color></b>");
+            sb.AppendLine($"> Surface Temperature : <color=#00E5FF>{selectedProfile.surfaceTemperature}</color>");
+            sb.AppendLine($"> Surface Pressure    : <color=#00E5FF>{selectedProfile.pressureKPa:F1} kPa</color>");
+            sb.AppendLine($"> Solar Irradiance    : <color=#00E5FF>{selectedProfile.sunlightPercentOfEarth:F1}% of Earth</color>");
+            sb.AppendLine($"> Hazard Classification: <color=#00E5FF>[{selectedProfile.hazardTitle}] {selectedProfile.hazardValue}</color>");
+            if (!string.IsNullOrEmpty(selectedProfile.nasaFactSheetUrl))
+            {
+                sb.AppendLine($"> NASA Fact Sheet Source : <size=85%><color=#80D8FF>{selectedProfile.nasaFactSheetUrl}</color></size>");
+            }
 
             diffInspectorText.text = sb.ToString();
         }

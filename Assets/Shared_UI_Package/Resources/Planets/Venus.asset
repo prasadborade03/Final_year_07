@@ -13,26 +13,51 @@ MonoBehaviour:
   m_Name: Venus
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Planetary.PlanetaryProfile
   planetName: Venus
+  displayName: Venus
   planetIcon: {fileID: 0}
-  description: 'Hellscape: Crushing supercritical atmosphere (92 atm equivalent),
-    near-Earth gravity, thick toxic yellow haze.'
+  description: 'Venus: Runaway greenhouse world, crushing 92 bar CO2 atmosphere,
+    lead-melting surface heat, sulfuric acid haze.'
   isDefault: 0
+  nasaFactSheetUrl: https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html
+  notes: 'NASA Venus Fact Sheet: Gravity 8.87 m/s2, mean temp 465C, pressure 92 bar
+    (9200 kPa), thick sulfuric acid clouds, sunlight diffuse.'
   gravityY: 8.87
-  terrainStaticFriction: 0.85
-  terrainDynamicFriction: 0.7
-  terrainBounciness: 0.01
-  roverDrag: 0.85
-  roverAngularDrag: 0.7
-  sunColor: {r: 0.9, g: 0.85, b: 0.5, a: 1}
-  sunIntensity: 0.45
-  ambientColor: {r: 0.35, g: 0.3, b: 0.1, a: 1}
-  ambientIntensity: 0.95
-  fogColor: {r: 0.88, g: 0.8, b: 0.35, a: 1}
-  fogDensity: 0.055
-  fogEnabled: 1
-  skyboxMaterial: {fileID: 0}
+  soilStaticFriction: 0.75
+  soilDynamicFriction: 0.6
+  soilRestitution: 0.02
+  roverDragMultiplier: 6
   windMain: 3
   windTurbulence: 1.5
   windPulseMagnitude: 1.2
+  surfaceTemperature: "\u2248 +465 \xB0C"
+  pressureKPa: 9200
+  sunlightPercentOfEarth: 2.5
+  hazardTitle: ATMOSPHERE
+  hazardValue: Corrosive / 92 bar
+  skyboxMaterial: {fileID: 2100000, guid: 8c47bb08382c097458d0f0f14e84d8bd, type: 2}
+  sunDiskMode: 1
+  sunSize: 0.02
+  sunSizeConvergence: 5
+  atmosphereThickness: 0.7
+  skyTint: {r: 0.77, g: 0.48, b: 0.28, a: 1}
+  groundColor: {r: 0.42, g: 0.22, b: 0.09, a: 1}
+  skyExposure: 0.85
+  sunColor: {r: 0.85, g: 0.75, b: 0.45, a: 1}
+  sunIntensity: 0.25
+  sunDefaultElevationDeg: 40
+  sunDefaultAzimuthDeg: 45
+  shadowStrength: 0.3
+  ambientMode: 1
+  ambientSkyColor: {r: 0.42, g: 0.38, b: 0.2, a: 1}
+  ambientEquatorColor: {r: 0.35, g: 0.3, b: 0.15, a: 1}
+  ambientGroundColor: {r: 0.2, g: 0.18, b: 0.1, a: 1}
+  ambientIntensity: 1
+  reflectionIntensity: 0.5
+  fogEnabled: 1
+  fogMode: 3
+  fogColor: {r: 0.58, g: 0.52, b: 0.28, a: 1}
+  fogDensity: 0.009
+  defaultMaterialPreset: 2
+  roverAngularDrag: 0.25
   heightmapPreset: {fileID: 0}
   terrainHeightScale: 130

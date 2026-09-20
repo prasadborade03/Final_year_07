@@ -110,6 +110,7 @@ namespace ProjectName.Terrain
         private Label valBattery, valMotorTemp;
 
         private Label valEnvGravity, valEnvTemp, valEnvPress, valEnvDust;
+        private Label lblEnvHazardTitle;
 
         // Bottom Bar: Modes & Perspectives
         private VisualElement groupDriveModes;
@@ -204,9 +205,12 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated += HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged += HandleRigPerspectiveChanged;
-            if (PlanetaryParameterWriter.Instance != null)
+
+            var envCtrl = PlanetEnvironmentController.Instance ?? (PlanetEnvironmentController)FindAnyObjectByType<PlanetEnvironmentController>();
+            if (envCtrl != null)
             {
-                PlanetaryParameterWriter.Instance.OnProfileApplied += HandlePlanetaryProfileApplied;
+                envCtrl.OnProfileApplied -= HandlePlanetaryProfileApplied;
+                envCtrl.OnProfileApplied += HandlePlanetaryProfileApplied;
             }
 
             BindUIElements();
@@ -397,7 +401,8 @@ namespace ProjectName.Terrain
             valEnvGravity = root.Q<Label>("ValEnvGravity");
             valEnvTemp = root.Q<Label>("ValEnvTemp");
             valEnvPress = root.Q<Label>("ValEnvPress");
-            valEnvDust = root.Q<Label>("ValEnvDust");
+            valEnvDust = root.Q<Label>("ValEnvHazard") ?? root.Q<Label>("ValEnvDust");
+            lblEnvHazardTitle = root.Q<Label>("LabelEnvHazardTitle");
 
             // Bottom Bar: Labels & Groups
             groupDriveModes = root.Q<VisualElement>("GroupDriveModes");
@@ -1221,22 +1226,23 @@ namespace ProjectName.Terrain
 
         private void UpdatePlanetaryEnvironmentUI()
         {
-            var reader = PlanetaryParameterReader.Instance;
-            if (reader == null) reader = FindAnyObjectByType<PlanetaryParameterReader>();
+            var envCtrl = PlanetEnvironmentController.Instance;
+            PlanetProfile profile = envCtrl != null ? envCtrl.currentProfile : null;
+            if (profile == null)
+            {
+                var writer = PlanetaryParameterWriter.Instance ?? FindAnyObjectByType<PlanetaryParameterWriter>();
+                if (writer != null) profile = writer.currentProfile;
+            }
+
+            var reader = PlanetaryParameterReader.Instance ?? FindAnyObjectByType<PlanetaryParameterReader>();
 
             if (valEnvGravity != null)
             {
-                float g = reader != null ? reader.GetGravity() : Mathf.Abs(Physics.gravity.y);
+                float g = profile != null ? Mathf.Abs(profile.gravityY) : (reader != null ? reader.GetGravity() : Mathf.Abs(Physics.gravity.y));
                 valEnvGravity.text = $"{g:F2} m/s²";
             }
 
-            string pName = "MARS";
-            var writer = PlanetaryParameterWriter.Instance ?? FindAnyObjectByType<PlanetaryParameterWriter>();
-            if (writer != null && writer.currentProfile != null)
-            {
-                pName = writer.currentProfile.planetName.ToUpper();
-            }
-
+            string pName = profile != null ? profile.planetName.ToUpper() : "MARS";
             if (btnPlanetBadge != null)
             {
                 btnPlanetBadge.text = pName;
@@ -1244,29 +1250,76 @@ namespace ProjectName.Terrain
 
             if (valEnvTemp != null)
             {
-                float tempC = -60f;
-                if (pName.Contains("MOON")) tempC = -130f;
-                else if (pName.Contains("EARTH")) tempC = 15f;
-                else if (pName.Contains("TITAN")) tempC = -179f;
-                else if (pName.Contains("EUROPA")) tempC = -160f;
-                else if (pName.Contains("MERCURY")) tempC = 167f;
-                valEnvTemp.text = $"{tempC:+0;-0}°C";
+                if (profile != null && !string.IsNullOrEmpty(profile.surfaceTemperature))
+                {
+                    valEnvTemp.text = profile.surfaceTemperature;
+                }
+                else
+                {
+                    float tempC = -60f;
+                    if (pName.Contains("MOON")) tempC = -130f;
+                    else if (pName.Contains("EARTH")) tempC = 15f;
+                    else if (pName.Contains("TITAN")) tempC = -179f;
+                    else if (pName.Contains("VENUS")) tempC = 465f;
+                    else if (pName.Contains("EUROPA")) tempC = -160f;
+                    else if (pName.Contains("MERCURY")) tempC = 167f;
+                    valEnvTemp.text = $"{tempC:+0;-0}°C";
+                }
             }
 
             if (valEnvPress != null)
             {
-                float pressKpa = 0.6f;
-                if (pName.Contains("MOON") || pName.Contains("EUROPA") || pName.Contains("MERCURY")) pressKpa = 0.0f;
-                else if (pName.Contains("EARTH")) pressKpa = 101.3f;
-                else if (pName.Contains("TITAN")) pressKpa = 146.7f;
-                valEnvPress.text = $"{pressKpa:F1} kPa";
+                if (profile != null)
+                {
+                    valEnvPress.text = profile.pressureKPa >= 1000f
+                        ? $"{profile.pressureKPa:N0} kPa"
+                        : $"{profile.pressureKPa:F1} kPa";
+                }
+                else
+                {
+                    float pressKpa = 0.6f;
+                    if (pName.Contains("MOON") || pName.Contains("EUROPA") || pName.Contains("MERCURY")) pressKpa = 0.0f;
+                    else if (pName.Contains("EARTH")) pressKpa = 101.3f;
+                    else if (pName.Contains("TITAN")) pressKpa = 146.7f;
+                    else if (pName.Contains("VENUS")) pressKpa = 9200f;
+                    valEnvPress.text = pressKpa >= 1000f ? $"{pressKpa:N0} kPa" : $"{pressKpa:F1} kPa";
+                }
+            }
+
+            if (lblEnvHazardTitle != null && profile != null && !string.IsNullOrEmpty(profile.hazardTitle))
+            {
+                lblEnvHazardTitle.text = profile.hazardTitle.ToUpper();
             }
 
             if (valEnvDust != null)
             {
-                float wind = reader != null ? reader.GetWindSpeed() : 4.5f;
-                bool hasDust = (pName.Contains("MARS") || pName.Contains("TITAN")) && (wind > 8f || RenderSettings.fogDensity > 0.02f);
-                valEnvDust.text = hasDust ? "Active" : "No";
+                if (profile != null && !string.IsNullOrEmpty(profile.hazardValue))
+                {
+                    valEnvDust.text = profile.hazardValue;
+                }
+                else
+                {
+                    float wind = reader != null ? reader.GetWindSpeed() : 4.5f;
+                    bool hasDust = (pName.Contains("MARS") || pName.Contains("TITAN")) && (wind > 8f || RenderSettings.fogDensity > 0.02f);
+                    valEnvDust.text = hasDust ? "Active" : "No";
+                }
+
+                valEnvDust.RemoveFromClassList("val-green");
+                valEnvDust.RemoveFromClassList("val-gold");
+                valEnvDust.RemoveFromClassList("val-red");
+                string lowerVal = valEnvDust.text.ToLower();
+                if (lowerVal.Contains("no") || lowerVal.Contains("clear") || lowerVal.Contains("none") || lowerVal.Contains("normal"))
+                {
+                    valEnvDust.AddToClassList("val-green");
+                }
+                else if (lowerVal.Contains("corrosive") || lowerVal.Contains("extreme") || lowerVal.Contains("active"))
+                {
+                    valEnvDust.AddToClassList("val-red");
+                }
+                else
+                {
+                    valEnvDust.AddToClassList("val-gold");
+                }
             }
         }
 
@@ -1859,18 +1912,26 @@ namespace ProjectName.Terrain
             }
         }
 
-        private void HandlePlanetaryProfileApplied(PlanetaryProfile profile)
+        private void HandlePlanetaryProfileApplied(PlanetProfile profile)
         {
+            UpdatePlanetaryEnvironmentUI();
             if (!followPlanetProfile || profile == null) return;
             SyncMaterialWithProfile(profile);
         }
 
         private void SyncMaterialWithCurrentPlanet()
         {
-            var writer = PlanetaryParameterWriter.Instance;
-            if (writer != null && writer.currentProfile != null)
+            var envCtrl = PlanetEnvironmentController.Instance;
+            PlanetProfile profile = envCtrl != null ? envCtrl.currentProfile : null;
+            if (profile == null)
             {
-                SyncMaterialWithProfile(writer.currentProfile);
+                var writer = PlanetaryParameterWriter.Instance;
+                if (writer != null) profile = writer.currentProfile;
+            }
+
+            if (profile != null)
+            {
+                SyncMaterialWithProfile(profile);
             }
             else
             {
@@ -1878,15 +1939,9 @@ namespace ProjectName.Terrain
             }
         }
 
-        private void SyncMaterialWithProfile(PlanetaryProfile profile)
+        private void SyncMaterialWithProfile(PlanetProfile profile)
         {
-            string pName = profile.planetName.ToLowerInvariant();
-            PlanetaryMaterialType targetMat;
-            if (pName.Contains("moon")) targetMat = PlanetaryMaterialType.LunarRegolith;
-            else if (pName.Contains("titan") || pName.Contains("venus")) targetMat = PlanetaryMaterialType.VolcanicBasalt;
-            else if (pName.Contains("earth") || pName.Contains("polar")) targetMat = PlanetaryMaterialType.PolarIce;
-            else targetMat = PlanetaryMaterialType.MartianDust;
-
+            PlanetaryMaterialType targetMat = profile.defaultMaterialPreset;
             SetMaterialInternal(targetMat, isManualOverride: false);
         }
 
@@ -2164,7 +2219,11 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
-            if (PlanetaryParameterWriter.Instance != null)
+            if (PlanetEnvironmentController.Instance != null)
+            {
+                PlanetEnvironmentController.Instance.OnProfileApplied -= HandlePlanetaryProfileApplied;
+            }
+            else if (PlanetaryParameterWriter.Instance != null)
             {
                 PlanetaryParameterWriter.Instance.OnProfileApplied -= HandlePlanetaryProfileApplied;
             }

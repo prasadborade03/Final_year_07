@@ -128,6 +128,14 @@ namespace ProjectName.Terrain
             terrain.allowAutoConnect = true;
             terrain.drawInstanced = true;
             terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            terrain.basemapDistance = 3000f;
+            terrain.heightmapPixelError = 5f;
+
+            var cam = Camera.main;
+            if (cam != null && cam.farClipPlane < 3500f)
+            {
+                cam.farClipPlane = 3500f;
+            }
 
             // Ensure TerrainCollider is present and linked to terrainData
             TerrainCollider tCollider = terrainObject.GetComponent<TerrainCollider>();
