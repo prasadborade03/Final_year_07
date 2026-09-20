@@ -124,9 +124,23 @@ namespace ProjectName.Planetary
             // 7. Global Illumination Refresh
             DynamicGI.UpdateEnvironment();
 
+            // 8. Planetary Surface Terrain Layers & Rocks (Phase 5B)
+            ApplySurfaceAndRocks(profile);
+
             Debug.Log($"[PlanetEnvironmentController] Applied <color=#00E5FF><b>{profile.displayName}</b></color> (g={profile.gravityY:F2} m/s², Press={profile.pressureKPa} kPa, Temp={profile.surfaceTemperature}, Fog={profile.fogEnabled})");
 
             OnProfileApplied?.Invoke(profile);
+        }
+
+        private void ApplySurfaceAndRocks(PlanetProfile profile)
+        {
+            if (profile == null) return;
+            var matManager = TerrainMaterialManager.Instance;
+            if (matManager == null) matManager = FindFirstObjectByType<TerrainMaterialManager>();
+            if (matManager != null)
+            {
+                matManager.ApplyPlanetaryProfile(profile);
+            }
         }
 
         /// <summary>

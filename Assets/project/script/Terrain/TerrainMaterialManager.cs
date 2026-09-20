@@ -71,18 +71,27 @@ namespace ProjectName.Terrain
         public Texture2D customSandstoneNormal;
         public Texture2D customSandstoneRoughness;
 
+        public static TerrainMaterialManager Instance { get; private set; }
+
         // Runtime Cache
         private readonly Dictionary<SurfaceMaterialType, TerrainLayer> generatedLayers = new Dictionary<SurfaceMaterialType, TerrainLayer>();
         private readonly Dictionary<SurfaceMaterialType, Material> generatedMaterials = new Dictionary<SurfaceMaterialType, Material>();
 
         private void Awake()
         {
+            if (Instance == null) Instance = this;
+
             if (targetTerrain == null)
                 targetTerrain = GetComponent<UnityEngine.Terrain>();
 
             InitializeDefaultConfigs();
             SanitizeConfigs();
             EnforceSpaceLightingAndReflections();
+        }
+
+        private void OnEnable()
+        {
+            if (Instance == null) Instance = this;
         }
 
         private void Start()
@@ -339,24 +348,30 @@ namespace ProjectName.Terrain
                     targetShader = Shader.Find("Standard");
             }
 
-            // Configure TerrainLayer with PBR textures (applies to ALL 7 presets including Topographic Grid & Normal Inspector)
-            TerrainLayer layer = GetOrCreateTerrainLayer(config);
-            if (targetTerrain.terrainData != null)
+            // Debug modes (Topographic Grid, Normal Inspector) use single specialized layer at 100% opacity
+            if (type == SurfaceMaterialType.TopographicGrid || type == SurfaceMaterialType.NormalInspector)
             {
-                targetTerrain.terrainData.terrainLayers = new TerrainLayer[] { layer };
-
-                // Initialize splatmap weights so layer 0 renders at 100% opacity
-                int alphaRes = Mathf.Max(32, targetTerrain.terrainData.alphamapResolution);
-                targetTerrain.terrainData.alphamapResolution = alphaRes;
-                float[,,] alphaMaps = new float[alphaRes, alphaRes, 1];
-                for (int y = 0; y < alphaRes; y++)
+                TerrainLayer layer = GetOrCreateTerrainLayer(config);
+                if (targetTerrain.terrainData != null)
                 {
-                    for (int x = 0; x < alphaRes; x++)
+                    targetTerrain.terrainData.terrainLayers = new TerrainLayer[] { layer };
+                    int alphaRes = Mathf.Max(32, targetTerrain.terrainData.alphamapResolution);
+                    targetTerrain.terrainData.alphamapResolution = alphaRes;
+                    float[,,] alphaMaps = new float[alphaRes, alphaRes, 1];
+                    for (int y = 0; y < alphaRes; y++)
                     {
-                        alphaMaps[y, x, 0] = 1.0f;
+                        for (int x = 0; x < alphaRes; x++)
+                        {
+                            alphaMaps[y, x, 0] = 1.0f;
+                        }
                     }
+                    targetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
                 }
-                targetTerrain.terrainData.SetAlphamaps(0, 0, alphaMaps);
+            }
+            else
+            {
+                // Planetary Worlds: 4-Layer Slope-and-Height Splatmap Blending (512x512)
+                ApplyPlanetaryMultiLayerSplatmap(type);
             }
 
             if (isURP && targetShader != null && targetShader.name.Contains("Universal Render Pipeline"))
@@ -388,6 +403,164 @@ namespace ProjectName.Terrain
             targetTerrain.drawInstanced = true;
             targetTerrain.Flush();
             Debug.Log($"[TerrainMaterialManager] Applied surface '{type}' (isURP: {isURP}, Shader: {(targetTerrain.materialTemplate != null ? targetTerrain.materialTemplate.shader.name : "Native")})");
+        }
+
+        public enum LayerRole { Fines, Scree, Cliff, Macro }
+        private readonly Dictionary<string, TerrainLayer> generatedMultiLayers = new Dictionary<string, TerrainLayer>();
+
+        /// <summary>
+        /// Generates and assigns 4 blended planetary terrain layers (Fines, Pebbles/Scree, Cliff Bedrock, Macro)
+        /// using a 512x512 physical slope-and-height alphamap.
+        /// Strictly enforces smoothness = 0.0, metallic = 0.0 (zero 'wet plastic' specular streaks).
+        /// </summary>
+        public void ApplyPlanetaryMultiLayerSplatmap(SurfaceMaterialType type)
+        {
+            if (targetTerrain == null || targetTerrain.terrainData == null) return;
+
+            TerrainLayer finesLayer = GetOrCreatePlanetaryLayer(type, LayerRole.Fines);
+            TerrainLayer screeLayer = GetOrCreatePlanetaryLayer(type, LayerRole.Scree);
+            TerrainLayer cliffLayer = GetOrCreatePlanetaryLayer(type, LayerRole.Cliff);
+            TerrainLayer macroLayer = GetOrCreatePlanetaryLayer(type, LayerRole.Macro);
+
+            targetTerrain.terrainData.terrainLayers = new TerrainLayer[] { finesLayer, screeLayer, cliffLayer, macroLayer };
+
+            int alphaRes = 512;
+            targetTerrain.terrainData.alphamapResolution = alphaRes;
+            float[,,] splat = new float[alphaRes, alphaRes, 4];
+
+            for (int y = 0; y < alphaRes; y++)
+            {
+                float normY = (float)y / (alphaRes - 1);
+                for (int x = 0; x < alphaRes; x++)
+                {
+                    float normX = (float)x / (alphaRes - 1);
+                    float steepness = targetTerrain.terrainData.GetSteepness(normX, normY);
+
+                    // Physical slope weighting:
+                    // Steepness < 15 deg: Fines / dust / regolith dominates
+                    // Steepness 15..32 deg: Pebbles / scree blends in
+                    // Steepness > 30 deg: Bedrock / cliff rock dominates
+                    float cliffWeight = Mathf.Clamp01((steepness - 24f) / 18f);
+                    float screeWeight = Mathf.Clamp01(1f - Mathf.Abs(steepness - 22f) / 12f);
+                    float finesWeight = Mathf.Clamp01((28f - steepness) / 16f);
+
+                    // Large-scale macro color variation to eliminate tiling repetition over 1000m
+                    float macroNoise = Mathf.PerlinNoise(normX * 6.5f, normY * 6.5f);
+                    float macroWeight = finesWeight * Mathf.Clamp01((macroNoise - 0.35f) * 1.5f);
+                    finesWeight = Mathf.Max(0f, finesWeight - macroWeight);
+
+                    float sum = finesWeight + screeWeight + cliffWeight + macroWeight;
+                    if (sum < 0.0001f) sum = 1f;
+
+                    splat[y, x, 0] = finesWeight / sum;
+                    splat[y, x, 1] = screeWeight / sum;
+                    splat[y, x, 2] = cliffWeight / sum;
+                    splat[y, x, 3] = macroWeight / sum;
+                }
+            }
+
+            targetTerrain.terrainData.SetAlphamaps(0, 0, splat);
+            Debug.Log($"[TerrainMaterialManager] Multi-layer splatmap generated for {type}: 4 layers (Fines, Scree, Cliff, Macro) at {alphaRes}x{alphaRes} resolution.");
+        }
+
+        public TerrainLayer GetOrCreatePlanetaryLayer(SurfaceMaterialType type, LayerRole role)
+        {
+            string key = $"{type}_{role}";
+            if (generatedMultiLayers.TryGetValue(key, out TerrainLayer cached) && cached != null)
+            {
+                // Invalidate if old layer had glossiness
+                if (cached.smoothness <= 0.001f && cached.metallic <= 0.001f)
+                    return cached;
+                generatedMultiLayers.Remove(key);
+            }
+
+            Texture2D diffuse = null;
+            Texture2D normal = null;
+            Vector2 tileSize = new Vector2(10f, 10f);
+            float normalScale = 1.0f;
+
+            switch (role)
+            {
+                case LayerRole.Fines:
+                    diffuse = TryAutoLoadTexture(type, TextureMapType.Albedo);
+                    normal = TryAutoLoadTexture(type, TextureMapType.Normal);
+                    tileSize = (type == SurfaceMaterialType.LunarRegolith) ? new Vector2(8f, 8f) :
+                               (type == SurfaceMaterialType.VolcanicBasalt) ? new Vector2(12f, 12f) :
+                               new Vector2(10f, 10f);
+                    normalScale = 1.0f;
+                    break;
+
+                case LayerRole.Scree:
+#if UNITY_EDITOR
+                    diffuse = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/project/materials/PBR_CC0/PebbleGround_CC0_Albedo.jpg");
+                    normal = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/project/materials/PBR_CC0/PebbleGround_CC0_Normal.jpg");
+#endif
+                    if (diffuse == null) diffuse = TryAutoLoadTexture(type, TextureMapType.Albedo);
+                    if (normal == null) normal = TryAutoLoadTexture(type, TextureMapType.Normal);
+                    tileSize = new Vector2(2.5f, 2.5f); // Realistic centimetre pebbles relative to rover 1m
+                    normalScale = 1.2f;
+                    break;
+
+                case LayerRole.Cliff:
+#if UNITY_EDITOR
+                    if (type == SurfaceMaterialType.VolcanicBasalt)
+                    {
+                        diffuse = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/project/materials/PBR_CC0/VolcanicBasalt_CC0_Albedo.jpg");
+                        normal = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/project/materials/PBR_CC0/VolcanicBasalt_CC0_Normal.jpg");
+                    }
+                    else
+                    {
+                        diffuse = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/project/materials/PBR_CC0/CliffRock_CC0_Albedo.jpg");
+                        normal = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/project/materials/PBR_CC0/CliffRock_CC0_Normal.jpg");
+                    }
+#endif
+                    if (diffuse == null) diffuse = TryAutoLoadTexture(SurfaceMaterialType.VolcanicBasalt, TextureMapType.Albedo);
+                    if (normal == null) normal = TryAutoLoadTexture(SurfaceMaterialType.VolcanicBasalt, TextureMapType.Normal);
+                    tileSize = new Vector2(14f, 14f);
+                    normalScale = 1.5f;
+                    break;
+
+                case LayerRole.Macro:
+                    diffuse = TryAutoLoadTexture(type, TextureMapType.Albedo);
+                    normal = TryAutoLoadTexture(type, TextureMapType.Normal);
+                    tileSize = new Vector2(90f, 90f); // Large scale to eliminate repetitive tiling over 1000m
+                    normalScale = 0.5f;
+                    break;
+            }
+
+            // Procedural fallback if textures missing
+            if (diffuse == null)
+            {
+                SurfaceMaterialConfig cfg = materialConfigs.Find(c => c.type == type);
+                diffuse = GenerateProceduralAlbedo(cfg.primaryColor, type);
+            }
+
+            TerrainLayer layer = new TerrainLayer
+            {
+                name = $"Layer_{type}_{role}",
+                diffuseTexture = diffuse,
+                normalMapTexture = normal,
+                normalScale = normalScale,
+                smoothness = 0.0f,
+                metallic = 0.0f,
+                specular = Color.black,
+                smoothnessSource = TerrainLayerSmoothnessSource.ConstantOnly,
+                tileSize = tileSize
+            };
+
+            generatedMultiLayers[key] = layer;
+            return layer;
+        }
+
+        public void RegenerateCurrentSplatmap()
+        {
+            if (targetTerrain == null) targetTerrain = UnityEngine.Terrain.activeTerrain;
+            if (targetTerrain == null) return;
+            if (activeMaterialType != SurfaceMaterialType.TopographicGrid && 
+                activeMaterialType != SurfaceMaterialType.NormalInspector)
+            {
+                ApplyPlanetaryMultiLayerSplatmap(activeMaterialType);
+            }
         }
 
         public void ClearCache()
@@ -524,9 +697,12 @@ namespace ProjectName.Terrain
 
             List<string> candidateNames = new List<string>
             {
+                $"{prefix}_CC0{suffix}",
+                $"{prefix}_CC0{altSuffix}",
                 $"{prefix}{suffix}",
                 $"{prefix}{altSuffix}",
                 $"{prefix}_diff",
+                $"{altPrefix}_CC0{suffix}",
                 $"{altPrefix}{suffix}",
                 $"{altPrefix}{altSuffix}",
                 $"{altPrefix}_diff_2k",
@@ -542,17 +718,21 @@ namespace ProjectName.Terrain
             };
 
 #if UNITY_EDITOR
-            string[] extensions = new string[] { ".png", ".jpg", ".jpeg", ".tga", ".exr" };
-            foreach (string baseName in candidateNames)
+            string[] searchDirs = new string[] { "Assets/project/materials/PBR_CC0/", "Assets/project/materials/" };
+            string[] extensions = new string[] { ".jpg", ".png", ".jpeg", ".tga", ".exr" };
+            foreach (string dir in searchDirs)
             {
-                foreach (string ext in extensions)
+                foreach (string baseName in candidateNames)
                 {
-                    string path = "Assets/project/materials/" + baseName + ext;
-                    Texture2D found = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                    if (found != null)
+                    foreach (string ext in extensions)
                     {
-                        Debug.Log($"[TerrainMaterialManager] Auto-loaded texture '{path}' for {surfaceType} {mapType}");
-                        return found;
+                        string path = dir + baseName + ext;
+                        Texture2D found = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                        if (found != null)
+                        {
+                            Debug.Log($"[TerrainMaterialManager] Auto-loaded texture '{path}' for {surfaceType} {mapType}");
+                            return found;
+                        }
                     }
                 }
             }
@@ -766,7 +946,32 @@ namespace ProjectName.Terrain
             ApplySurfaceMaterial(preset);
         }
 
-        private SurfaceMaterialType MapPlanetaryToSurface(PlanetaryMaterialType p)
+        /// <summary>
+        /// Authoritative method to apply a PlanetProfile's surface material preset and scatter surface rocks.
+        /// </summary>
+        public void ApplyPlanetaryProfile(ProjectName.Planetary.PlanetProfile profile)
+        {
+            if (profile == null) return;
+            if (targetTerrain == null) targetTerrain = UnityEngine.Terrain.activeTerrain;
+            if (targetTerrain == null) targetTerrain = FindFirstObjectByType<UnityEngine.Terrain>();
+
+            SurfaceMaterialType surface = MapPlanetaryToSurface(profile.defaultMaterialPreset);
+            ApplySurfaceMaterial(surface);
+
+            // Scatter planetary surface rocks & boulders
+            if (PlanetRockScatterer.Instance != null)
+            {
+                PlanetRockScatterer.Instance.ScatterRocks(targetTerrain, profile);
+            }
+            else if (targetTerrain != null)
+            {
+                var scatterer = targetTerrain.GetComponent<PlanetRockScatterer>();
+                if (scatterer == null) scatterer = targetTerrain.gameObject.AddComponent<PlanetRockScatterer>();
+                scatterer.ScatterRocks(targetTerrain, profile);
+            }
+        }
+
+        public SurfaceMaterialType MapPlanetaryToSurface(PlanetaryMaterialType p)
         {
             switch (p)
             {

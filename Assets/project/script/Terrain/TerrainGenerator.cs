@@ -151,6 +151,15 @@ namespace ProjectName.Terrain
                 materialManager.ApplyMaterial(terrain, config.materialType);
             }
 
+            // Scatter planetary surface rocks & boulders (Phase 5B)
+            var rockScatterer = terrainObject.GetComponent<PlanetRockScatterer>();
+            if (rockScatterer == null) rockScatterer = terrainObject.AddComponent<PlanetRockScatterer>();
+            var envController = ProjectName.Planetary.PlanetEnvironmentController.Instance;
+            if (envController != null && envController.currentProfile != null)
+            {
+                rockScatterer.ScatterRocks(terrain, envController.currentProfile);
+            }
+
             currentTerrainObject = terrainObject;
             Debug.Log($"[TerrainGenerator] Successfully built 3D planetary terrain: {config.terrainWidth}x{config.terrainLength}m, MaxHeight: {config.maxHeight}m, Offset: {config.baseOffset}m, Material: {config.materialType}");
 

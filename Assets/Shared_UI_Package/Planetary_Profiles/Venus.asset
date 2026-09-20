@@ -58,6 +58,10 @@ MonoBehaviour:
   fogColor: {r: 0.58, g: 0.52, b: 0.28, a: 1}
   fogDensity: 0.009
   defaultMaterialPreset: 2
+  rockDensity: 0.28
+  rockColorTint: {r: 0.35, g: 0.32, b: 0.3, a: 1}
+  boulderFraction: 0.2
+  spawnClearanceRadius: 15
   roverAngularDrag: 0.25
   heightmapPreset: {fileID: 0}
   terrainHeightScale: 130

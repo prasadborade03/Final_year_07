@@ -176,6 +176,22 @@ namespace ProjectName.Planetary
         [Tooltip("Default PBR planetary surface material preset for Phase 5B terrain")]
         public PlanetaryMaterialType defaultMaterialPreset = PlanetaryMaterialType.MartianDust;
 
+        [Header("8. Surface Rocks & Pebbles")]
+        [Tooltip("Scatter density of rocks and pebbles across the terrain (0 = none, 1 = dense field)")]
+        [Range(0.0f, 1.0f)]
+        public float rockDensity = 0.25f;
+
+        [Tooltip("Color tint applied to rocks to match planetary regolith / basalt tone")]
+        public Color rockColorTint = Color.white;
+
+        [Tooltip("Fraction of rocks that are large boulders (>= 0.5m) with convex colliders (0.0 to 0.5)")]
+        [Range(0.0f, 0.5f)]
+        public float boulderFraction = 0.15f;
+
+        [Tooltip("Safe clearance radius around rover spawn point where no rocks will be spawned (meters)")]
+        [Range(5.0f, 50.0f)]
+        public float spawnClearanceRadius = 15.0f;
+
         [Header("Legacy Compatibility Fields")]
         public float terrainStaticFriction { get => soilStaticFriction; set => soilStaticFriction = value; }
         public float terrainDynamicFriction { get => soilDynamicFriction; set => soilDynamicFriction = value; }
