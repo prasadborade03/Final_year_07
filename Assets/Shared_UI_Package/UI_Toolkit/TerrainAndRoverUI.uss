@@ -870,3 +870,329 @@
     color: #ffffff;
 }
 
+/* ========================================================================= */
+/* 7. TERRAIN LAB WORKBENCH STYLES                                            */
+/* ========================================================================= */
+.studio-tab-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    background-color: rgba(14, 21, 32, 0.85);
+    border-radius: 8px;
+    padding: 3px;
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.6);
+}
+
+.studio-tab-btn {
+    flex-grow: 1;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border-width: 0;
+    background-color: transparent;
+    color: #94a3b8;
+    font-size: 10px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    -unity-text-align: middle-center;
+}
+
+.studio-tab-btn:hover {
+    background-color: rgba(0, 229, 255, 0.15);
+    color: #e2e8f0;
+}
+
+.studio-tab-btn-active {
+    background-color: rgba(0, 229, 255, 0.25);
+    border-width: 1px;
+    border-color: #00e5ff;
+    color: #00e5ff;
+}
+
+.tab-view-container {
+    flex-grow: 1;
+}
+
+.terrain-lab-scroll {
+    flex-grow: 1;
+    max-height: 800px;
+}
+
+.painter-canvas-wrapper {
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.painter-canvas-image {
+    width: 180px;
+    height: 180px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: #00e5ff;
+    background-color: #020617;
+}
+
+.canvas-hint {
+    font-size: 8px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+.brush-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: rgba(15, 23, 42, 0.8);
+    border-radius: 6px;
+    padding: 2px;
+    margin-bottom: 6px;
+}
+
+.brush-btn {
+    flex-grow: 1;
+    font-size: 9px;
+    color: #cbd5e1;
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 4px;
+    padding: 4px 2px;
+    margin: 1px;
+    -unity-text-align: middle-center;
+}
+
+.brush-btn:hover {
+    background-color: rgba(0, 229, 255, 0.2);
+    color: #ffffff;
+}
+
+.brush-btn-active {
+    background-color: #f97316;
+    color: #020617;
+    -unity-font-style: bold;
+}
+
+.history-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(15, 23, 42, 0.6);
+    border-radius: 6px;
+    padding: 3px 6px;
+    margin-bottom: 6px;
+}
+
+.history-btn {
+    font-size: 9px;
+    color: #cbd5e1;
+    background-color: rgba(30, 41, 59, 0.7);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 5px;
+    padding: 3px 8px;
+}
+
+.history-btn:hover {
+    background-color: rgba(0, 229, 255, 0.2);
+    border-color: #00e5ff;
+}
+
+.history-lbl {
+    font-size: 8px;
+    color: #94a3b8;
+}
+
+.curve-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 3px;
+    margin-bottom: 6px;
+}
+
+.curve-btn {
+    flex-grow: 1;
+    font-size: 8px;
+    color: #94a3b8;
+    background-color: rgba(30, 41, 59, 0.6);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 5px;
+    padding: 3px;
+    margin: 1px;
+    -unity-text-align: middle-center;
+}
+
+.curve-btn:hover {
+    background-color: rgba(0, 229, 255, 0.15);
+}
+
+.curve-btn-active {
+    background-color: rgba(249, 115, 22, 0.3);
+    border-color: #f97316;
+    color: #fdba74;
+    -unity-font-style: bold;
+}
+
+.material-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.material-btn {
+    width: 48%;
+    font-size: 8px;
+    color: #cbd5e1;
+    background-color: rgba(30, 41, 59, 0.7);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 6px;
+    padding: 4px;
+    margin-bottom: 4px;
+    -unity-text-align: middle-center;
+}
+
+.material-btn:hover {
+    border-color: #00e5ff;
+}
+
+.material-btn-active {
+    background-color: rgba(249, 115, 22, 0.25);
+    border-color: #f97316;
+    color: #fdba74;
+    -unity-font-style: bold;
+}
+
+.lab-toggle {
+    font-size: 9px;
+    color: #cbd5e1;
+    margin-top: 2px;
+    margin-bottom: 4px;
+}
+
+.lab-toggle > .unity-toggle__label {
+    color: #cbd5e1;
+    font-size: 9px;
+}
+
+.preset-grid-lab {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.preset-btn-lab {
+    width: 31%;
+    font-size: 8px;
+    color: #cbd5e1;
+    background-color: rgba(30, 41, 59, 0.7);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 5px;
+    padding: 3px 1px;
+    margin-bottom: 3px;
+    -unity-text-align: middle-center;
+}
+
+.preset-btn-lab:hover {
+    border-color: #00e5ff;
+}
+
+.preset-btn-lab-active {
+    background-color: rgba(0, 229, 255, 0.25);
+    border-color: #00e5ff;
+    color: #00e5ff;
+    -unity-font-style: bold;
+}
+
+.file-ops-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.file-op-btn {
+    width: 48%;
+    font-size: 8px;
+    color: #cbd5e1;
+    background-color: rgba(30, 41, 59, 0.7);
+    border-width: 1px;
+    border-color: rgba(148, 163, 184, 0.2);
+    border-radius: 5px;
+    padding: 4px 2px;
+    -unity-text-align: middle-center;
+}
+
+.file-op-btn:hover {
+    border-color: #00e5ff;
+    color: #ffffff;
+}
+
+.param-name {
+    color: #94a3b8;
+    font-size: 8px;
+    -unity-font-style: bold;
+}
+
+.param-val {
+    color: #00e5ff;
+    font-size: 8px;
+    -unity-font-style: bold;
+}
+
+.slider-label-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.slider-row {
+    margin-bottom: 4px;
+}
+
+.slider-row > .unity-slider {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.slider-row .unity-base-slider__dragger {
+    background-color: #00e5ff;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #ffffff;
+    height: 12px;
+    width: 12px;
+}
+
+.slider-row .unity-base-slider__tracker {
+    background-color: rgba(30, 41, 59, 0.8);
+    border-color: rgba(148, 163, 184, 0.25);
+    height: 4px;
+}
+
+.lab-dropdown .unity-base-field__label,
+#DropdownResolution .unity-base-field__label {
+    color: #94a3b8;
+    font-size: 8px;
+    -unity-font-style: bold;
+    min-width: 80px;
+}
+
+.lab-dropdown .unity-base-popup-field__input,
+#DropdownResolution .unity-base-popup-field__input {
+    background-color: rgba(30, 41, 59, 0.8);
+    border-color: rgba(148, 163, 184, 0.3);
+    border-radius: 5px;
+    padding: 3px 6px;
+}
+
+.lab-dropdown .unity-base-popup-field__text,
+#DropdownResolution .unity-base-popup-field__text {
+    color: #00e5ff;
+    font-size: 8px;
+    -unity-font-style: bold;
+}
+
+

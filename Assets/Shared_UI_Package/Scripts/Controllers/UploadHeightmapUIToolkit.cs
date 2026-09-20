@@ -128,6 +128,62 @@ namespace ProjectName.Terrain
         private VisualElement studioBottomBar;
         public bool isPlacementMode = false;
 
+        // Terrain Lab Elements & State
+        private Button btnTabMission;
+        private Button btnTabTerrainLab;
+        private VisualElement tabMissionView;
+        private ScrollView tabTerrainLabView;
+        private bool isTerrainLabActive = false;
+
+        // Terrain Lab: Presets, Seed, Files
+        private Button btnLabPresetGale, btnLabPresetOlympus, btnLabPresetShackleton, btnLabPresetValles, btnLabPresetPlains, btnLabPresetFractal;
+        private IntegerField fieldSeed;
+        private Button btnRandomSeed;
+        private Button btnImportPNG, btnExportPNG;
+        private int currentSeed = 0;
+
+        // Terrain Lab: 2D Canvas Painter & Dirty-Rect Undo/Redo
+        private Image heightmapPainterImage;
+        private Button btnBrushRaise, btnBrushLower, btnBrushSmooth, btnBrushFlatten, btnBrushNoise;
+        private Button btnUndo, btnRedo;
+        private Label labelHistoryStatus;
+        private Slider sliderBrushRadius, sliderBrushStrength, sliderBrushHardness, sliderFlattenHeight;
+        private VisualElement rowFlattenHeight;
+        private Label labelBrushRadiusVal, labelBrushStrengthVal, labelBrushHardnessVal, labelFlattenHeightVal;
+        private BrushMode currentBrushMode = BrushMode.Raise;
+        private float brushRadius = 0.08f;
+        private float brushStrength = 0.40f;
+        private float brushHardness = 0.50f;
+        private float targetFlattenHeight = 0.50f;
+        private bool isPainting = false;
+
+        public struct HeightStrokeDiff
+        {
+            public RectInt rect;
+            public float[,] oldHeights;
+            public float[,] newHeights;
+        }
+        private readonly Stack<HeightStrokeDiff> undoStack = new Stack<HeightStrokeDiff>();
+        private readonly Stack<HeightStrokeDiff> redoStack = new Stack<HeightStrokeDiff>();
+        private const int MAX_UNDO_STEPS = 20;
+        private readonly Dictionary<int, float> strokeTouchedCells = new Dictionary<int, float>();
+
+        // Terrain Lab: Spatial Tuning
+        private Slider sliderMaxHeight, sliderBaseOffset, sliderTerrainSize, sliderSmoothing;
+        private Label labelMaxHeightVal, labelBaseOffsetVal, labelTerrainSizeVal, labelSmoothingVal;
+        private DropdownField dropdownResolution;
+        private Button btnCurveLinear, btnCurveExponential, btnCurveRidge, btnCurveBasin;
+
+        // Terrain Lab: Surface Material & Follow Planet
+        private Toggle toggleFollowPlanet;
+        private bool followPlanetProfile = true;
+        private Button btnMatMartian, btnMatLunar, btnMatBasalt, btnMatIce, btnMatCanyon, btnMatWireframe, btnMatNormal;
+
+        // Terrain Lab: Apply & Live Preview
+        private Toggle toggleLivePreview;
+        private bool isLivePreviewEnabled = false;
+        private Button btnApplyTerrainLab;
+
         private void Awake()
         {
             if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
@@ -138,7 +194,8 @@ namespace ProjectName.Terrain
                 HeightmapPreset.GaleCrater,
                 tuningConfig.resolution,
                 tuningConfig.smoothingFactor,
-                tuningConfig.heightCurve
+                tuningConfig.heightCurve,
+                currentSeed
             );
         }
 
@@ -147,11 +204,19 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated += HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged += HandleRigPerspectiveChanged;
+            if (PlanetaryParameterWriter.Instance != null)
+            {
+                PlanetaryParameterWriter.Instance.OnProfileApplied += HandlePlanetaryProfileApplied;
+            }
 
             BindUIElements();
             RefreshPreview();
             UpdatePresetButtonsUI();
             UpdateRoverSelectionUI();
+            UpdateBrushButtonStyles();
+            UpdateCurveButtonStyles();
+            UpdateMaterialButtonStyles();
+            UpdateHistoryUI();
             SetDrivingHudMode(false); // Default to Studio view on open, user can switch to Driving HUD with [Tab]
 
             if (RoverCameraRig.Instance != null)
@@ -362,6 +427,244 @@ namespace ProjectName.Terrain
             if (btnCamLeft != null) btnCamLeft.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Left);
             if (btnCamRight != null) btnCamRight.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Right);
             if (btnCamTop != null) btnCamTop.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Top);
+
+            // ---------------------------------------------------------
+            // Terrain Lab: Tab Selector & Workbench Bindings
+            // ---------------------------------------------------------
+            btnTabMission = root.Q<Button>("BtnTabMission");
+            btnTabTerrainLab = root.Q<Button>("BtnTabTerrainLab");
+            tabMissionView = root.Q<VisualElement>("TabMissionView");
+            tabTerrainLabView = root.Q<ScrollView>("TabTerrainLabView");
+
+            if (btnTabMission != null) btnTabMission.clicked += () => SetTerrainLabActive(false);
+            if (btnTabTerrainLab != null) btnTabTerrainLab.clicked += () => SetTerrainLabActive(true);
+
+            // Presets & Seed
+            btnLabPresetGale = root.Q<Button>("BtnLabPresetGale");
+            btnLabPresetOlympus = root.Q<Button>("BtnLabPresetOlympus");
+            btnLabPresetShackleton = root.Q<Button>("BtnLabPresetShackleton");
+            btnLabPresetValles = root.Q<Button>("BtnLabPresetValles");
+            btnLabPresetPlains = root.Q<Button>("BtnLabPresetPlains");
+            btnLabPresetFractal = root.Q<Button>("BtnLabPresetFractal");
+
+            if (btnLabPresetGale != null) btnLabPresetGale.clicked += () => SelectPreset(HeightmapPreset.GaleCrater);
+            if (btnLabPresetOlympus != null) btnLabPresetOlympus.clicked += () => SelectPreset(HeightmapPreset.OlympusMons);
+            if (btnLabPresetShackleton != null) btnLabPresetShackleton.clicked += () => SelectPreset(HeightmapPreset.ShackletonCrater);
+            if (btnLabPresetValles != null) btnLabPresetValles.clicked += () => SelectPreset(HeightmapPreset.VallesMarineris);
+            if (btnLabPresetPlains != null) btnLabPresetPlains.clicked += () => SelectPreset(HeightmapPreset.Plains);
+            if (btnLabPresetFractal != null) btnLabPresetFractal.clicked += () => SelectPreset(HeightmapPreset.ProceduralFractal);
+
+            fieldSeed = root.Q<IntegerField>("FieldSeed");
+            btnRandomSeed = root.Q<Button>("BtnRandomSeed");
+            if (fieldSeed != null)
+            {
+                fieldSeed.value = currentSeed;
+                fieldSeed.RegisterValueChangedCallback(evt =>
+                {
+                    currentSeed = evt.newValue;
+                    RegeneratePreset();
+                });
+            }
+            if (btnRandomSeed != null)
+            {
+                btnRandomSeed.clicked += () =>
+                {
+                    currentSeed = UnityEngine.Random.Range(0, 999999);
+                    if (fieldSeed != null) fieldSeed.value = currentSeed;
+                    RegeneratePreset();
+                };
+            }
+
+            btnImportPNG = root.Q<Button>("BtnImportPNG");
+            btnExportPNG = root.Q<Button>("BtnExportPNG");
+            if (btnImportPNG != null) btnImportPNG.clicked += OnImportPNGClicked;
+            if (btnExportPNG != null) btnExportPNG.clicked += OnExportPNGClicked;
+
+            // 2D Canvas Painter
+            heightmapPainterImage = root.Q<Image>("HeightmapPainterImage");
+            if (heightmapPainterImage != null)
+            {
+                heightmapPainterImage.image = previewTexture;
+                heightmapPainterImage.RegisterCallback<PointerDownEvent>(OnPainterPointerDown);
+                heightmapPainterImage.RegisterCallback<PointerMoveEvent>(OnPainterPointerMove);
+                heightmapPainterImage.RegisterCallback<PointerUpEvent>(OnPainterPointerUp);
+                heightmapPainterImage.RegisterCallback<PointerLeaveEvent>(OnPainterPointerLeave);
+            }
+
+            btnBrushRaise = root.Q<Button>("BtnBrushRaise");
+            btnBrushLower = root.Q<Button>("BtnBrushLower");
+            btnBrushSmooth = root.Q<Button>("BtnBrushSmooth");
+            btnBrushFlatten = root.Q<Button>("BtnBrushFlatten");
+            btnBrushNoise = root.Q<Button>("BtnBrushNoise");
+
+            if (btnBrushRaise != null) btnBrushRaise.clicked += () => SetBrushMode(BrushMode.Raise);
+            if (btnBrushLower != null) btnBrushLower.clicked += () => SetBrushMode(BrushMode.Lower);
+            if (btnBrushSmooth != null) btnBrushSmooth.clicked += () => SetBrushMode(BrushMode.Smooth);
+            if (btnBrushFlatten != null) btnBrushFlatten.clicked += () => SetBrushMode(BrushMode.Flatten);
+            if (btnBrushNoise != null) btnBrushNoise.clicked += () => SetBrushMode(BrushMode.Noise);
+
+            btnUndo = root.Q<Button>("BtnUndo");
+            btnRedo = root.Q<Button>("BtnRedo");
+            labelHistoryStatus = root.Q<Label>("LabelHistoryStatus");
+            if (btnUndo != null) btnUndo.clicked += UndoLastStroke;
+            if (btnRedo != null) btnRedo.clicked += RedoStroke;
+
+            sliderBrushRadius = root.Q<Slider>("SliderBrushRadius");
+            labelBrushRadiusVal = root.Q<Label>("LabelBrushRadiusVal");
+            if (sliderBrushRadius != null)
+            {
+                sliderBrushRadius.value = brushRadius;
+                sliderBrushRadius.RegisterValueChangedCallback(evt =>
+                {
+                    brushRadius = evt.newValue;
+                    if (labelBrushRadiusVal != null) labelBrushRadiusVal.text = $"{(int)(brushRadius * 100f)}%";
+                });
+            }
+
+            sliderBrushStrength = root.Q<Slider>("SliderBrushStrength");
+            labelBrushStrengthVal = root.Q<Label>("LabelBrushStrengthVal");
+            if (sliderBrushStrength != null)
+            {
+                sliderBrushStrength.value = brushStrength;
+                sliderBrushStrength.RegisterValueChangedCallback(evt =>
+                {
+                    brushStrength = evt.newValue;
+                    if (labelBrushStrengthVal != null) labelBrushStrengthVal.text = $"{(int)(brushStrength * 100f)}%";
+                });
+            }
+
+            sliderBrushHardness = root.Q<Slider>("SliderBrushHardness");
+            labelBrushHardnessVal = root.Q<Label>("LabelBrushHardnessVal");
+            if (sliderBrushHardness != null)
+            {
+                sliderBrushHardness.value = brushHardness;
+                sliderBrushHardness.RegisterValueChangedCallback(evt =>
+                {
+                    brushHardness = evt.newValue;
+                    if (labelBrushHardnessVal != null) labelBrushHardnessVal.text = $"{(int)(brushHardness * 100f)}%";
+                });
+            }
+
+            rowFlattenHeight = root.Q<VisualElement>("RowFlattenHeight");
+            sliderFlattenHeight = root.Q<Slider>("SliderFlattenHeight");
+            labelFlattenHeightVal = root.Q<Label>("LabelFlattenHeightVal");
+            if (sliderFlattenHeight != null)
+            {
+                sliderFlattenHeight.value = targetFlattenHeight;
+                sliderFlattenHeight.RegisterValueChangedCallback(evt =>
+                {
+                    targetFlattenHeight = evt.newValue;
+                    if (labelFlattenHeightVal != null) labelFlattenHeightVal.text = $"{(int)(targetFlattenHeight * 100f)}%";
+                });
+            }
+
+            // Spatial Tuning
+            sliderMaxHeight = root.Q<Slider>("SliderMaxHeight");
+            labelMaxHeightVal = root.Q<Label>("LabelMaxHeightVal");
+            if (sliderMaxHeight != null)
+            {
+                sliderMaxHeight.value = tuningConfig.maxHeight;
+                sliderMaxHeight.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.maxHeight = evt.newValue;
+                    if (labelMaxHeightVal != null) labelMaxHeightVal.text = $"{evt.newValue:F0} m";
+                    if (isLivePreviewEnabled) SyncTerrainDimensionsLive();
+                });
+            }
+
+            sliderBaseOffset = root.Q<Slider>("SliderBaseOffset");
+            labelBaseOffsetVal = root.Q<Label>("LabelBaseOffsetVal");
+            if (sliderBaseOffset != null)
+            {
+                sliderBaseOffset.value = tuningConfig.baseOffset;
+                sliderBaseOffset.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.baseOffset = evt.newValue;
+                    if (labelBaseOffsetVal != null) labelBaseOffsetVal.text = $"{evt.newValue:F0} m";
+                    if (isLivePreviewEnabled) SyncTerrainDimensionsLive();
+                });
+            }
+
+            sliderTerrainSize = root.Q<Slider>("SliderTerrainSize");
+            labelTerrainSizeVal = root.Q<Label>("LabelTerrainSizeVal");
+            if (sliderTerrainSize != null)
+            {
+                sliderTerrainSize.value = tuningConfig.terrainWidth;
+                sliderTerrainSize.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.terrainWidth = evt.newValue;
+                    tuningConfig.terrainLength = evt.newValue;
+                    if (labelTerrainSizeVal != null) labelTerrainSizeVal.text = $"{evt.newValue:F0} x {evt.newValue:F0} m";
+                    if (isLivePreviewEnabled) SyncTerrainDimensionsLive();
+                });
+            }
+
+            dropdownResolution = root.Q<DropdownField>("DropdownResolution");
+            if (dropdownResolution != null)
+            {
+                dropdownResolution.RegisterValueChangedCallback(OnResolutionChanged);
+            }
+
+            sliderSmoothing = root.Q<Slider>("SliderSmoothing");
+            labelSmoothingVal = root.Q<Label>("LabelSmoothingVal");
+            if (sliderSmoothing != null)
+            {
+                sliderSmoothing.value = tuningConfig.smoothingFactor;
+                sliderSmoothing.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.smoothingFactor = evt.newValue;
+                    if (labelSmoothingVal != null) labelSmoothingVal.text = $"{evt.newValue:F1}";
+                });
+            }
+
+            btnCurveLinear = root.Q<Button>("BtnCurveLinear");
+            btnCurveExponential = root.Q<Button>("BtnCurveExponential");
+            btnCurveRidge = root.Q<Button>("BtnCurveRidge");
+            btnCurveBasin = root.Q<Button>("BtnCurveBasin");
+
+            if (btnCurveLinear != null) btnCurveLinear.clicked += () => SetHeightCurve(HeightRemapCurve.Linear);
+            if (btnCurveExponential != null) btnCurveExponential.clicked += () => SetHeightCurve(HeightRemapCurve.Exponential);
+            if (btnCurveRidge != null) btnCurveRidge.clicked += () => SetHeightCurve(HeightRemapCurve.RidgePeak);
+            if (btnCurveBasin != null) btnCurveBasin.clicked += () => SetHeightCurve(HeightRemapCurve.BasinInversion);
+
+            // Planetary Surface Material
+            toggleFollowPlanet = root.Q<Toggle>("ToggleFollowPlanet");
+            if (toggleFollowPlanet != null)
+            {
+                toggleFollowPlanet.value = followPlanetProfile;
+                toggleFollowPlanet.RegisterValueChangedCallback(evt =>
+                {
+                    followPlanetProfile = evt.newValue;
+                    if (followPlanetProfile) SyncMaterialWithCurrentPlanet();
+                });
+            }
+
+            btnMatMartian = root.Q<Button>("BtnMatMartian");
+            btnMatLunar = root.Q<Button>("BtnMatLunar");
+            btnMatBasalt = root.Q<Button>("BtnMatBasalt");
+            btnMatIce = root.Q<Button>("BtnMatIce");
+            btnMatCanyon = root.Q<Button>("BtnMatCanyon");
+            btnMatWireframe = root.Q<Button>("BtnMatWireframe");
+            btnMatNormal = root.Q<Button>("BtnMatNormal");
+
+            if (btnMatMartian != null) btnMatMartian.clicked += () => SetMaterial(PlanetaryMaterialType.MartianDust);
+            if (btnMatLunar != null) btnMatLunar.clicked += () => SetMaterial(PlanetaryMaterialType.LunarRegolith);
+            if (btnMatBasalt != null) btnMatBasalt.clicked += () => SetMaterial(PlanetaryMaterialType.VolcanicBasalt);
+            if (btnMatIce != null) btnMatIce.clicked += () => SetMaterial(PlanetaryMaterialType.PolarIce);
+            if (btnMatCanyon != null) btnMatCanyon.clicked += () => SetMaterial(PlanetaryMaterialType.RedCanyon);
+            if (btnMatWireframe != null) btnMatWireframe.clicked += () => SetMaterial(PlanetaryMaterialType.TopographicWireframe);
+            if (btnMatNormal != null) btnMatNormal.clicked += () => SetMaterial(PlanetaryMaterialType.NormalInspector);
+
+            // Apply & Live Preview
+            toggleLivePreview = root.Q<Toggle>("ToggleLivePreview");
+            if (toggleLivePreview != null)
+            {
+                toggleLivePreview.value = isLivePreviewEnabled;
+                toggleLivePreview.RegisterValueChangedCallback(evt => isLivePreviewEnabled = evt.newValue);
+            }
+
+            btnApplyTerrainLab = root.Q<Button>("BtnApplyTerrainLab");
+            if (btnApplyTerrainLab != null) btnApplyTerrainLab.clicked += OnApplyTerrainLabClicked;
         }
 
         private void Update()
@@ -372,6 +675,19 @@ namespace ProjectName.Terrain
                                 uiDocument.rootVisualElement.focusController.focusedElement != null &&
                                 (uiDocument.rootVisualElement.focusController.focusedElement.GetType().Name.Contains("Text") ||
                                  uiDocument.rootVisualElement.focusController.focusedElement.GetType().Name.Contains("Input"));
+
+            // Undo / Redo keyboard shortcuts [Ctrl+Z] / [Ctrl+Y]
+            if (!isTypingInUI && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
+            {
+                if (Input.GetKeyDown(KeyCode.Z))
+                {
+                    UndoLastStroke();
+                }
+                else if (Input.GetKeyDown(KeyCode.Y))
+                {
+                    RedoStroke();
+                }
+            }
 
             if (ActiveRoverContext.HasActiveRover)
             {
@@ -1144,35 +1460,519 @@ namespace ProjectName.Terrain
         }
 
         // -------------------------------------------------------------
-        // Presets & Terrain Generation
+        // Terrain Lab Workbench & Presets
         // -------------------------------------------------------------
+        public void SetTerrainLabActive(bool labActive)
+        {
+            isTerrainLabActive = labActive;
+            if (tabMissionView != null) tabMissionView.style.display = labActive ? DisplayStyle.None : DisplayStyle.Flex;
+            if (tabTerrainLabView != null) tabTerrainLabView.style.display = labActive ? DisplayStyle.Flex : DisplayStyle.None;
+
+            SetBtnClass(btnTabMission, "studio-tab-btn-active", !labActive);
+            SetBtnClass(btnTabTerrainLab, "studio-tab-btn-active", labActive);
+        }
+
         private void SelectPreset(HeightmapPreset preset)
         {
             currentPreset = preset;
+            RegeneratePreset();
+            UpdatePresetButtonsUI();
+        }
+
+        private void RegeneratePreset()
+        {
             currentHeights = HeightmapLoader.GeneratePresetHeights(
-                preset,
+                currentPreset,
                 tuningConfig.resolution,
                 tuningConfig.smoothingFactor,
-                tuningConfig.heightCurve
+                tuningConfig.heightCurve,
+                currentSeed
             );
 
-            UpdatePresetButtonsUI();
+            undoStack.Clear();
+            redoStack.Clear();
+            UpdateHistoryUI();
             RefreshPreview();
+
+            if (isLivePreviewEnabled)
+            {
+                var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                if (curTerrain != null && curTerrain.terrainData != null)
+                {
+                    curTerrain.terrainData.SetHeights(0, 0, currentHeights);
+                }
+            }
         }
 
         private void UpdatePresetButtonsUI()
         {
+            // Radar overview pills
             SetBtnClass(btnPresetGale, "preset-active", currentPreset == HeightmapPreset.GaleCrater);
             SetBtnClass(btnPresetOlympus, "preset-active", currentPreset == HeightmapPreset.OlympusMons);
             SetBtnClass(btnPresetShackleton, "preset-active", currentPreset == HeightmapPreset.ShackletonCrater);
             SetBtnClass(btnPresetValles, "preset-active", currentPreset == HeightmapPreset.VallesMarineris);
-            SetBtnClass(btnPresetFractal, "preset-active", currentPreset == HeightmapPreset.ProceduralFractal);
+            SetBtnClass(btnPresetFractal, "preset-active", currentPreset == HeightmapPreset.ProceduralFractal || currentPreset == HeightmapPreset.Plains);
+
+            // Terrain Lab pills
+            SetBtnClass(btnLabPresetGale, "preset-btn-lab-active", currentPreset == HeightmapPreset.GaleCrater);
+            SetBtnClass(btnLabPresetOlympus, "preset-btn-lab-active", currentPreset == HeightmapPreset.OlympusMons);
+            SetBtnClass(btnLabPresetShackleton, "preset-btn-lab-active", currentPreset == HeightmapPreset.ShackletonCrater);
+            SetBtnClass(btnLabPresetValles, "preset-btn-lab-active", currentPreset == HeightmapPreset.VallesMarineris);
+            SetBtnClass(btnLabPresetPlains, "preset-btn-lab-active", currentPreset == HeightmapPreset.Plains);
+            SetBtnClass(btnLabPresetFractal, "preset-btn-lab-active", currentPreset == HeightmapPreset.ProceduralFractal);
         }
 
-        private void OnBrowseFileClicked()
+        // -------------------------------------------------------------
+        // Interactive 2D Heightmap Canvas Painter & Dirty-Rect Undo/Redo
+        // -------------------------------------------------------------
+        private void SetBrushMode(BrushMode mode)
         {
-            var extensions = new[] { new ExtensionFilter("Heightmap Images", "png", "jpg", "jpeg") };
-            string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Planetary Heightmap", "", extensions, false);
+            currentBrushMode = mode;
+            UpdateBrushButtonStyles();
+            if (rowFlattenHeight != null)
+            {
+                rowFlattenHeight.style.display = (mode == BrushMode.Flatten) ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+        }
+
+        private void UpdateBrushButtonStyles()
+        {
+            SetBtnClass(btnBrushRaise, "brush-btn-active", currentBrushMode == BrushMode.Raise);
+            SetBtnClass(btnBrushLower, "brush-btn-active", currentBrushMode == BrushMode.Lower);
+            SetBtnClass(btnBrushSmooth, "brush-btn-active", currentBrushMode == BrushMode.Smooth);
+            SetBtnClass(btnBrushFlatten, "brush-btn-active", currentBrushMode == BrushMode.Flatten);
+            SetBtnClass(btnBrushNoise, "brush-btn-active", currentBrushMode == BrushMode.Noise);
+        }
+
+        private void OnPainterPointerDown(PointerDownEvent evt)
+        {
+            if (heightmapPainterImage == null || currentHeights == null) return;
+            isPainting = true;
+            strokeTouchedCells.Clear();
+            PaintAtPointerPosition(evt.localPosition);
+        }
+
+        private void OnPainterPointerMove(PointerMoveEvent evt)
+        {
+            if (!isPainting) return;
+            PaintAtPointerPosition(evt.localPosition);
+        }
+
+        private void OnPainterPointerUp(PointerUpEvent evt)
+        {
+            EndStroke();
+        }
+
+        private void OnPainterPointerLeave(PointerLeaveEvent evt)
+        {
+            EndStroke();
+        }
+
+        private void PaintAtPointerPosition(Vector2 localPos)
+        {
+            if (heightmapPainterImage == null || currentHeights == null) return;
+
+            float w = heightmapPainterImage.resolvedStyle.width;
+            float h = heightmapPainterImage.resolvedStyle.height;
+            if (w <= 0f || h <= 0f) return;
+
+            float u = Mathf.Clamp01(localPos.x / w);
+            float v = Mathf.Clamp01(1.0f - (localPos.y / h)); // Invert Y
+
+            int res = tuningConfig.resolution;
+            int centerX = Mathf.RoundToInt(u * (res - 1));
+            int centerY = Mathf.RoundToInt(v * (res - 1));
+            int radiusPixels = Mathf.Max(1, Mathf.RoundToInt(brushRadius * res));
+
+            int minX = Mathf.Max(0, centerX - radiusPixels);
+            int maxX = Mathf.Min(res - 1, centerX + radiusPixels);
+            int minY = Mathf.Max(0, centerY - radiusPixels);
+            int maxY = Mathf.Min(res - 1, centerY + radiusPixels);
+
+            for (int py = minY; py <= maxY; py++)
+            {
+                for (int px = minX; px <= maxX; px++)
+                {
+                    int key = py * res + px;
+                    if (!strokeTouchedCells.ContainsKey(key))
+                    {
+                        strokeTouchedCells[key] = currentHeights[py, px];
+                    }
+                }
+            }
+
+            RectInt dirtyRect = HeightmapLoader.ApplyBrush(
+                currentHeights,
+                res,
+                new Vector2(u, v),
+                currentBrushMode,
+                brushRadius,
+                brushStrength,
+                brushHardness,
+                targetFlattenHeight,
+                currentSeed
+            );
+
+            // Update only dirty rect on preview texture
+            HeightmapLoader.UpdatePreviewTextureRect(
+                previewTexture,
+                currentHeights,
+                dirtyRect,
+                res,
+                tuningConfig.materialType
+            );
+
+            if (isLivePreviewEnabled)
+            {
+                var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                if (curTerrain != null && curTerrain.terrainData != null)
+                {
+                    int subW = dirtyRect.width;
+                    int subH = dirtyRect.height;
+                    float[,] subHeights = new float[subH, subW];
+                    for (int sy = 0; sy < subH; sy++)
+                    {
+                        for (int sx = 0; sx < subW; sx++)
+                        {
+                            subHeights[sy, sx] = currentHeights[dirtyRect.y + sy, dirtyRect.x + sx];
+                        }
+                    }
+                    curTerrain.terrainData.SetHeightsDelayLOD(dirtyRect.x, dirtyRect.y, subHeights);
+                }
+            }
+        }
+
+        private void EndStroke()
+        {
+            if (!isPainting) return;
+            isPainting = false;
+
+            if (strokeTouchedCells.Count > 0)
+            {
+                int res = tuningConfig.resolution;
+                int minX = int.MaxValue, maxX = int.MinValue;
+                int minY = int.MaxValue, maxY = int.MinValue;
+
+                foreach (var key in strokeTouchedCells.Keys)
+                {
+                    int py = key / res;
+                    int px = key % res;
+                    if (px < minX) minX = px;
+                    if (px > maxX) maxX = px;
+                    if (py < minY) minY = py;
+                    if (py > maxY) maxY = py;
+                }
+
+                minX = Mathf.Clamp(minX, 0, res - 1);
+                maxX = Mathf.Clamp(maxX, 0, res - 1);
+                minY = Mathf.Clamp(minY, 0, res - 1);
+                maxY = Mathf.Clamp(maxY, 0, res - 1);
+
+                int rw = maxX - minX + 1;
+                int rh = maxY - minY + 1;
+
+                if (rw > 0 && rh > 0)
+                {
+                    float[,] oldSub = new float[rh, rw];
+                    float[,] newSub = new float[rh, rw];
+
+                    for (int y = 0; y < rh; y++)
+                    {
+                        int py = minY + y;
+                        for (int x = 0; x < rw; x++)
+                        {
+                            int px = minX + x;
+                            int key = py * res + px;
+                            oldSub[y, x] = strokeTouchedCells.TryGetValue(key, out float oldVal) ? oldVal : currentHeights[py, px];
+                            newSub[y, x] = currentHeights[py, px];
+                        }
+                    }
+
+                    if (undoStack.Count >= MAX_UNDO_STEPS)
+                    {
+                        var temp = new List<HeightStrokeDiff>(undoStack);
+                        temp.RemoveAt(temp.Count - 1);
+                        undoStack.Clear();
+                        for (int i = temp.Count - 1; i >= 0; i--)
+                        {
+                            undoStack.Push(temp[i]);
+                        }
+                    }
+
+                    undoStack.Push(new HeightStrokeDiff
+                    {
+                        rect = new RectInt(minX, minY, rw, rh),
+                        oldHeights = oldSub,
+                        newHeights = newSub
+                    });
+
+                    redoStack.Clear();
+                    UpdateHistoryUI();
+                }
+
+                strokeTouchedCells.Clear();
+
+                if (isLivePreviewEnabled)
+                {
+                    var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                    if (curTerrain != null && curTerrain.terrainData != null)
+                    {
+                        curTerrain.terrainData.SyncHeightmap();
+                    }
+                }
+            }
+        }
+
+        public void UndoLastStroke()
+        {
+            if (undoStack.Count == 0) return;
+
+            var diff = undoStack.Pop();
+            redoStack.Push(diff);
+
+            int res = tuningConfig.resolution;
+            int rw = diff.rect.width;
+            int rh = diff.rect.height;
+
+            for (int y = 0; y < rh; y++)
+            {
+                int py = diff.rect.y + y;
+                for (int x = 0; x < rw; x++)
+                {
+                    int px = diff.rect.x + x;
+                    if (py >= 0 && py < res && px >= 0 && px < res)
+                    {
+                        currentHeights[py, px] = diff.oldHeights[y, x];
+                    }
+                }
+            }
+
+            HeightmapLoader.UpdatePreviewTextureRect(previewTexture, currentHeights, diff.rect, res, tuningConfig.materialType);
+
+            if (isLivePreviewEnabled)
+            {
+                var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                if (curTerrain != null && curTerrain.terrainData != null)
+                {
+                    curTerrain.terrainData.SetHeightsDelayLOD(diff.rect.x, diff.rect.y, diff.oldHeights);
+                    curTerrain.terrainData.SyncHeightmap();
+                }
+            }
+
+            UpdateHistoryUI();
+            ShowNotification("Undo stroke.");
+        }
+
+        public void RedoStroke()
+        {
+            if (redoStack.Count == 0) return;
+
+            var diff = redoStack.Pop();
+            undoStack.Push(diff);
+
+            int res = tuningConfig.resolution;
+            int rw = diff.rect.width;
+            int rh = diff.rect.height;
+
+            for (int y = 0; y < rh; y++)
+            {
+                int py = diff.rect.y + y;
+                for (int x = 0; x < rw; x++)
+                {
+                    int px = diff.rect.x + x;
+                    if (py >= 0 && py < res && px >= 0 && px < res)
+                    {
+                        currentHeights[py, px] = diff.newHeights[y, x];
+                    }
+                }
+            }
+
+            HeightmapLoader.UpdatePreviewTextureRect(previewTexture, currentHeights, diff.rect, res, tuningConfig.materialType);
+
+            if (isLivePreviewEnabled)
+            {
+                var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                if (curTerrain != null && curTerrain.terrainData != null)
+                {
+                    curTerrain.terrainData.SetHeightsDelayLOD(diff.rect.x, diff.rect.y, diff.newHeights);
+                    curTerrain.terrainData.SyncHeightmap();
+                }
+            }
+
+            UpdateHistoryUI();
+            ShowNotification("Redo stroke.");
+        }
+
+        private void UpdateHistoryUI()
+        {
+            if (labelHistoryStatus != null)
+            {
+                labelHistoryStatus.text = $"History: {undoStack.Count}/{MAX_UNDO_STEPS}";
+            }
+            if (btnUndo != null) btnUndo.SetEnabled(undoStack.Count > 0);
+            if (btnRedo != null) btnRedo.SetEnabled(redoStack.Count > 0);
+        }
+
+        // -------------------------------------------------------------
+        // Height Remap Curves & Surface Materials
+        // -------------------------------------------------------------
+        private void SetHeightCurve(HeightRemapCurve curve)
+        {
+            tuningConfig.heightCurve = curve;
+            UpdateCurveButtonStyles();
+            RegeneratePreset();
+        }
+
+        private void UpdateCurveButtonStyles()
+        {
+            SetBtnClass(btnCurveLinear, "curve-btn-active", tuningConfig.heightCurve == HeightRemapCurve.Linear);
+            SetBtnClass(btnCurveExponential, "curve-btn-active", tuningConfig.heightCurve == HeightRemapCurve.Exponential);
+            SetBtnClass(btnCurveRidge, "curve-btn-active", tuningConfig.heightCurve == HeightRemapCurve.RidgePeak);
+            SetBtnClass(btnCurveBasin, "curve-btn-active", tuningConfig.heightCurve == HeightRemapCurve.BasinInversion);
+        }
+
+        public void SetMaterial(PlanetaryMaterialType mat)
+        {
+            SetMaterialInternal(mat, isManualOverride: true);
+        }
+
+        private void SetMaterialInternal(PlanetaryMaterialType mat, bool isManualOverride)
+        {
+            if (isManualOverride)
+            {
+                followPlanetProfile = false;
+                if (toggleFollowPlanet != null) toggleFollowPlanet.value = false;
+            }
+
+            tuningConfig.materialType = mat;
+            UpdateMaterialButtonStyles();
+            RefreshPreview();
+
+            if (terrainGenerator == null) terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
+            if (terrainGenerator != null)
+            {
+                var curTerrain = terrainGenerator.GetCurrentTerrain() ?? UnityEngine.Terrain.activeTerrain;
+                if (curTerrain != null && terrainGenerator.materialManager != null)
+                {
+                    terrainGenerator.materialManager.ApplyMaterial(curTerrain, mat);
+                }
+            }
+        }
+
+        private void HandlePlanetaryProfileApplied(PlanetaryProfile profile)
+        {
+            if (!followPlanetProfile || profile == null) return;
+            SyncMaterialWithProfile(profile);
+        }
+
+        private void SyncMaterialWithCurrentPlanet()
+        {
+            var writer = PlanetaryParameterWriter.Instance;
+            if (writer != null && writer.currentProfile != null)
+            {
+                SyncMaterialWithProfile(writer.currentProfile);
+            }
+            else
+            {
+                SetMaterialInternal(PlanetaryMaterialType.MartianDust, isManualOverride: false);
+            }
+        }
+
+        private void SyncMaterialWithProfile(PlanetaryProfile profile)
+        {
+            string pName = profile.planetName.ToLowerInvariant();
+            PlanetaryMaterialType targetMat;
+            if (pName.Contains("moon")) targetMat = PlanetaryMaterialType.LunarRegolith;
+            else if (pName.Contains("titan") || pName.Contains("venus")) targetMat = PlanetaryMaterialType.VolcanicBasalt;
+            else if (pName.Contains("earth") || pName.Contains("polar")) targetMat = PlanetaryMaterialType.PolarIce;
+            else targetMat = PlanetaryMaterialType.MartianDust;
+
+            SetMaterialInternal(targetMat, isManualOverride: false);
+        }
+
+        private void UpdateMaterialButtonStyles()
+        {
+            SetBtnClass(btnMatMartian, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.MartianDust);
+            SetBtnClass(btnMatLunar, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.LunarRegolith);
+            SetBtnClass(btnMatBasalt, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.VolcanicBasalt);
+            SetBtnClass(btnMatIce, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.PolarIce);
+            SetBtnClass(btnMatCanyon, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.RedCanyon);
+            SetBtnClass(btnMatWireframe, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.TopographicWireframe);
+            SetBtnClass(btnMatNormal, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.NormalInspector);
+        }
+
+        private void SyncTerrainDimensionsLive()
+        {
+            var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+            if (curTerrain != null && curTerrain.terrainData != null)
+            {
+                curTerrain.terrainData.size = new Vector3(tuningConfig.terrainWidth, tuningConfig.maxHeight, tuningConfig.terrainLength);
+                curTerrain.transform.position = new Vector3(-tuningConfig.terrainWidth * 0.5f, tuningConfig.baseOffset, -tuningConfig.terrainLength * 0.5f);
+                var col = curTerrain.GetComponent<TerrainCollider>();
+                if (col != null)
+                {
+                    col.terrainData = null;
+                    col.terrainData = curTerrain.terrainData;
+                }
+            }
+        }
+
+        private void OnResolutionChanged(ChangeEvent<string> evt)
+        {
+            int newRes = 513;
+            if (evt.newValue.Contains("257")) newRes = 257;
+            else if (evt.newValue.Contains("513")) newRes = 513;
+            else if (evt.newValue.Contains("1025")) newRes = 1025;
+            else if (evt.newValue.Contains("2049")) newRes = 2049;
+
+            if (newRes != tuningConfig.resolution)
+            {
+                currentHeights = HeightmapLoader.ResampleHeights(currentHeights, newRes);
+                tuningConfig.resolution = newRes;
+                undoStack.Clear();
+                redoStack.Clear();
+                UpdateHistoryUI();
+                RefreshPreview();
+                ShowNotification($"Heightmap resampled to {newRes}x{newRes}.");
+            }
+        }
+
+        // -------------------------------------------------------------
+        // File Operations: PNG Import & Export
+        // -------------------------------------------------------------
+        private void OnExportPNGClicked()
+        {
+            if (currentHeights == null) return;
+            int res = tuningConfig.resolution;
+
+            string path = StandaloneFileBrowser.SaveFilePanel("Export Heightmap PNG", "", "PlanetaryHeightmap.png", "png");
+            if (string.IsNullOrEmpty(path)) return;
+
+            Texture2D exportTex = new Texture2D(res, res, TextureFormat.RGB24, false);
+            Color[] colors = new Color[res * res];
+            for (int y = 0; y < res; y++)
+            {
+                for (int x = 0; x < res; x++)
+                {
+                    float h = currentHeights[y, x];
+                    colors[y * res + x] = new Color(h, h, h, 1f);
+                }
+            }
+            exportTex.SetPixels(colors);
+            exportTex.Apply(false);
+
+            byte[] bytes = exportTex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            DestroyImmediate(exportTex);
+
+            ShowNotification($"Exported heightmap PNG to {Path.GetFileName(path)}");
+            Debug.Log($"[TerrainLab] Exported heightmap PNG to {path}");
+        }
+
+        private void OnImportPNGClicked()
+        {
+            var extensions = new[] { new ExtensionFilter("Grayscale Heightmap", "png", "jpg", "jpeg") };
+            string[] paths = StandaloneFileBrowser.OpenFilePanel("Import Heightmap Image", "", extensions, false);
 
             if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
             {
@@ -1188,12 +1988,29 @@ namespace ProjectName.Terrain
                 {
                     currentHeights = loaded;
                     currentPreset = HeightmapPreset.CustomImage;
+                    undoStack.Clear();
+                    redoStack.Clear();
+                    UpdateHistoryUI();
                     UpdatePresetButtonsUI();
                     RefreshPreview();
+                    ShowNotification($"Imported heightmap from {Path.GetFileName(path)}");
                 }
             }
         }
 
+        private void OnBrowseFileClicked()
+        {
+            OnImportPNGClicked();
+        }
+
+        private void OnApplyTerrainLabClicked()
+        {
+            OnGenerateTerrainClicked();
+        }
+
+        // -------------------------------------------------------------
+        // Primary Terrain Generation & Collider Sync
+        // -------------------------------------------------------------
         private void OnGenerateTerrainClicked()
         {
             try
@@ -1204,7 +2021,8 @@ namespace ProjectName.Terrain
                         currentPreset,
                         tuningConfig.resolution,
                         tuningConfig.smoothingFactor,
-                        tuningConfig.heightCurve
+                        tuningConfig.heightCurve,
+                        currentSeed
                     );
                 }
 
@@ -1217,11 +2035,30 @@ namespace ProjectName.Terrain
 
                 // Generates new terrain and automatically destroys ALL old terrains and hazards!
                 UnityEngine.Terrain terrain = terrainGenerator.GenerateTerrain(currentHeights, tuningConfig);
-                if (terrain != null && flowController != null)
+                if (terrain != null)
                 {
-                    flowController.OnTerrainReady();
+                    // Force TerrainCollider to bind to terrainData to prevent rover floating/sinking bugs
+                    var col = terrain.GetComponent<TerrainCollider>();
+                    if (col != null)
+                    {
+                        col.terrainData = null;
+                        col.terrainData = terrain.terrainData;
+                    }
+
+                    if (flowController != null)
+                    {
+                        flowController.OnTerrainReady();
+                    }
+
+                    // Auto-respawn active rover at last placement pose
+                    if (RoverPlacementController.Instance != null && ActiveRoverContext.HasActiveRover)
+                    {
+                        RoverPlacementController.Instance.RespawnAtLastPlacementPose();
+                        Debug.Log("[Studio] Auto-respawned active rover at last placement pose after terrain rebuild.");
+                    }
                 }
 
+                ShowNotification("Terrain generated & collider synced.");
                 Debug.Log("[Studio] New planetary terrain generated successfully. Old terrain removed.");
             }
             catch (System.Exception ex)
@@ -1244,6 +2081,11 @@ namespace ProjectName.Terrain
             if (heightmapPreviewImage != null)
             {
                 heightmapPreviewImage.image = previewTexture;
+            }
+
+            if (heightmapPainterImage != null)
+            {
+                heightmapPainterImage.image = previewTexture;
             }
         }
 
@@ -1322,6 +2164,10 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
+            if (PlanetaryParameterWriter.Instance != null)
+            {
+                PlanetaryParameterWriter.Instance.OnProfileApplied -= HandlePlanetaryProfileApplied;
+            }
 
             if (previewTexture != null)
             {

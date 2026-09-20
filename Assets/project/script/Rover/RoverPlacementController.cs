@@ -536,6 +536,12 @@ namespace ProjectName.Rover
             string rId = !string.IsNullOrEmpty(lastPlacementRoverId) ? lastPlacementRoverId :
                          (ActiveRoverContext.HasActiveRover ? ActiveRoverContext.Current.roverId : "husky");
 
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            if (terrain != null)
+            {
+                lastPlacementPoint.y = terrain.SampleHeight(lastPlacementPoint) + terrain.transform.position.y;
+            }
+
             ConfirmPlacementAtPoint(lastPlacementPoint, lastPlacementYaw, rId);
         }
 

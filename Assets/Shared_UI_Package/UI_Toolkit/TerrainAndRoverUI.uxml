@@ -128,77 +128,240 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <!-- COLUMN 2 (Center): Terrain Overview + Deploy Rover -->
+            <!-- COLUMN 2 (Center): Terrain Overview + Deploy Rover + Terrain Lab Workbench -->
             <ui:VisualElement name="ColCenter" class="studio-col col-center hud-interactive">
-                <!-- Terrain Overview & Radar Card -->
-                <ui:VisualElement class="studio-card center-radar-card">
-                    <ui:VisualElement class="card-header" style="width: 100%;">
-                        <ui:Label text="TERRAIN OVERVIEW" class="card-title" />
-                        <ui:Button name="BtnBrowseFile" text="Upload Image..." class="card-mini-btn" />
-                    </ui:VisualElement>
-
-                    <!-- Circular Radar / Contour Visual -->
-                    <ui:VisualElement class="radar-container">
-                        <ui:VisualElement class="radar-ring radar-ring-4" />
-                        <ui:VisualElement class="radar-ring radar-ring-3" />
-                        <ui:VisualElement class="radar-ring radar-ring-2" />
-                        <ui:VisualElement class="radar-ring radar-ring-1" />
-                        <ui:VisualElement class="radar-contour-shape c1" />
-                        <ui:VisualElement class="radar-contour-shape c2" />
-                        <ui:VisualElement class="radar-crosshair-h" />
-                        <ui:VisualElement class="radar-crosshair-v" />
-                        <ui:Image name="HeightmapPreviewImage" class="radar-heightmap-overlay" />
-                        <ui:VisualElement name="RadarRoverDot" class="radar-rover-dot" />
-                    </ui:VisualElement>
-
-                    <ui:VisualElement class="radar-legend-row">
-                        <ui:Label text="● ROVER POSITION" class="radar-legend-tag" />
-                        <ui:Label name="LabelRadarRange" text="RANGE 50 m" class="radar-range-tag" />
-                    </ui:VisualElement>
-
-                    <!-- Planetary Presets Row -->
-                    <ui:VisualElement class="center-presets-row">
-                        <ui:Button name="BtnPresetGale" text="Gale Crater" class="studio-preset-pill preset-active" />
-                        <ui:Button name="BtnPresetOlympus" text="Olympus Mons" class="studio-preset-pill" />
-                        <ui:Button name="BtnPresetShackleton" text="Shackleton" class="studio-preset-pill" />
-                        <ui:Button name="BtnPresetValles" text="Valles" class="studio-preset-pill" />
-                        <ui:Button name="BtnPresetFractal" text="Plains" class="studio-preset-pill" />
-                    </ui:VisualElement>
-
-                    <!-- Primary Generate Terrain Action -->
-                    <ui:Button name="BtnGenerateTerrain" text="GENERATE NEW PLANETARY TERRAIN" class="studio-generate-btn" />
+                <!-- Studio Tab Bar: Mission Radar vs Terrain Lab -->
+                <ui:VisualElement class="studio-tab-bar">
+                    <ui:Button name="BtnTabMission" text="MISSION RADAR" class="studio-tab-btn studio-tab-btn-active" tooltip="Topographic radar &amp; rover deployment" />
+                    <ui:Button name="BtnTabTerrainLab" text="TERRAIN LAB" class="studio-tab-btn" tooltip="Interactive 2D heightmap painter, spatial tuning &amp; materials" />
                 </ui:VisualElement>
 
-                <!-- Deploy Digital Twin Rover Card -->
-                <ui:VisualElement class="studio-card deploy-card">
-                    <ui:VisualElement class="card-header">
-                        <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="card-title" />
+                <!-- TAB 1: Mission Radar & Deploy Rover -->
+                <ui:VisualElement name="TabMissionView" class="tab-view-container">
+                    <!-- Terrain Overview & Radar Card -->
+                    <ui:VisualElement class="studio-card center-radar-card">
+                        <ui:VisualElement class="card-header" style="width: 100%;">
+                            <ui:Label text="TERRAIN OVERVIEW" class="card-title" />
+                            <ui:Button name="BtnBrowseFile" text="Upload Image..." class="card-mini-btn" />
+                        </ui:VisualElement>
+
+                        <!-- Circular Radar / Contour Visual -->
+                        <ui:VisualElement class="radar-container">
+                            <ui:VisualElement class="radar-ring radar-ring-4" />
+                            <ui:VisualElement class="radar-ring radar-ring-3" />
+                            <ui:VisualElement class="radar-ring radar-ring-2" />
+                            <ui:VisualElement class="radar-ring radar-ring-1" />
+                            <ui:VisualElement class="radar-contour-shape c1" />
+                            <ui:VisualElement class="radar-contour-shape c2" />
+                            <ui:VisualElement class="radar-crosshair-h" />
+                            <ui:VisualElement class="radar-crosshair-v" />
+                            <ui:Image name="HeightmapPreviewImage" class="radar-heightmap-overlay" />
+                            <ui:VisualElement name="RadarRoverDot" class="radar-rover-dot" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="radar-legend-row">
+                            <ui:Label text="● ROVER POSITION" class="radar-legend-tag" />
+                            <ui:Label name="LabelRadarRange" text="RANGE 50 m" class="radar-range-tag" />
+                        </ui:VisualElement>
+
+                        <!-- Planetary Presets Row -->
+                        <ui:VisualElement class="center-presets-row">
+                            <ui:Button name="BtnPresetGale" text="Gale Crater" class="studio-preset-pill preset-active" />
+                            <ui:Button name="BtnPresetOlympus" text="Olympus Mons" class="studio-preset-pill" />
+                            <ui:Button name="BtnPresetShackleton" text="Shackleton" class="studio-preset-pill" />
+                            <ui:Button name="BtnPresetValles" text="Valles" class="studio-preset-pill" />
+                            <ui:Button name="BtnPresetFractal" text="Plains" class="studio-preset-pill" />
+                        </ui:VisualElement>
+
+                        <!-- Primary Generate Terrain Action -->
+                        <ui:Button name="BtnGenerateTerrain" text="GENERATE NEW PLANETARY TERRAIN" class="studio-generate-btn" />
                     </ui:VisualElement>
 
-                    <ui:VisualElement class="rover-list">
-                        <ui:Button name="BtnRoverHusky" class="rover-item-row rover-active-row">
-                            <ui:VisualElement class="rover-name-row">
-                                <ui:Label text="Clearpath Husky A200" class="rover-item-name" />
-                            </ui:VisualElement>
-                            <ui:Label name="TagHuskyActive" text="ACTIVE" class="rover-active-tag" />
-                        </ui:Button>
+                    <!-- Deploy Digital Twin Rover Card -->
+                    <ui:VisualElement class="studio-card deploy-card">
+                        <ui:VisualElement class="card-header">
+                            <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="card-title" />
+                        </ui:VisualElement>
 
-                        <ui:Button name="BtnRoverM20" class="rover-item-row">
-                            <ui:VisualElement class="rover-name-row">
-                                <ui:Label text="Deep Robotics M20" class="rover-item-name" />
-                            </ui:VisualElement>
-                            <ui:Label name="TagM20Active" text="DEPLOY" class="rover-idle-tag" />
-                        </ui:Button>
+                        <ui:VisualElement class="rover-list">
+                            <ui:Button name="BtnRoverHusky" class="rover-item-row rover-active-row">
+                                <ui:VisualElement class="rover-name-row">
+                                    <ui:Label text="Clearpath Husky A200" class="rover-item-name" />
+                                </ui:VisualElement>
+                                <ui:Label name="TagHuskyActive" text="ACTIVE" class="rover-active-tag" />
+                            </ui:Button>
 
-                        <ui:Button name="BtnRoverM2020" class="rover-item-row">
-                            <ui:VisualElement class="rover-name-row">
-                                <ui:Label text="NASA Perseverance M2020" class="rover-item-name" />
-                            </ui:VisualElement>
-                            <ui:Label name="TagM2020Active" text="DEPLOY" class="rover-idle-tag" />
-                        </ui:Button>
+                            <ui:Button name="BtnRoverM20" class="rover-item-row">
+                                <ui:VisualElement class="rover-name-row">
+                                    <ui:Label text="Deep Robotics M20" class="rover-item-name" />
+                                </ui:VisualElement>
+                                <ui:Label name="TagM20Active" text="DEPLOY" class="rover-idle-tag" />
+                            </ui:Button>
+
+                            <ui:Button name="BtnRoverM2020" class="rover-item-row">
+                                <ui:VisualElement class="rover-name-row">
+                                    <ui:Label text="NASA Perseverance M2020" class="rover-item-name" />
+                                </ui:VisualElement>
+                                <ui:Label name="TagM2020Active" text="DEPLOY" class="rover-idle-tag" />
+                            </ui:Button>
+                        </ui:VisualElement>
+                        <ui:Button name="BtnQuickSpawnCentre" text="QUICK SPAWN AT CENTRE" class="card-mini-btn" style="margin-top: 6px; width: 100%; height: 26px;" tooltip="Spawn the selected rover directly at terrain centre" />
                     </ui:VisualElement>
-                    <ui:Button name="BtnQuickSpawnCentre" text="QUICK SPAWN AT CENTRE" class="card-mini-btn" style="margin-top: 6px; width: 100%; height: 26px;" tooltip="Spawn the selected rover directly at terrain centre" />
                 </ui:VisualElement>
+
+                <!-- TAB 2: Terrain Lab Workbench -->
+                <ui:ScrollView name="TabTerrainLabView" class="terrain-lab-scroll" style="display: none;">
+                    <!-- 1. Presets & File Operations -->
+                    <ui:VisualElement class="studio-card" style="margin-bottom: 6px;">
+                        <ui:VisualElement class="card-header">
+                            <ui:Label text="PRESETS &amp; PNG I/O" class="card-title" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="preset-grid-lab">
+                            <ui:Button name="BtnLabPresetGale" text="Gale Crater" class="preset-btn-lab preset-btn-lab-active" />
+                            <ui:Button name="BtnLabPresetOlympus" text="Olympus" class="preset-btn-lab" />
+                            <ui:Button name="BtnLabPresetShackleton" text="Shackleton" class="preset-btn-lab" />
+                            <ui:Button name="BtnLabPresetValles" text="Valles" class="preset-btn-lab" />
+                            <ui:Button name="BtnLabPresetPlains" text="Plains" class="preset-btn-lab" />
+                            <ui:Button name="BtnLabPresetFractal" text="Fractal" class="preset-btn-lab" />
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
+                            <ui:Label text="Seed:" class="param-name" style="font-size: 8px;" />
+                            <ui:IntegerField name="FieldSeed" value="0" style="width: 70px; height: 18px; font-size: 8px;" />
+                            <ui:Button name="BtnRandomSeed" text="🎲 Random" class="card-mini-btn" style="height: 18px; font-size: 8px;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="file-ops-row">
+                            <ui:Button name="BtnImportPNG" text="📁 Import PNG..." class="file-op-btn" tooltip="Import 8-bit or 16-bit grayscale heightmap image" />
+                            <ui:Button name="BtnExportPNG" text="💾 Export PNG..." class="file-op-btn" tooltip="Export current heightmap to grayscale PNG" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 2. Interactive 2D Heightmap Canvas Painter -->
+                    <ui:VisualElement class="studio-card" style="margin-bottom: 6px;">
+                        <ui:VisualElement class="card-header">
+                            <ui:Label text="2D HEIGHTMAP PAINTER" class="card-title" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="painter-canvas-wrapper">
+                            <ui:Image name="HeightmapPainterImage" class="painter-canvas-image" />
+                            <ui:Label text="LMB: paint · [Ctrl+Z] Undo · [Ctrl+Y] Redo" class="canvas-hint" />
+                        </ui:VisualElement>
+                        <!-- Brush Mode Selection Bar -->
+                        <ui:VisualElement class="brush-bar">
+                            <ui:Button name="BtnBrushRaise" text="▲ Raise" class="brush-btn brush-btn-active" tooltip="Raise elevation" />
+                            <ui:Button name="BtnBrushLower" text="▼ Lower" class="brush-btn" tooltip="Lower elevation" />
+                            <ui:Button name="BtnBrushSmooth" text="≈ Smooth" class="brush-btn" tooltip="Smooth terrain" />
+                            <ui:Button name="BtnBrushFlatten" text="━ Flat" class="brush-btn" tooltip="Flatten to target height" />
+                            <ui:Button name="BtnBrushNoise" text="⚡ Noise" class="brush-btn" tooltip="Add surface noise perturbation" />
+                        </ui:VisualElement>
+                        <!-- History Bar: Undo, Redo, Counter -->
+                        <ui:VisualElement class="history-bar">
+                            <ui:Button name="BtnUndo" text="↶ Undo" class="history-btn" />
+                            <ui:Label name="LabelHistoryStatus" text="History: 0/20" class="history-lbl" />
+                            <ui:Button name="BtnRedo" text="↷ Redo" class="history-btn" />
+                        </ui:VisualElement>
+                        <!-- Brush Sliders -->
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Brush Radius:" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelBrushRadiusVal" text="8%" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderBrushRadius" low-value="0.01" high-value="0.25" value="0.08" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Brush Strength:" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelBrushStrengthVal" text="40%" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderBrushStrength" low-value="0.05" high-value="1.0" value="0.4" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Hardness (Falloff):" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelBrushHardnessVal" text="50%" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderBrushHardness" low-value="0.0" high-value="1.0" value="0.5" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="RowFlattenHeight" class="slider-row" style="display: none;">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Target Flatten Height:" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelFlattenHeightVal" text="50%" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderFlattenHeight" low-value="0.0" high-value="1.0" value="0.5" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 3. Elevation & Spatial Tuning -->
+                    <ui:VisualElement class="studio-card" style="margin-bottom: 6px;">
+                        <ui:VisualElement class="card-header">
+                            <ui:Label text="ELEVATION &amp; SPATIAL TUNING" class="card-title" />
+                        </ui:VisualElement>
+                        <!-- Elevation Scale -->
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Elevation Scale (Amplitude):" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelMaxHeightVal" text="120 m" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderMaxHeight" low-value="5" high-value="500" value="120" />
+                        </ui:VisualElement>
+                        <!-- Base Floor Offset -->
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Base Elevation Offset:" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelBaseOffsetVal" text="0 m" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderBaseOffset" low-value="-50" high-value="50" value="0" />
+                        </ui:VisualElement>
+                        <!-- Terrain Bounds -->
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Terrain Size (Width x Length):" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelTerrainSizeVal" text="1000 x 1000 m" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderTerrainSize" low-value="200" high-value="2000" value="1000" />
+                        </ui:VisualElement>
+                        <!-- Resolution Dropdown (257, 513, 1025, 2049 only) -->
+                        <ui:DropdownField name="DropdownResolution" label="Heightmap Res" choices="257 x 257 (High Detail),513 x 513 (Very High),1025 x 1025 (Ultra Detail),2049 x 2049 (Extreme)" value="513 x 513 (Very High)" style="font-size: 8px; margin-bottom: 4px;" />
+                        <!-- Gaussian Smoothing -->
+                        <ui:VisualElement class="slider-row">
+                            <ui:VisualElement class="slider-label-row">
+                                <ui:Label text="Anti-Staircase Smoothing:" class="param-name" style="font-size: 8px;" />
+                                <ui:Label name="LabelSmoothingVal" text="1.0" class="param-val" style="font-size: 8px;" />
+                            </ui:VisualElement>
+                            <ui:Slider name="SliderSmoothing" low-value="0" high-value="5" value="1" />
+                        </ui:VisualElement>
+                        <!-- Height Remapping Curve -->
+                        <ui:Label text="Height Remap Curve:" class="param-name" style="font-size: 8px; margin-top: 2px;" />
+                        <ui:VisualElement class="curve-bar">
+                            <ui:Button name="BtnCurveLinear" text="Linear" class="curve-btn curve-btn-active" />
+                            <ui:Button name="BtnCurveExponential" text="Exp" class="curve-btn" />
+                            <ui:Button name="BtnCurveRidge" text="Ridge" class="curve-btn" />
+                            <ui:Button name="BtnCurveBasin" text="Basin" class="curve-btn" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 4. Planetary Surface Material -->
+                    <ui:VisualElement class="studio-card" style="margin-bottom: 6px;">
+                        <ui:VisualElement class="card-header">
+                            <ui:Label text="PLANETARY SURFACE MATERIAL" class="card-title" />
+                        </ui:VisualElement>
+                        <ui:Toggle name="ToggleFollowPlanet" label="Follow Planet Profile (Default)" value="true" class="lab-toggle" />
+                        <ui:VisualElement class="material-grid">
+                            <ui:Button name="BtnMatMartian" text="🔴 Martian Rust Oxide" class="material-btn material-btn-active" />
+                            <ui:Button name="BtnMatLunar" text="⚪ Lunar Regolith" class="material-btn" />
+                            <ui:Button name="BtnMatBasalt" text="⚫ Volcanic Basalt" class="material-btn" />
+                            <ui:Button name="BtnMatIce" text="❄️ Polar Cryo-Ice Cap" class="material-btn" />
+                            <ui:Button name="BtnMatCanyon" text="🟤 Red Sandstone" class="material-btn" />
+                            <ui:Button name="BtnMatWireframe" text="🟩 Topographic Grid" class="material-btn" />
+                            <ui:Button name="BtnMatNormal" text="🟣 Normal Inspector" class="material-btn" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- 5. Apply & Live Preview -->
+                    <ui:VisualElement class="studio-card" style="margin-bottom: 4px;">
+                        <ui:Toggle name="ToggleLivePreview" label="Live Preview on 3D Terrain" value="false" class="lab-toggle" />
+                        <ui:Button name="BtnApplyTerrainLab" text="✨ APPLY TUNING &amp; REBUILD TERRAIN" class="studio-generate-btn" />
+                        <ui:Label text="Syncs TerrainCollider &amp; auto-respawns active rover" class="canvas-hint" style="-unity-text-align: middle-center; margin-top: 3px;" />
+                    </ui:VisualElement>
+                </ui:ScrollView>
             </ui:VisualElement>
 
             <!-- COLUMN 3 (Right): Compass, Actuators, Power/Thermal, Planetary Environment -->

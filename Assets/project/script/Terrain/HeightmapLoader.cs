@@ -141,6 +141,11 @@ namespace ProjectName.Terrain
         // -------------------------------------------------------------
         public static float[,] GeneratePresetHeights(HeightmapPreset preset, int resolution, float smoothingFactor = 1.0f, HeightRemapCurve curve = HeightRemapCurve.Linear)
         {
+            return GeneratePresetHeights(preset, resolution, smoothingFactor, curve, 0);
+        }
+
+        public static float[,] GeneratePresetHeights(HeightmapPreset preset, int resolution, float smoothingFactor, HeightRemapCurve curve, int seed)
+        {
             float[,] heights = new float[resolution, resolution];
 
             for (int y = 0; y < resolution; y++)
@@ -179,9 +184,13 @@ namespace ProjectName.Terrain
                             h = EvaluatePolarIce(u, v);
                             break;
 
+                        case HeightmapPreset.Plains:
+                            h = EvaluatePlains(u, v, seed);
+                            break;
+
                         case HeightmapPreset.ProceduralFractal:
                         default:
-                            h = EvaluateFractalNoise(u, v);
+                            h = EvaluateFractalNoise(u, v, seed);
                             break;
                     }
 
@@ -289,17 +298,30 @@ namespace ProjectName.Terrain
             return Mathf.Clamp01(broadDome + ripple1 + ripple2 + microIce);
         }
 
-        private static float EvaluateFractalNoise(float u, float v)
+        private static float EvaluatePlains(float u, float v, int seed = 0)
         {
-            // 5-octave fractal Brownian motion (fBm)
+            float sU = u + seed * 1.4142f;
+            float sV = v + seed * 1.7320f;
+            float lowRoll = Mathf.PerlinNoise(sU * 1.8f + 11.2f, sV * 1.8f + 13.5f) * 0.18f;
+            float gentleSlope = (u * 0.05f) + 0.35f;
+            float microRough = Mathf.PerlinNoise(sU * 12f, sV * 12f) * 0.03f;
+            return Mathf.Clamp01(gentleSlope + lowRoll + microRough);
+        }
+
+        private static float EvaluateFractalNoise(float u, float v, int seed = 0)
+        {
+            // 5-octave fractal Brownian motion (fBm) with seed offset
             float total = 0f;
             float frequency = 2.5f;
             float amplitude = 0.5f;
             float maxVal = 0f;
 
+            float sU = u + seed * 1.3719f;
+            float sV = v + seed * 2.1931f;
+
             for (int o = 0; o < 5; o++)
             {
-                total += Mathf.PerlinNoise(u * frequency + 17.3f, v * frequency + 31.7f) * amplitude;
+                total += Mathf.PerlinNoise(sU * frequency + 17.3f, sV * frequency + 31.7f) * amplitude;
                 maxVal += amplitude;
                 frequency *= 2.05f;
                 amplitude *= 0.5f;
@@ -313,27 +335,49 @@ namespace ProjectName.Terrain
         // -------------------------------------------------------------
         public static void ApplyBrush(float[,] heights, int resolution, Vector2 uv, BrushMode mode, float radiusNorm, float strength, float targetHeight = 0.5f)
         {
-            if (heights == null) return;
+            ApplyBrush(heights, resolution, uv, mode, radiusNorm, strength, 0.5f, targetHeight, 0);
+        }
+
+        public static RectInt ApplyBrush(
+            float[,] heights,
+            int resolution,
+            Vector2 uv,
+            BrushMode mode,
+            float radiusNorm,
+            float strength,
+            float hardness,
+            float targetHeight,
+            int seed = 0)
+        {
+            if (heights == null) return new RectInt(0, 0, 0, 0);
 
             int centerX = Mathf.RoundToInt(uv.x * (resolution - 1));
             int centerY = Mathf.RoundToInt(uv.y * (resolution - 1));
             int radiusPixels = Mathf.Max(1, Mathf.RoundToInt(radiusNorm * resolution));
 
-            for (int dy = -radiusPixels; dy <= radiusPixels; dy++)
+            int minX = Mathf.Max(0, centerX - radiusPixels);
+            int maxX = Mathf.Min(resolution - 1, centerX + radiusPixels);
+            int minY = Mathf.Max(0, centerY - radiusPixels);
+            int maxY = Mathf.Min(resolution - 1, centerY + radiusPixels);
+
+            for (int py = minY; py <= maxY; py++)
             {
-                int py = centerY + dy;
-                if (py < 0 || py >= resolution) continue;
-
-                for (int dx = -radiusPixels; dx <= radiusPixels; dx++)
+                int dy = py - centerY;
+                for (int px = minX; px <= maxX; px++)
                 {
-                    int px = centerX + dx;
-                    if (px < 0 || px >= resolution) continue;
-
+                    int dx = px - centerX;
                     float dist = Mathf.Sqrt(dx * dx + dy * dy);
                     if (dist > radiusPixels) continue;
 
-                    // Cosine smooth falloff
-                    float falloff = (Mathf.Cos((dist / radiusPixels) * Mathf.PI) + 1f) * 0.5f;
+                    // Cosine falloff shaped by hardness parameter
+                    float d = dist / radiusPixels; // [0, 1]
+                    float falloff = 1f;
+                    if (d > hardness)
+                    {
+                        float t = (d - hardness) / Mathf.Max(0.001f, 1f - hardness);
+                        falloff = (Mathf.Cos(t * Mathf.PI) + 1f) * 0.5f;
+                    }
+
                     float delta = falloff * strength * 0.08f;
 
                     switch (mode)
@@ -366,13 +410,60 @@ namespace ProjectName.Terrain
                         case BrushMode.Flatten:
                             heights[py, px] = Mathf.Lerp(heights[py, px], targetHeight, falloff * strength * 0.5f);
                             break;
+
+                        case BrushMode.Noise:
+                            float n = (Mathf.PerlinNoise((px + seed * 17.3f) * 0.15f, (py + seed * 23.7f) * 0.15f) - 0.5f) * 2f;
+                            heights[py, px] = Mathf.Clamp01(heights[py, px] + n * delta);
+                            break;
                     }
                 }
             }
+
+            return new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
         }
 
         // -------------------------------------------------------------
-        // Live Preview Texture Generation (with Planetary Tinting)
+        // Bilinear Array Resampling for Resolution Switching
+        // -------------------------------------------------------------
+        public static float[,] ResampleHeights(float[,] source, int newRes)
+        {
+            if (source == null) return null;
+            int oldH = source.GetLength(0);
+            int oldW = source.GetLength(1);
+            if (oldH == newRes && oldW == newRes) return (float[,])source.Clone();
+
+            float[,] resampled = new float[newRes, newRes];
+            for (int y = 0; y < newRes; y++)
+            {
+                float v = (float)y / (newRes - 1);
+                float oldY = v * (oldH - 1);
+                int y0 = Mathf.FloorToInt(oldY);
+                int y1 = Mathf.Min(oldH - 1, y0 + 1);
+                float yf = oldY - y0;
+
+                for (int x = 0; x < newRes; x++)
+                {
+                    float u = (float)x / (newRes - 1);
+                    float oldX = u * (oldW - 1);
+                    int x0 = Mathf.FloorToInt(oldX);
+                    int x1 = Mathf.Min(oldW - 1, x0 + 1);
+                    float xf = oldX - x0;
+
+                    float h00 = source[y0, x0];
+                    float h10 = source[y0, x1];
+                    float h01 = source[y1, x0];
+                    float h11 = source[y1, x1];
+
+                    float h0 = Mathf.Lerp(h00, h10, xf);
+                    float h1 = Mathf.Lerp(h01, h11, xf);
+                    resampled[y, x] = Mathf.Lerp(h0, h1, yf);
+                }
+            }
+            return resampled;
+        }
+
+        // -------------------------------------------------------------
+        // Live Preview Texture Generation & Dirty-Rect Updates
         // -------------------------------------------------------------
         public static Texture2D CreatePreviewTexture(float[,] heights, int resolution, PlanetaryMaterialType materialType, Texture2D existingTex = null)
         {
@@ -399,52 +490,86 @@ namespace ProjectName.Terrain
                     int srcX = Mathf.RoundToInt(u * (resolution - 1));
 
                     float h = heights[srcY, srcX];
-                    Color c = Color.white;
-
-                    switch (materialType)
-                    {
-                        case PlanetaryMaterialType.MartianDust:
-                            c = new Color(h * 0.85f + 0.15f, h * 0.40f + 0.08f, h * 0.20f + 0.04f, 1f);
-                            break;
-
-                        case PlanetaryMaterialType.LunarRegolith:
-                            c = new Color(h * 0.65f + 0.20f, h * 0.65f + 0.20f, h * 0.70f + 0.22f, 1f);
-                            break;
-
-                        case PlanetaryMaterialType.VolcanicBasalt:
-                            c = new Color(h * 0.35f + 0.08f, h * 0.35f + 0.08f, h * 0.40f + 0.09f, 1f);
-                            break;
-
-                        case PlanetaryMaterialType.PolarIce:
-                            c = new Color(h * 0.50f + 0.45f, h * 0.65f + 0.35f, h * 0.80f + 0.20f, 1f);
-                            break;
-
-                        case PlanetaryMaterialType.RedCanyon:
-                            float band = Mathf.Sin(h * 20f) * 0.1f;
-                            c = new Color(h * 0.75f + 0.20f + band, h * 0.30f + 0.10f, h * 0.15f + 0.05f, 1f);
-                            break;
-
-                        case PlanetaryMaterialType.TopographicWireframe:
-                            float contour = Mathf.Abs(Mathf.Sin(h * 30f)) > 0.85f ? 1f : 0.15f;
-                            c = new Color(0f, contour, contour * 0.75f, 1f);
-                            break;
-
-                        case PlanetaryMaterialType.NormalInspector:
-                            // Approximate normal
-                            float hR = heights[srcY, Mathf.Min(srcX + 1, resolution - 1)];
-                            float hU = heights[Mathf.Min(srcY + 1, resolution - 1), srcX];
-                            Vector3 norm = new Vector3(-(hR - h) * 10f, 1f, -(hU - h) * 10f).normalized;
-                            c = new Color(norm.x * 0.5f + 0.5f, norm.y * 0.5f + 0.5f, norm.z * 0.5f + 0.5f, 1f);
-                            break;
-                    }
-
-                    pixels[y * previewRes + x] = c;
+                    pixels[y * previewRes + x] = GetTintedPixelColor(h, srcX, srcY, heights, resolution, materialType);
                 }
             }
 
             tex.SetPixels(pixels);
             tex.Apply(false);
             return tex;
+        }
+
+        public static void UpdatePreviewTextureRect(Texture2D tex, float[,] heights, RectInt arrayRect, int resolution, PlanetaryMaterialType materialType)
+        {
+            if (tex == null || heights == null || arrayRect.width <= 0 || arrayRect.height <= 0) return;
+            int previewRes = tex.width;
+            if (previewRes <= 0) return;
+
+            float scale = (float)(previewRes - 1) / Mathf.Max(1, resolution - 1);
+            int pxMin = Mathf.Clamp(Mathf.FloorToInt(arrayRect.xMin * scale), 0, previewRes - 1);
+            int pxMax = Mathf.Clamp(Mathf.CeilToInt(arrayRect.xMax * scale), 0, previewRes - 1);
+            int pyMin = Mathf.Clamp(Mathf.FloorToInt(arrayRect.yMin * scale), 0, previewRes - 1);
+            int pyMax = Mathf.Clamp(Mathf.CeilToInt(arrayRect.yMax * scale), 0, previewRes - 1);
+
+            int pw = pxMax - pxMin + 1;
+            int ph = pyMax - pyMin + 1;
+            if (pw <= 0 || ph <= 0) return;
+
+            Color[] blockColors = new Color[pw * ph];
+            for (int py = 0; py < ph; py++)
+            {
+                int y = pyMin + py;
+                float v = (float)y / (previewRes - 1);
+                int srcY = Mathf.Clamp(Mathf.RoundToInt(v * (resolution - 1)), 0, resolution - 1);
+
+                for (int px = 0; px < pw; px++)
+                {
+                    int x = pxMin + px;
+                    float u = (float)x / (previewRes - 1);
+                    int srcX = Mathf.Clamp(Mathf.RoundToInt(u * (resolution - 1)), 0, resolution - 1);
+
+                    float h = heights[srcY, srcX];
+                    blockColors[py * pw + px] = GetTintedPixelColor(h, srcX, srcY, heights, resolution, materialType);
+                }
+            }
+
+            tex.SetPixels(pxMin, pyMin, pw, ph, blockColors);
+            tex.Apply(false);
+        }
+
+        public static Color GetTintedPixelColor(float h, int srcX, int srcY, float[,] heights, int resolution, PlanetaryMaterialType materialType)
+        {
+            switch (materialType)
+            {
+                case PlanetaryMaterialType.MartianDust:
+                    return new Color(h * 0.85f + 0.15f, h * 0.40f + 0.08f, h * 0.20f + 0.04f, 1f);
+
+                case PlanetaryMaterialType.LunarRegolith:
+                    return new Color(h * 0.65f + 0.20f, h * 0.65f + 0.20f, h * 0.70f + 0.22f, 1f);
+
+                case PlanetaryMaterialType.VolcanicBasalt:
+                    return new Color(h * 0.35f + 0.08f, h * 0.35f + 0.08f, h * 0.40f + 0.09f, 1f);
+
+                case PlanetaryMaterialType.PolarIce:
+                    return new Color(h * 0.50f + 0.45f, h * 0.65f + 0.35f, h * 0.80f + 0.20f, 1f);
+
+                case PlanetaryMaterialType.RedCanyon:
+                    float band = Mathf.Sin(h * 20f) * 0.1f;
+                    return new Color(h * 0.75f + 0.20f + band, h * 0.30f + 0.10f, h * 0.15f + 0.05f, 1f);
+
+                case PlanetaryMaterialType.TopographicWireframe:
+                    float contour = Mathf.Abs(Mathf.Sin(h * 30f)) > 0.85f ? 1f : 0.15f;
+                    return new Color(0f, contour, contour * 0.75f, 1f);
+
+                case PlanetaryMaterialType.NormalInspector:
+                    float hR = heights[srcY, Mathf.Min(srcX + 1, resolution - 1)];
+                    float hU = heights[Mathf.Min(srcY + 1, resolution - 1), srcX];
+                    Vector3 norm = new Vector3(-(hR - h) * 10f, 1f, -(hU - h) * 10f).normalized;
+                    return new Color(norm.x * 0.5f + 0.5f, norm.y * 0.5f + 0.5f, norm.z * 0.5f + 0.5f, 1f);
+
+                default:
+                    return new Color(h, h, h, 1f);
+            }
         }
     }
 }

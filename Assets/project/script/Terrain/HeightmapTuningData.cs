@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace ProjectName.Terrain
@@ -19,6 +19,7 @@ namespace ProjectName.Terrain
         VallesMarineris,
         PolarIce,
         ProceduralFractal,
+        Plains,
         CustomImage
     }
 
@@ -38,7 +39,8 @@ namespace ProjectName.Terrain
         Raise,
         Lower,
         Smooth,
-        Flatten
+        Flatten,
+        Noise
     }
 
     [Serializable]
