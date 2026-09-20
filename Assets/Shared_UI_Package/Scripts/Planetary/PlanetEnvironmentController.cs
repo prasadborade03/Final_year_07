@@ -30,7 +30,19 @@ namespace ProjectName.Planetary
         [Header("Active Environment")]
         public PlanetProfile currentProfile;
 
-        public static PlanetEnvironmentController Instance { get; protected set; }
+        private static PlanetEnvironmentController _instance;
+        public static PlanetEnvironmentController Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = UnityEngine.Object.FindAnyObjectByType<PlanetEnvironmentController>();
+                }
+                return _instance;
+            }
+            protected set { _instance = value; }
+        }
 
         public event Action<PlanetProfile> OnProfileApplied;
 

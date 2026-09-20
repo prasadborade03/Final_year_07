@@ -86,6 +86,9 @@ namespace ProjectName.Rover
         public float slipFairThreshold = 0.40f;
 
         [Header("Subsystems & Power")]
+        [Tooltip("Nominal rover mass in kilograms")]
+        public float massKg = 50f;
+
         [Tooltip("Standard battery pack capacity in Watt-hours")]
         public float batteryWh = 1200f;
 

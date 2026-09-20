@@ -30,6 +30,7 @@ MonoBehaviour:
   windTurbulence: 0
   windPulseMagnitude: 0
   surfaceTemperature: "+100 \xB0C / \u2212170 \xB0C"
+  ambientTemperatureCelsius: -20
   pressureKPa: 0
   sunlightPercentOfEarth: 100
   hazardTitle: VACUUM

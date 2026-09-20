@@ -572,37 +572,56 @@ namespace ProjectName.Terrain
 
         public static Color GetTintedPixelColor(float h, int srcX, int srcY, float[,] heights, int resolution, PlanetaryMaterialType materialType)
         {
+            // Calculate directional topographic hillshading from height gradients
+            int prevX = Mathf.Max(0, srcX - 1);
+            int nextX = Mathf.Min(resolution - 1, srcX + 1);
+            int prevY = Mathf.Max(0, srcY - 1);
+            int nextY = Mathf.Min(resolution - 1, srcY + 1);
+
+            float dhX = (heights[srcY, nextX] - heights[srcY, prevX]) * 8f;
+            float dhY = (heights[nextY, srcX] - heights[prevY, srcX]) * 8f;
+            Vector3 normal = new Vector3(-dhX, 1f, -dhY).normalized;
+            Vector3 lightDir = new Vector3(-0.577f, 0.707f, 0.408f); // NW illumination
+            float hillshade = Mathf.Clamp01((1f + Vector3.Dot(normal, lightDir)) * 0.5f);
+            float shade = 0.60f + (hillshade * 0.50f);
+
+            Color baseCol;
             switch (materialType)
             {
                 case PlanetaryMaterialType.MartianDust:
-                    return new Color(h * 0.85f + 0.15f, h * 0.40f + 0.08f, h * 0.20f + 0.04f, 1f);
+                    baseCol = new Color(h * 0.85f + 0.15f, h * 0.40f + 0.08f, h * 0.20f + 0.04f, 1f);
+                    break;
 
                 case PlanetaryMaterialType.LunarRegolith:
-                    return new Color(h * 0.65f + 0.20f, h * 0.65f + 0.20f, h * 0.70f + 0.22f, 1f);
+                    baseCol = new Color(h * 0.65f + 0.20f, h * 0.65f + 0.20f, h * 0.70f + 0.22f, 1f);
+                    break;
 
                 case PlanetaryMaterialType.VolcanicBasalt:
-                    return new Color(h * 0.35f + 0.08f, h * 0.35f + 0.08f, h * 0.40f + 0.09f, 1f);
+                    baseCol = new Color(h * 0.35f + 0.08f, h * 0.35f + 0.08f, h * 0.40f + 0.09f, 1f);
+                    break;
 
                 case PlanetaryMaterialType.PolarIce:
-                    return new Color(h * 0.50f + 0.45f, h * 0.65f + 0.35f, h * 0.80f + 0.20f, 1f);
+                    baseCol = new Color(h * 0.50f + 0.45f, h * 0.65f + 0.35f, h * 0.80f + 0.20f, 1f);
+                    break;
 
                 case PlanetaryMaterialType.RedCanyon:
                     float band = Mathf.Sin(h * 20f) * 0.1f;
-                    return new Color(h * 0.75f + 0.20f + band, h * 0.30f + 0.10f, h * 0.15f + 0.05f, 1f);
+                    baseCol = new Color(h * 0.75f + 0.20f + band, h * 0.30f + 0.10f, h * 0.15f + 0.05f, 1f);
+                    break;
 
                 case PlanetaryMaterialType.TopographicWireframe:
                     float contour = Mathf.Abs(Mathf.Sin(h * 30f)) > 0.85f ? 1f : 0.15f;
                     return new Color(0f, contour, contour * 0.75f, 1f);
 
                 case PlanetaryMaterialType.NormalInspector:
-                    float hR = heights[srcY, Mathf.Min(srcX + 1, resolution - 1)];
-                    float hU = heights[Mathf.Min(srcY + 1, resolution - 1), srcX];
-                    Vector3 norm = new Vector3(-(hR - h) * 10f, 1f, -(hU - h) * 10f).normalized;
-                    return new Color(norm.x * 0.5f + 0.5f, norm.y * 0.5f + 0.5f, norm.z * 0.5f + 0.5f, 1f);
+                    return new Color(normal.x * 0.5f + 0.5f, normal.y * 0.5f + 0.5f, normal.z * 0.5f + 0.5f, 1f);
 
                 default:
-                    return new Color(h, h, h, 1f);
+                    baseCol = new Color(h, h, h, 1f);
+                    break;
             }
+
+            return new Color(baseCol.r * shade, baseCol.g * shade, baseCol.b * shade, 1f);
         }
     }
 }

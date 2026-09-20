@@ -30,6 +30,7 @@ MonoBehaviour:
   windTurbulence: 1.2
   windPulseMagnitude: 0.8
   surfaceTemperature: "\u2248 \u221260 \xB0C"
+  ambientTemperatureCelsius: -60
   pressureKPa: 0.636
   sunlightPercentOfEarth: 43
   hazardTitle: DUST STORM

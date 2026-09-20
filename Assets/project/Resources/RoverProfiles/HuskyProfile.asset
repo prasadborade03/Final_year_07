@@ -36,6 +36,7 @@ MonoBehaviour:
   slipGoodThreshold: 0.15
   slipFairThreshold: 0.4
   batteryWh: 1200
+  massKg: 50
   driveModes:
   - label: STOP
     kind: 0

@@ -376,15 +376,15 @@ namespace ProjectName.UI
             // Action Buttons at bottom-right
             GameObject btnApplyEnvObj = CreateButton(rightPanel.transform, "BtnApplyEnv",
                 new Vector2(0f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(8f, 12f), new Vector2(-12f, 40f),
-                new Color(0.12f, 0.45f, 0.35f, 0.9f), "Apply Environment", 12);
+                new Vector2(8f, 12f), new Vector2(-12f, 44f),
+                new Color(0.12f, 0.45f, 0.35f, 0.95f), "Apply Environment\n<size=9px><color=#94a3b8>Keep rover pose</color></size>", 11);
             btnApplyEnvironment = btnApplyEnvObj.GetComponent<Button>();
             btnApplyEnvironment.onClick.AddListener(() => ApplySelectedProfile(false));
 
             GameObject btnApplyRespawnObj = CreateButton(rightPanel.transform, "BtnApplyRespawn",
                 new Vector2(0.5f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(8f, 12f), new Vector2(-12f, 40f),
-                new Color(0.15f, 0.55f, 0.75f, 0.95f), "Apply & Respawn Rover", 12);
+                new Vector2(8f, 12f), new Vector2(-12f, 44f),
+                new Color(0.15f, 0.55f, 0.75f, 0.95f), "Apply & Respawn\n<size=9px><color=#cbd5e1>Reset to safe pose</color></size>", 11);
             btnApplyAndRespawn = btnApplyRespawnObj.GetComponent<Button>();
             btnApplyAndRespawn.onClick.AddListener(() => ApplySelectedProfile(true));
         }

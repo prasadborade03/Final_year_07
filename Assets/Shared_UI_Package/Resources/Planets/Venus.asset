@@ -30,6 +30,7 @@ MonoBehaviour:
   windTurbulence: 1.5
   windPulseMagnitude: 1.2
   surfaceTemperature: "\u2248 +465 \xB0C"
+  ambientTemperatureCelsius: 465
   pressureKPa: 9200
   sunlightPercentOfEarth: 2.5
   hazardTitle: ATMOSPHERE

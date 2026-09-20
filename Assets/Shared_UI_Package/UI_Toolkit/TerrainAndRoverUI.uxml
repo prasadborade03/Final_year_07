@@ -40,32 +40,31 @@
                 <!-- Kinematics Card -->
                 <ui:VisualElement class="studio-card">
                     <ui:VisualElement class="card-header">
-                        <ui:Label text="KINEMATICS / SPEED" class="card-title" />
-                        <ui:Label text="•••" class="card-dots" />
+                        <ui:Label text="KINEMATICS / SPEED" class="card-title" tooltip="Truthful rigid-body and wheel motion telemetry" />
                     </ui:VisualElement>
                     <ui:VisualElement class="stat-grid-2x2">
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Linear velocity magnitude of rover chassis">
                             <ui:Label text="SPEED (LINEAR)" class="stat-label" />
                             <ui:VisualElement class="val-unit-row">
                                 <ui:Label name="ValLinearSpeed" text="0.00" class="stat-big-val" />
                                 <ui:Label text="m/s" class="stat-unit" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Ground vehicle speed in kilometers per hour">
                             <ui:Label text="SPEED (GROUND)" class="stat-label" />
                             <ui:VisualElement class="val-unit-row">
                                 <ui:Label name="ValGroundSpeed" text="0.00" class="stat-big-val" />
                                 <ui:Label text="km/h" class="stat-unit" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Forward acceleration in m/s²">
                             <ui:Label text="ACCELERATION" class="stat-label" />
                             <ui:VisualElement class="val-unit-row">
                                 <ui:Label name="ValAcceleration" text="+0.00" class="stat-med-val val-green" />
                                 <ui:Label text="m/s²" class="stat-unit" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Normalized inertial g-force load">
                             <ui:Label text="G-FORCE" class="stat-label" />
                             <ui:VisualElement class="val-unit-row">
                                 <ui:Label name="ValGForce" text="1.00" class="stat-med-val" />
@@ -78,19 +77,18 @@
                 <!-- Attitude & Orientation Card -->
                 <ui:VisualElement class="studio-card">
                     <ui:VisualElement class="card-header">
-                        <ui:Label text="ATTITUDE &amp; ORIENTATION" class="card-title" />
-                        <ui:Label text="•••" class="card-dots" />
+                        <ui:Label text="ATTITUDE &amp; ORIENTATION" class="card-title" tooltip="Orientation, pitch, roll, and cardinal compass heading" />
                     </ui:VisualElement>
                     <ui:VisualElement class="stat-grid-2x2">
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Chassis pitch angle in degrees relative to horizontal plane">
                             <ui:Label text="PITCH" class="stat-label" />
                             <ui:Label name="ValPitch" text="0.0°" class="stat-med-val" />
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Chassis roll angle in degrees relative to horizontal plane">
                             <ui:Label text="ROLL" class="stat-label" />
                             <ui:Label name="ValRoll" text="0.0°" class="stat-med-val" />
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Compass bearing and cardinal direction">
                             <ui:Label text="HEADING" class="stat-label" />
                             <ui:Label name="ValHeading" text="000° N" class="stat-med-val val-cyan" />
                             <ui:VisualElement class="heading-sub-row">
@@ -100,7 +98,7 @@
                                 <ui:Label name="IconAttitudeWarning" text="▲" class="attitude-warn-icon" style="display: none;" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Terrain surface gradient slope under the rover in degrees">
                             <ui:Label text="SLOPE" class="stat-label" />
                             <ui:Label name="ValSlope" text="0.0°" class="stat-med-val" />
                         </ui:VisualElement>
@@ -110,8 +108,7 @@
                 <!-- Position & Odometry Card -->
                 <ui:VisualElement name="CardPosition" class="studio-card">
                     <ui:VisualElement class="card-header">
-                        <ui:Label text="POSITION &amp; ODOMETRY" class="card-title" />
-                        <ui:Label text="•••" class="card-dots" />
+                        <ui:Label text="POSITION &amp; ODOMETRY" class="card-title" tooltip="Spatial coordinates and traverse distance metrics" />
                     </ui:VisualElement>
                     <ui:Label text="WORLD COORDINATES (XYZ)" class="stat-label" />
                     <ui:Label name="ValCoords" text="X 0.00 m   Y 0.00 m   Z 0.00 m" class="stat-coords-val" />
@@ -145,60 +142,61 @@
                             <ui:Button name="BtnBrowseFile" text="Upload Image..." class="card-mini-btn" />
                         </ui:VisualElement>
 
-                        <!-- Circular Radar / Contour Visual -->
-                        <ui:VisualElement class="radar-container">
-                            <ui:VisualElement class="radar-ring radar-ring-4" />
-                            <ui:VisualElement class="radar-ring radar-ring-3" />
-                            <ui:VisualElement class="radar-ring radar-ring-2" />
-                            <ui:VisualElement class="radar-ring radar-ring-1" />
-                            <ui:VisualElement class="radar-contour-shape c1" />
-                            <ui:VisualElement class="radar-contour-shape c2" />
-                            <ui:VisualElement class="radar-crosshair-h" />
-                            <ui:VisualElement class="radar-crosshair-v" />
-                            <ui:Image name="HeightmapPreviewImage" class="radar-heightmap-overlay" />
-                            <ui:VisualElement name="RadarRoverDot" class="radar-rover-dot" />
+                        <!-- Topographic Minimap Container (Click to place / teleport) -->
+                        <ui:VisualElement name="MinimapContainer" class="minimap-container" tooltip="Click on minimap to teleport or place active rover at coordinates">
+                            <ui:Image name="HeightmapPreviewImage" class="minimap-elevation-image" />
+                            <ui:VisualElement class="minimap-grid-overlay" />
+                            <ui:VisualElement name="MinimapBreadcrumbsContainer" class="minimap-breadcrumbs-container" />
+                            <ui:VisualElement name="RadarRoverDot" class="radar-rover-dot">
+                                <ui:VisualElement name="RadarRoverHeadingArrow" class="radar-rover-arrow" />
+                            </ui:VisualElement>
                         </ui:VisualElement>
 
                         <ui:VisualElement class="radar-legend-row">
-                            <ui:Label text="● ROVER POSITION" class="radar-legend-tag" />
-                            <ui:Label name="LabelRadarRange" text="RANGE 50 m" class="radar-range-tag" />
+                            <ui:Label text="● ROVER POSE" class="radar-legend-tag" tooltip="Live rover position and directional heading" />
+                            <ui:Label name="LabelRadarRange" text="GRID 1000m × 1000m" class="radar-range-tag" tooltip="Real-world planetary terrain dimensions" />
                         </ui:VisualElement>
 
                         <!-- Planetary Presets Row -->
                         <ui:VisualElement class="center-presets-row">
-                            <ui:Button name="BtnPresetGale" text="Gale Crater" class="studio-preset-pill preset-active" />
-                            <ui:Button name="BtnPresetOlympus" text="Olympus Mons" class="studio-preset-pill" />
-                            <ui:Button name="BtnPresetShackleton" text="Shackleton" class="studio-preset-pill" />
-                            <ui:Button name="BtnPresetValles" text="Valles" class="studio-preset-pill" />
-                            <ui:Button name="BtnPresetFractal" text="Plains" class="studio-preset-pill" />
+                            <ui:Button name="BtnPresetGale" text="Gale Crater" class="studio-preset-pill preset-active" tooltip="Gale Crater: central mound surrounded by plains" />
+                            <ui:Button name="BtnPresetOlympus" text="Olympus Mons" class="studio-preset-pill" tooltip="Olympus Mons: massive volcanic caldera shield" />
+                            <ui:Button name="BtnPresetShackleton" text="Shackleton" class="studio-preset-pill" tooltip="Shackleton Crater: deep impact crater with shadowed basin" />
+                            <ui:Button name="BtnPresetValles" text="Valles" class="studio-preset-pill" tooltip="Valles Marineris: dramatic tectonic chasm canyon" />
+                            <ui:Button name="BtnPresetFractal" text="Plains" class="studio-preset-pill" tooltip="Rolling terrain with multi-frequency procedural noise" />
                         </ui:VisualElement>
 
                         <!-- Primary Generate Terrain Action -->
-                        <ui:Button name="BtnGenerateTerrain" text="GENERATE NEW PLANETARY TERRAIN" class="studio-generate-btn" />
+                        <ui:Button name="BtnGenerateTerrain" text="GENERATE NEW PLANETARY TERRAIN" class="studio-generate-btn" tooltip="Generate fresh heightmap, rebuild terrain geometry, sync colliders, and relocate rover" />
                     </ui:VisualElement>
 
                     <!-- Deploy Digital Twin Rover Card -->
                     <ui:VisualElement class="studio-card deploy-card">
                         <ui:VisualElement class="card-header">
-                            <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="card-title" />
+                            <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="card-title" tooltip="Select active robotics platform or place at cursor" />
+                        </ui:VisualElement>
+
+                        <!-- Empty State Banner when no rover is active -->
+                        <ui:VisualElement name="RoverEmptyStateBanner" class="rover-empty-state-banner" style="display: none;">
+                            <ui:Label text="⚠️ STANDBY: Select a rover below, then click terrain or Quick Spawn" class="empty-state-text" />
                         </ui:VisualElement>
 
                         <ui:VisualElement class="rover-list">
-                            <ui:Button name="BtnRoverHusky" class="rover-item-row rover-active-row">
+                            <ui:Button name="BtnRoverHusky" class="rover-item-row rover-active-row" tooltip="Clearpath Husky A200: Skid-steer 4WD rugged mobile platform (50 kg)">
                                 <ui:VisualElement class="rover-name-row">
                                     <ui:Label text="Clearpath Husky A200" class="rover-item-name" />
                                 </ui:VisualElement>
                                 <ui:Label name="TagHuskyActive" text="ACTIVE" class="rover-active-tag" />
                             </ui:Button>
 
-                            <ui:Button name="BtnRoverM20" class="rover-item-row">
+                            <ui:Button name="BtnRoverM20" class="rover-item-row" tooltip="Deep Robotics M20: Quadruped autonomous exploration robot (45 kg)">
                                 <ui:VisualElement class="rover-name-row">
                                     <ui:Label text="Deep Robotics M20" class="rover-item-name" />
                                 </ui:VisualElement>
                                 <ui:Label name="TagM20Active" text="DEPLOY" class="rover-idle-tag" />
                             </ui:Button>
 
-                            <ui:Button name="BtnRoverM2020" class="rover-item-row">
+                            <ui:Button name="BtnRoverM2020" class="rover-item-row" tooltip="NASA Perseverance Mars 2020: 6WD Rocker-Bogie astrobiology science rover (1025 kg)">
                                 <ui:VisualElement class="rover-name-row">
                                     <ui:Label text="NASA Perseverance M2020" class="rover-item-name" />
                                 </ui:VisualElement>
@@ -364,37 +362,16 @@
                 </ui:ScrollView>
             </ui:VisualElement>
 
-            <!-- COLUMN 3 (Right): Compass, Actuators, Power/Thermal, Planetary Environment -->
+            <!-- COLUMN 3 (Right): Actuators, Power/Thermal, Planetary Environment -->
             <ui:VisualElement name="ColRight" class="studio-col col-right hud-interactive">
-                <!-- Compass / Heading Card -->
-                <ui:VisualElement class="studio-card compass-card">
-                    <ui:VisualElement class="card-header">
-                        <ui:Label text="COMPASS / HEADING" class="card-title" />
-                        <ui:Label text="•••" class="card-dots" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="compass-container">
-                        <ui:VisualElement class="compass-dial">
-                            <ui:VisualElement class="compass-outer-ring" />
-                            <ui:VisualElement name="CompassNeedle" class="compass-needle" />
-                            <ui:VisualElement class="compass-center-hub" />
-                            <ui:Label text="N" class="compass-lbl compass-n" />
-                            <ui:Label text="S" class="compass-lbl compass-s" />
-                            <ui:Label text="W" class="compass-lbl compass-w" />
-                            <ui:Label text="E" class="compass-lbl compass-e" />
-                        </ui:VisualElement>
-                        <ui:Label name="ValCompassBig" text="000° N" class="compass-big-text" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-
                 <!-- Actuators / Wheel Traction Card -->
                 <ui:VisualElement class="studio-card actuators-card">
                     <ui:VisualElement class="card-header">
-                        <ui:Label text="ACTUATORS / WHEEL TRACTION" class="card-title" />
-                        <ui:Label text="•••" class="card-dots" />
+                        <ui:Label text="ACTUATORS / WHEEL TRACTION" class="card-title" tooltip="Individual wheel drive status, rotational velocity, and dynamic slip" />
                     </ui:VisualElement>
                     <ui:VisualElement name="WheelContainer" class="wheel-grid-2x2">
                         <!-- FL -->
-                        <ui:VisualElement class="wheel-cell">
+                        <ui:VisualElement class="wheel-cell" tooltip="Front-Left wheel traction &amp; ground contact">
                             <ui:VisualElement class="wheel-info-col">
                                 <ui:Label text="FL" class="wheel-name" />
                                 <ui:Label name="TagWheelFL" text="GOOD" class="wheel-status tag-good" />
@@ -409,7 +386,7 @@
                         </ui:VisualElement>
 
                         <!-- FR -->
-                        <ui:VisualElement class="wheel-cell">
+                        <ui:VisualElement class="wheel-cell" tooltip="Front-Right wheel traction &amp; ground contact">
                             <ui:VisualElement class="wheel-info-col">
                                 <ui:Label text="FR" class="wheel-name" />
                                 <ui:Label name="TagWheelFR" text="GOOD" class="wheel-status tag-good" />
@@ -424,7 +401,7 @@
                         </ui:VisualElement>
 
                         <!-- RL -->
-                        <ui:VisualElement class="wheel-cell">
+                        <ui:VisualElement class="wheel-cell" tooltip="Rear-Left wheel traction &amp; ground contact">
                             <ui:VisualElement class="wheel-info-col">
                                 <ui:Label text="RL" class="wheel-name" />
                                 <ui:Label name="TagWheelRL" text="GOOD" class="wheel-status tag-good" />
@@ -439,7 +416,7 @@
                         </ui:VisualElement>
 
                         <!-- RR -->
-                        <ui:VisualElement class="wheel-cell">
+                        <ui:VisualElement class="wheel-cell" tooltip="Rear-Right wheel traction &amp; ground contact">
                             <ui:VisualElement class="wheel-info-col">
                                 <ui:Label text="RR" class="wheel-name" />
                                 <ui:Label name="TagWheelRR" text="FAIR" class="wheel-status tag-fair" />
@@ -455,21 +432,20 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
 
-                <!-- Power & Thermal Card -->
+                <!-- Power & Thermal Card (Lumped physics-derived estimate) -->
                 <ui:VisualElement class="studio-card power-card">
                     <ui:VisualElement class="card-header">
-                        <ui:Label text="POWER &amp; THERMAL" class="card-title" />
-                        <ui:Label text="•••" class="card-dots" />
+                        <ui:Label text="POWER &amp; THERMAL" class="card-title" tooltip="Truthful energy budget and thermal dynamics (EST)" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="meter-row">
-                        <ui:Label text="BATTERY" class="meter-label" />
+                    <ui:VisualElement class="meter-row" tooltip="Estimated battery state of charge integrated from wheel driving power and base avionics">
+                        <ui:Label text="BATTERY (EST)" class="meter-label" />
                         <ui:VisualElement class="meter-track">
                             <ui:VisualElement name="BarBattery" class="meter-fill fill-mint" style="width: 85%;" />
                         </ui:VisualElement>
                         <ui:Label name="ValBattery" text="85%" class="meter-val" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="meter-row" style="margin-top: 6px;">
-                        <ui:Label text="MOTOR TEMP" class="meter-label" />
+                    <ui:VisualElement class="meter-row" style="margin-top: 6px;" tooltip="Lumped thermal model dT/dt = (P_loss - (T - T_ambient)/R_th) / C_th dynamically linked to planetary ambient">
+                        <ui:Label text="MOTOR TEMP (EST)" class="meter-label" />
                         <ui:VisualElement class="meter-track">
                             <ui:VisualElement name="BarMotorTemp" class="meter-fill fill-cyan" style="width: 42%;" />
                         </ui:VisualElement>
@@ -480,22 +456,22 @@
                 <!-- Planetary Environment Card -->
                 <ui:VisualElement name="CardEnvironment" class="studio-card env-card">
                     <ui:VisualElement class="card-header">
-                        <ui:Label text="PLANETARY ENVIRONMENT" class="card-title" />
+                        <ui:Label text="PLANETARY ENVIRONMENT" class="card-title" tooltip="Atmospheric and gravitational parameters of the active celestial body" />
                     </ui:VisualElement>
                     <ui:VisualElement class="stat-grid-2x2">
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Surface gravitational acceleration (m/s²)">
                             <ui:Label text="GRAVITY" class="stat-label" />
                             <ui:Label name="ValEnvGravity" text="3.72 m/s²" class="stat-med-val val-gold" />
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Mean surface ambient temperature (°C)">
                             <ui:Label text="SURFACE TEMP" class="stat-label" />
                             <ui:Label name="ValEnvTemp" text="-60°C" class="stat-med-val" />
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Barometric atmospheric surface pressure (kPa)">
                             <ui:Label text="ATM PRESS" class="stat-label" />
                             <ui:Label name="ValEnvPress" text="0.6 kPa" class="stat-med-val" />
                         </ui:VisualElement>
-                        <ui:VisualElement class="stat-cell">
+                        <ui:VisualElement class="stat-cell" tooltip="Active planetary weather or environmental hazard">
                             <ui:Label name="LabelEnvHazardTitle" text="DUST STORM" class="stat-label" />
                             <ui:Label name="ValEnvHazard" text="No" class="stat-med-val val-green" />
                         </ui:VisualElement>
@@ -527,7 +503,7 @@
 
             <!-- Controls Helper & View Toggle -->
             <ui:VisualElement class="bottom-group-right">
-                <ui:Label name="LblHelperHint" text="[W,A,S,D] Drive | [V] Cam Presets | [Tab] HUD Toggle" class="hud-helper-hint" />
+                <ui:Label name="LblHelperHint" text="[W,A,S,D] Drive | [V] Cam | [Tab] Studio/HUD | [H] Hide HUD" class="hud-helper-hint" tooltip="Keyboard shortcuts: Drive [W,A,S,D], Camera presets [V], Studio/HUD toggle [Tab], Hide HUD [H]" />
                 <ui:Button name="BtnToggleHUD" text="VIEW [Tab]" class="hud-toggle-pill" tooltip="Toggle between Driving HUD and Full Studio [Tab]" />
             </ui:VisualElement>
         </ui:VisualElement>

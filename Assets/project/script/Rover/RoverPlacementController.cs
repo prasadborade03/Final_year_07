@@ -30,7 +30,19 @@ namespace ProjectName.Rover
     [DisallowMultipleComponent]
     public class RoverPlacementController : MonoBehaviour
     {
-        public static RoverPlacementController Instance { get; private set; }
+        private static RoverPlacementController _instance;
+        public static RoverPlacementController Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = UnityEngine.Object.FindAnyObjectByType<RoverPlacementController>();
+                }
+                return _instance;
+            }
+            private set { _instance = value; }
+        }
 
         public enum State
         {

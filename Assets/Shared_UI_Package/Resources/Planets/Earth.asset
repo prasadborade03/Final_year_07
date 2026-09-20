@@ -30,6 +30,7 @@ MonoBehaviour:
   windTurbulence: 0.5
   windPulseMagnitude: 0.5
   surfaceTemperature: "\u2248 +15 \xB0C"
+  ambientTemperatureCelsius: 15
   pressureKPa: 101.3
   sunlightPercentOfEarth: 100
   hazardTitle: WEATHER

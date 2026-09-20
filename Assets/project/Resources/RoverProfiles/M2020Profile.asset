@@ -42,6 +42,7 @@ MonoBehaviour:
   slipGoodThreshold: 0.12
   slipFairThreshold: 0.35
   batteryWh: 4000
+  massKg: 1025
   driveModes:
   - label: ACKERMANN
     kind: 2

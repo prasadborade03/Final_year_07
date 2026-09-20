@@ -35,8 +35,8 @@ namespace ProjectName.Terrain
         private float[,] currentHeights;
         private Texture2D previewTexture;
         private HeightmapPreset currentPreset = HeightmapPreset.GaleCrater;
-        private bool isStudioMinimized = false;
-        private bool isDrivingHudMode = false;
+        public bool isStudioMinimized = false;
+        public bool isDrivingHudMode = false;
         private string activeRoverId = "husky";
         private string currentDriveMode = "CRUISE";
         private FreeFlyCamera.CameraPerspective currentCamView = FreeFlyCamera.CameraPerspective.Front;
@@ -78,20 +78,29 @@ namespace ProjectName.Terrain
         private Label valOdometer;
         private Label valMissionTime;
 
-        // Col 2: Center Radar & Deploy
+        // Col 2: Topographic Minimap & Deploy
+        private VisualElement minimapContainer;
         private Image heightmapPreviewImage;
         private VisualElement radarRoverDot;
+        private VisualElement radarRoverHeadingArrow;
+        private VisualElement minimapBreadcrumbsContainer;
+        private readonly List<VisualElement> breadcrumbDots = new List<VisualElement>();
+        private readonly List<Vector3> breadcrumbPositions = new List<Vector3>();
+        private const int MAX_BREADCRUMBS = 25;
+        private const float BREADCRUMB_MIN_DISTANCE = 1.2f;
         private Label labelRadarRange;
         private Button btnBrowseFile;
         private Button btnPresetGale, btnPresetOlympus, btnPresetShackleton, btnPresetValles, btnPresetFractal;
         private Button btnGenerateTerrain;
 
+        private VisualElement roverEmptyStateBanner;
         private Button btnRoverHusky, btnRoverM20, btnRoverM2020;
         private Label tagHuskyActive, tagM20Active, tagM2020Active;
 
-        // Col 3: Compass, Actuators, Power, Environment
-        private VisualElement compassNeedle;
-        private Label valCompassBig;
+        // HUD Visibility toggle
+        private bool isHudHidden = false;
+
+        // Col 3: Actuators, Power, Environment (Compass card eliminated in Phase 6)
 
         private VisualElement wheelContainer;
         private class WheelUIItem
@@ -304,10 +313,14 @@ namespace ProjectName.Terrain
             valOdometer = root.Q<Label>("ValOdometer");
             valMissionTime = root.Q<Label>("ValMissionTime");
 
-            // Col 2: Center Radar
+            // Col 2: Topographic Minimap & Deploy
+            minimapContainer = root.Q<VisualElement>("MinimapContainer");
             heightmapPreviewImage = root.Q<Image>("HeightmapPreviewImage");
             radarRoverDot = root.Q<VisualElement>("RadarRoverDot");
+            radarRoverHeadingArrow = root.Q<VisualElement>("RadarRoverHeadingArrow");
+            minimapBreadcrumbsContainer = root.Q<VisualElement>("MinimapBreadcrumbsContainer");
             labelRadarRange = root.Q<Label>("LabelRadarRange");
+            roverEmptyStateBanner = root.Q<VisualElement>("RoverEmptyStateBanner");
             btnBrowseFile = root.Q<Button>("BtnBrowseFile");
             if (btnBrowseFile != null) btnBrowseFile.clicked += OnBrowseFileClicked;
 
@@ -387,9 +400,7 @@ namespace ProjectName.Terrain
 
             studioBottomBar = root.Q<VisualElement>(className: "studio-bottom-bar");
 
-            // Col 3: Compass, Actuators, Power, Environment
-            compassNeedle = root.Q<VisualElement>("CompassNeedle");
-            valCompassBig = root.Q<Label>("ValCompassBig");
+            // Col 3: Actuators, Power, Environment (Compass card removed in Phase 6)
 
             wheelContainer = root.Q<VisualElement>("WheelContainer") ?? root.Q<VisualElement>(className: "wheel-grid-2x2");
 
@@ -719,7 +730,13 @@ namespace ProjectName.Terrain
                 SetStudioMinimized(!isStudioMinimized);
             }
 
-            if (isStudioMinimized) return;
+            // [H] toggles complete HUD visibility on/off for cinematic rover/terrain view
+            if (Input.GetKeyDown(KeyCode.H) && !isTypingInUI)
+            {
+                ToggleHudVisibility();
+            }
+
+            if (isStudioMinimized || isHudHidden) return;
 
             // Stream live telemetry at <= 10 Hz into Studio elements (Rule R7: Zero garbage, low overhead)
             uiUpdateTimer += Time.unscaledDeltaTime;
@@ -782,6 +799,20 @@ namespace ProjectName.Terrain
             {
                 btnFloatingDock.style.display = minimized ? DisplayStyle.Flex : DisplayStyle.None;
             }
+        }
+
+        public void ToggleHudVisibility()
+        {
+            isHudHidden = !isHudHidden;
+            if (studioRoot != null)
+            {
+                studioRoot.style.display = isHudHidden ? DisplayStyle.None : (isStudioMinimized ? DisplayStyle.None : DisplayStyle.Flex);
+            }
+            if (btnFloatingDock != null)
+            {
+                btnFloatingDock.style.display = isHudHidden ? DisplayStyle.None : (isStudioMinimized ? DisplayStyle.Flex : DisplayStyle.None);
+            }
+            Debug.Log($"[Studio HUD] Cinematic HUD view: {(isHudHidden ? "HIDDEN (Press H to restore)" : "RESTORED")}");
         }
 
         public bool IsTextInputFocused()
@@ -933,7 +964,18 @@ namespace ProjectName.Terrain
             activeRoverId = handle.roverId;
             UpdateRoverSelectionUI();
 
-            if (badgeStatus != null) badgeStatus.text = "● ACTIVE";
+            if (badgeStatus != null)
+            {
+                badgeStatus.text = "● ACTIVE";
+                badgeStatus.RemoveFromClassList("pill-standby");
+                badgeStatus.AddToClassList("pill-active");
+            }
+
+            if (roverEmptyStateBanner != null)
+            {
+                roverEmptyStateBanner.style.display = DisplayStyle.None;
+            }
+
             if (badgeDriveMode != null && handle.profile != null)
             {
                 badgeDriveMode.text = handle.profile.steeringLabel.ToUpper();
@@ -948,13 +990,25 @@ namespace ProjectName.Terrain
         {
             activeRoverId = "";
             UpdateRoverSelectionUI();
+            ClearBreadcrumbs();
             SetTelemetryStandbyState();
             ConfigureDriveBarForStandby();
         }
 
         private void SetTelemetryStandbyState()
         {
-            if (badgeStatus != null) badgeStatus.text = "● STANDBY";
+            if (badgeStatus != null)
+            {
+                badgeStatus.text = "● STANDBY";
+                badgeStatus.RemoveFromClassList("pill-active");
+                badgeStatus.AddToClassList("pill-standby");
+            }
+
+            if (roverEmptyStateBanner != null)
+            {
+                roverEmptyStateBanner.style.display = DisplayStyle.Flex;
+            }
+
             if (badgeDriveMode != null) badgeDriveMode.text = "—";
 
             if (valLinearSpeed != null) valLinearSpeed.text = "—";
@@ -972,7 +1026,6 @@ namespace ProjectName.Terrain
             if (valCoords != null) valCoords.text = "X —   Y —   Z —";
             if (valOdometer != null) valOdometer.text = "—";
             if (valMissionTime != null) valMissionTime.text = "—";
-            if (valCompassBig != null) valCompassBig.text = "—";
 
             if (barBattery != null) barBattery.style.width = Length.Percent(0);
             if (valBattery != null) valBattery.text = "—";
@@ -1125,13 +1178,6 @@ namespace ProjectName.Terrain
                 valMissionTime.text = $"{hrs:00}:{mins:00}:{secs:00}";
             }
 
-            // Compass Needle & Big Deg
-            if (valCompassBig != null) valCompassBig.text = $"{t.headingDeg:000}° {t.headingCardinal}";
-            if (compassNeedle != null)
-            {
-                compassNeedle.style.rotate = new Rotate(t.headingDeg);
-            }
-
             // Wheel Actuators Matrix (Dynamic count, discrete 5 segments)
             if (t.wheelStates != null && activeWheelUIs.Count > 0)
             {
@@ -1142,30 +1188,110 @@ namespace ProjectName.Terrain
                 }
             }
 
-            // Power & Thermal
+            // Power & Thermal (Truthful lumped model & Wh integration)
             if (barBattery != null) barBattery.style.width = Length.Percent(Mathf.Clamp01(t.batteryPercent / 100f) * 100f);
             if (valBattery != null) valBattery.text = $"{t.batteryPercent:F0}%";
 
             if (barMotorTemp != null) barMotorTemp.style.width = Length.Percent(Mathf.Clamp01(t.motorTempCelsius / 100f) * 100f);
             if (valMotorTemp != null) valMotorTemp.text = $"{t.motorTempCelsius:F0} °C";
 
-            // Radar Dot Position
+            // Topographic Minimap: Rover Position Marker, Heading Arrow, Breadcrumbs, and Grid Range
             if (radarRoverDot != null)
             {
                 var tTerrain = UnityEngine.Terrain.activeTerrain;
-                if (tTerrain != null)
+                if (tTerrain != null && tTerrain.terrainData != null)
                 {
                     Vector3 tPos = tTerrain.transform.position;
                     Vector3 tSize = tTerrain.terrainData.size;
                     float normX = Mathf.Clamp01((t.worldPosition.x - tPos.x) / tSize.x);
                     float normZ = Mathf.Clamp01((t.worldPosition.z - tPos.z) / tSize.z);
 
-                    // Radar is 154x154 px
-                    float radarPxX = (normX - 0.5f) * 130f;
-                    float radarPxY = (0.5f - normZ) * 130f;
-                    radarRoverDot.style.translate = new Translate(radarPxX, radarPxY);
+                    // Minimap is 160x160 px; offset from center is (norm - 0.5) * 156
+                    float mapPxX = (normX - 0.5f) * 156f;
+                    float mapPxY = (0.5f - normZ) * 156f;
+                    radarRoverDot.style.translate = new Translate(mapPxX, mapPxY);
+
+                    // Heading rotation arrow aligned with rover heading
+                    if (radarRoverHeadingArrow != null)
+                    {
+                        radarRoverHeadingArrow.style.rotate = new Rotate(t.headingDeg);
+                    }
+
+                    // Update terrain grid range label
+                    if (labelRadarRange != null)
+                    {
+                        labelRadarRange.text = $"GRID {tSize.x:F0}m × {tSize.z:F0}m";
+                    }
+
+                    // Dynamic breadcrumb trail
+                    UpdateMinimapBreadcrumbs(t.worldPosition, tPos, tSize);
                 }
             }
+        }
+
+        private void UpdateMinimapBreadcrumbs(Vector3 roverPos, Vector3 tPos, Vector3 tSize)
+        {
+            if (minimapBreadcrumbsContainer == null) return;
+
+            bool addPoint = false;
+            if (breadcrumbPositions.Count == 0)
+            {
+                addPoint = true;
+            }
+            else
+            {
+                float dist = Vector3.Distance(breadcrumbPositions[breadcrumbPositions.Count - 1], roverPos);
+                if (dist >= BREADCRUMB_MIN_DISTANCE)
+                {
+                    addPoint = true;
+                }
+            }
+
+            if (addPoint)
+            {
+                breadcrumbPositions.Add(roverPos);
+                if (breadcrumbPositions.Count > MAX_BREADCRUMBS)
+                {
+                    breadcrumbPositions.RemoveAt(0);
+                }
+
+                while (breadcrumbDots.Count < breadcrumbPositions.Count)
+                {
+                    var dot = new VisualElement();
+                    dot.AddToClassList("breadcrumb-dot");
+                    minimapBreadcrumbsContainer.Add(dot);
+                    breadcrumbDots.Add(dot);
+                }
+                while (breadcrumbDots.Count > breadcrumbPositions.Count)
+                {
+                    int last = breadcrumbDots.Count - 1;
+                    minimapBreadcrumbsContainer.Remove(breadcrumbDots[last]);
+                    breadcrumbDots.RemoveAt(last);
+                }
+
+                for (int i = 0; i < breadcrumbPositions.Count; i++)
+                {
+                    Vector3 bPos = breadcrumbPositions[i];
+                    float normX = Mathf.Clamp01((bPos.x - tPos.x) / tSize.x);
+                    float normZ = Mathf.Clamp01((bPos.z - tPos.z) / tSize.z);
+                    float pxX = (normX - 0.5f) * 156f;
+                    float pxY = (0.5f - normZ) * 156f;
+                    breadcrumbDots[i].style.translate = new Translate(pxX, pxY);
+
+                    float alpha = 0.2f + (0.8f * ((float)(i + 1) / breadcrumbPositions.Count));
+                    breadcrumbDots[i].style.opacity = alpha;
+                }
+            }
+        }
+
+        private void ClearBreadcrumbs()
+        {
+            breadcrumbPositions.Clear();
+            if (minimapBreadcrumbsContainer != null)
+            {
+                minimapBreadcrumbsContainer.Clear();
+            }
+            breadcrumbDots.Clear();
         }
 
         private void UpdateWheelCell(WheelTelemetryState w, WheelUIItem item)
@@ -1394,7 +1520,7 @@ namespace ProjectName.Terrain
                 if (btnModeCruise != null) { btnModeCruise.text = "POINT TURN"; btnModeCruise.tooltip = "Zero-radius 360-deg spin [2]"; }
                 if (btnModeExplore != null) { btnModeExplore.text = "CRAB"; btnModeExplore.tooltip = "Diagonal parallel crab translation [3]"; }
                 if (btnModePrecision != null) { btnModePrecision.text = "TANK DRIVE"; btnModePrecision.tooltip = "Differential skid steer [4]"; }
-                if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [M] Steer Mode | [Space] Clearance | [V] Cam | [Tab] HUD";
+                if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [M] Steer | [V] Cam | [Tab] HUD | [H] Hide";
             }
             else
             {
@@ -1406,11 +1532,11 @@ namespace ProjectName.Terrain
 
                 if (profile.id == "m20")
                 {
-                    if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [Q,E] Knees | [1..4] Speed | [V] Cam | [Tab] HUD";
+                    if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [Q,E] Knees | [V] Cam | [Tab] HUD | [H] Hide";
                 }
                 else
                 {
-                    if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [1..4] Speed | [V] Cam Presets | [Tab] HUD Toggle";
+                    if (lblHelperHint != null) lblHelperHint.text = "[W,A,S,D] Drive | [V] Cam | [Tab] HUD | [H] Hide";
                 }
             }
 
@@ -2068,8 +2194,16 @@ namespace ProjectName.Terrain
         // -------------------------------------------------------------
         private void OnGenerateTerrainClicked()
         {
+            if (btnGenerateTerrain != null)
+            {
+                btnGenerateTerrain.SetEnabled(false);
+                btnGenerateTerrain.text = "GENERATING TERRAIN... ⏳";
+            }
+
             try
             {
+                ClearBreadcrumbs();
+
                 if (currentHeights == null)
                 {
                     currentHeights = HeightmapLoader.GeneratePresetHeights(
@@ -2113,12 +2247,21 @@ namespace ProjectName.Terrain
                     }
                 }
 
+                RefreshPreview();
                 ShowNotification("Terrain generated & collider synced.");
                 Debug.Log("[Studio] New planetary terrain generated successfully. Old terrain removed.");
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"[Studio] Terrain generation exception: {ex.Message}\n{ex.StackTrace}");
+            }
+            finally
+            {
+                if (btnGenerateTerrain != null)
+                {
+                    btnGenerateTerrain.SetEnabled(true);
+                    btnGenerateTerrain.text = "GENERATE NEW PLANETARY TERRAIN";
+                }
             }
         }
 

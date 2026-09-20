@@ -30,6 +30,7 @@ MonoBehaviour:
   windTurbulence: 2
   windPulseMagnitude: 1.5
   surfaceTemperature: "\u2248 \u2212179 \xB0C"
+  ambientTemperatureCelsius: -179
   pressureKPa: 146.7
   sunlightPercentOfEarth: 1
   hazardTitle: HAZE

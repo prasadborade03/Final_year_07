@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ProjectName.Planetary;
 
 namespace ProjectName.Rover
 {
@@ -49,7 +50,7 @@ namespace ProjectName.Rover
         public float powerDrawWatts = 75f;
         public float batteryCapacityWh = 1200f;
         public float ambientTempCelsius = 18f;
-        private float energyConsumedWh = 0f;
+        public float energyConsumedWh = 0f;
 
         public WheelTelemetryState[] wheelStates = new WheelTelemetryState[0];
 
@@ -106,6 +107,17 @@ namespace ProjectName.Rover
             else
             {
                 wheelStates = new WheelTelemetryState[0];
+            }
+
+            if (profile != null && profile.batteryWh > 0f)
+            {
+                batteryCapacityWh = profile.batteryWh;
+            }
+
+            var env = PlanetEnvironmentController.Instance;
+            if (env != null && env.currentProfile != null)
+            {
+                ambientTempCelsius = env.currentProfile.ambientTemperatureCelsius;
             }
 
             energyConsumedWh = 0f;
@@ -350,39 +362,68 @@ namespace ProjectName.Rover
 
         private void UpdatePowerAndThermals(float dt)
         {
-            // Base avionics power: ~75W
-            float currentPower = 75f;
+            // Sync ambient temperature from active planet environment
+            var env = PlanetEnvironmentController.Instance;
+            if (env != null && env.currentProfile != null)
+            {
+                ambientTempCelsius = env.currentProfile.ambientTemperatureCelsius;
+            }
 
-            // Physical electrical power consumed by driving wheels (torque * angular velocity)
-            float totalWheelPower = 0f;
-            if (wheelStates != null)
+            // 1. Base avionics power load (flight computer, navigation sensors, antennas) ~70 W
+            float avionicsPower = 70f;
+
+            // 2. Physical wheel motor electrical power: sum |tau_i * omega_i|
+            float wheelElectricalPower = 0f;
+            if (wheelStates != null && wheelStates.Length > 0)
             {
                 for (int i = 0; i < wheelStates.Length; i++)
                 {
-                    float p = (wheelStates[i].motorTorque * 0.001f) * Mathf.Abs(wheelStates[i].angularVelocityRad);
-                    totalWheelPower += Mathf.Clamp(p, 0f, 120f);
+                    float omega = Mathf.Abs(wheelStates[i].angularVelocityRad);
+                    float wheelP = (wheelStates[i].motorTorque * 0.001f) * omega;
+                    wheelElectricalPower += Mathf.Clamp(wheelP, 0f, 150f);
                 }
             }
 
-            float slopeFactor = 1f + Mathf.Sin(terrainSlopeDeg * Mathf.Deg2Rad) * 1.2f;
-            currentPower += (totalWheelPower * slopeFactor);
+            // Grade power: work required to climb slope: m * g * v * sin(theta)
+            float gradeWork = 0f;
+            if (linearSpeedMps > 0.05f && terrainSlopeDeg > 1f)
+            {
+                float mass = profile != null ? profile.massKg : 50f;
+                float g = Mathf.Abs(Physics.gravity.y);
+                gradeWork = mass * g * linearSpeedMps * Mathf.Sin(terrainSlopeDeg * Mathf.Deg2Rad);
+                gradeWork = Mathf.Clamp(gradeWork, 0f, 400f);
+            }
 
+            float currentPower = avionicsPower + wheelElectricalPower + gradeWork;
             if (linearSpeedMps > 0.05f)
             {
-                currentPower += (linearSpeedMps * 45f);
+                currentPower += (linearSpeedMps * 25f); // Chassis rolling resistance & gear losses
             }
 
             powerDrawWatts = Mathf.Round(currentPower);
 
-            // Battery state of charge calculation
+            // 3. True battery energy integration (Watt-hours)
             float wattHoursUsed = (currentPower * (dt / 3600f));
             energyConsumedWh += wattHoursUsed;
-            batteryPercent = Mathf.Clamp(100f * (1f - (energyConsumedWh / batteryCapacityWh)), 0f, 100f);
+            batteryPercent = Mathf.Clamp(100f * (1f - (energyConsumedWh / Mathf.Max(10f, batteryCapacityWh))), 0f, 100f);
 
-            // Motor thermal dynamics (Newton's cooling law towards ambient + joule heating from power)
-            float heatingRate = (currentPower - 75f) * 0.02f;
-            float targetTemp = ambientTempCelsius + heatingRate;
-            motorTempCelsius = Mathf.MoveTowards(motorTempCelsius, targetTemp, dt * 0.3f);
+            // 4. Lumped thermal differential model: dT/dt = (P_loss - (T - T_ambient) / R_th) / C_th
+            if (PlanetEnvironmentController.Instance != null && PlanetEnvironmentController.Instance.currentProfile != null)
+            {
+                ambientTempCelsius = PlanetEnvironmentController.Instance.currentProfile.ambientTemperatureCelsius;
+            }
+
+            // Motor efficiency ~80%, 20% of mechanical electrical power converts into motor heat + 5W idle heat
+            float pLoss = (wheelElectricalPower * 0.20f) + 5f;
+            float rTh = 0.8f;      // Thermal resistance K/W (conductive/radiative cooling to environment)
+            float cTh = 1500f;     // Thermal capacitance J/K (lumped copper/steel actuator hub)
+
+            float heatLossToAmbient = (motorTempCelsius - ambientTempCelsius) / rTh;
+            float netHeatFlowWatts = pLoss - heatLossToAmbient; // Joules/sec
+            float deltaTemp = (netHeatFlowWatts / cTh) * dt;
+
+            // Stable numerical integration
+            motorTempCelsius += Mathf.Clamp(deltaTemp, -10f * dt, 10f * dt);
         }
 
         private void CheckKillPlane(Vector3 currentPos, float dt)
