@@ -2,6 +2,9 @@
 
 VR Planetary Rover Digital Twin Simulation Studio (`Final_year_07`)
 
+> **Last updated**: September 2026 — updated through Phase 6 (thermal model, minimap, HUD cleanup)  
+> **Branch**: `feature/studio-overhaul` · **Engine**: Unity 6.5 LTS · Universal Render Pipeline
+
 ---
 
 ## 1. System Architecture
@@ -147,3 +150,96 @@ Assets/
    - Basalt: `VolcanicBasalt_Albedo.png`, `VolcanicBasalt_Normal.png`, `VolcanicBasalt_Roughness.png`
    - Polar Ice: `PolarIce_Albedo.png`, `PolarIce_Normal.png`, `PolarIce_Roughness.png`
    - Sandstone: `Sandstone_Albedo.png`, `Sandstone_Normal.png`, `Sandstone_Roughness.png`
+
+---
+
+## 4. Planetary Environment System (Phase 5A+)
+
+### ScriptableObject Profile Pattern
+
+Each planet is represented by a [`PlanetProfile`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Planetary/PlanetProfile.cs) ScriptableObject at `Assets/Shared_UI_Package/Resources/Planets/<Name>.asset`.
+
+| Asset | Gravity (m/s²) | Temp (°C) | Pressure (kPa) | Drag ×  |
+|---|---|---|---|---|
+| `Mars.asset` | 3.72 | −60 | 0.636 | 1.0 |
+| `Moon.asset` | 1.62 | −20 | ≈ 0 | 0.1 |
+| `Venus.asset` | 8.87 | +465 | 9,200 | 6.0 |
+| `Titan.asset` | 1.35 | −179 | 146.7 | 3.5 |
+| `Earth.asset` | 9.81 | +15 | 101.3 | 1.5 |
+
+**Loaded via**: `Resources.Load<PlanetProfile>("Planets/Mars")`
+
+### Single-Writer Rule
+
+[`PlanetEnvironmentController`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Planetary/PlanetEnvironmentController.cs) is the **only class** that writes to `RenderSettings`, `Physics.gravity`, `WindZone`, or any scene lighting parameters. All other code reads from `PlanetEnvironmentController.Instance.currentProfile`.
+
+`ApplyProfile(PlanetProfile p)` sequence:
+1. `Physics.gravity = new Vector3(0, -p.gravityY, 0)`
+2. `RenderSettings.skybox = p.skyboxMaterial`
+3. Sun `Light`: color, intensity, elevation, azimuth, shadow strength
+4. `RenderSettings.fog*`: mode, color, density
+5. `RenderSettings.ambientMode`, sky/equator/ground colors
+6. `WindZone`: main, turbulence, pulse magnitude
+7. `TerrainMaterialManager.SetMaterialPreset(p.defaultMaterialPreset)`
+8. `PlanetRockScatterer.Scatter(p)`: replaces all rocks
+
+---
+
+## 5. Rover Telemetry System (Phase 3+)
+
+[`RoverTelemetry`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Rover/RoverTelemetry.cs) runs on `FixedUpdate()` (0.02 s). Key public fields consumed by the UI:
+
+| Field | Type | Source |
+|---|---|---|
+| `linearSpeedMps` | float | `Vector3.Dot(rootBody.velocity, forward)` |
+| `headingDeg` | float | `Atan2(forward.x, forward.z)` → 0–360° |
+| `terrainSlopeDeg` | float | Raycast → `Vector3.Angle(hit.normal, up)` |
+| `wheelStates[]` | `WheelState[]` | Per wheel: ω, τ, slipRatio, contact |
+| `powerDrawWatts` | float | Avionics + wheel motors + grade + rolling |
+| `batteryPercent` | float | `100 × (1 − E_consumed / E_capacity)` |
+| `motorTempCelsius` | float | Lumped thermal ODE |
+| `ambientTempCelsius` | float | Live from `PlanetProfile` |
+| `energyConsumedWh` | float | Cumulative battery drain |
+
+### Lumped Thermal Model
+
+```
+dT_motor/dt = (P_loss − (T_motor − T_ambient) / R_th) / C_th
+
+P_loss  = 0.20 × P_wheels + 5 W
+R_th    = 0.8 K/W
+C_th    = 1500 J/K
+T_ambient = PlanetEnvironmentController.Instance.currentProfile.ambientTemperatureCelsius
+```
+
+---
+
+## 6. Phase Changelog Summary
+
+| Phase | Title | Key Output |
+|---|---|---|
+| 0 | Audit & Setup | Branch created; legacy code understood; design decisions locked |
+| 1 | UI Toolkit Foundation | UXML/USS studio shell; 3-column layout; tab system |
+| 2 | Rover Integration | `ActiveRoverContext`; `RoverHandle`; `RoverPlacementController`; 4 M2020 drive modes |
+| 3 | Live Telemetry | `RoverTelemetry`: real speed, heading, slope, slip — no fabricated values |
+| 4 | Terrain Lab | Painter, procedural presets, undo/redo, PNG import/export |
+| 5A | Planet Realism — Data | `PlanetProfile` + `PlanetEnvironmentController`; per-planet sky/light/fog/facts |
+| 5B | Planet Realism — Surface | CC0 PBR textures, slope+height alphamap, rock scatterer |
+| 6 | UI Cleanup + Thermal | Compass removed; lumped thermal model; 90% opacity; 24px stats; HUD toggle |
+
+---
+
+## 7. Key Files Quick Reference
+
+| File | Role | Lines |
+|---|---|---|
+| [`UploadHeightmapUIToolkit.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Controllers/UploadHeightmapUIToolkit.cs) | Main UI controller | ~2382 |
+| [`TerrainAndRoverUI.uxml`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/UI_Toolkit/TerrainAndRoverUI.uxml) | Studio layout | ~512 |
+| [`TerrainAndRoverUI.uss`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/UI_Toolkit/TerrainAndRoverUI.uss) | All styles | ~1221 |
+| [`RoverTelemetry.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Rover/RoverTelemetry.cs) | Physics telemetry + thermal model | ~473 |
+| [`PlanetProfile.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Planetary/PlanetProfile.cs) | ScriptableObject: all planet data | ~210 |
+| [`PlanetEnvironmentController.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Planetary/PlanetEnvironmentController.cs) | Single writer for scene environment | ~310 |
+| [`HeightmapLoader.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Terrain/HeightmapLoader.cs) | Procedural algorithms + PNG import | ~660 |
+| [`TerrainMaterialManager.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Terrain/TerrainMaterialManager.cs) | PBR layers + slope/height blend | ~1100 |
+
+> See [`RESEARCH_BLACK_BOOK.md`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/RESEARCH_BLACK_BOOK.md) for full planetary science data, equations, and phase-by-phase development log.
