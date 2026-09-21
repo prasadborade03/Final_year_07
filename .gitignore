@@ -118,3 +118,5 @@ InitTestScene*.unity*
 # Temporary nested repos / clones
 final-year-prj/
 
+# Plastic SCM / Unity Version Control cache
+.plastic/
