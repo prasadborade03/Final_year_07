@@ -1,0 +1,416 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="Tokens.uss" />
+    <Style src="Components.uss" />
+
+    <ui:VisualElement name="UIKitRoot" style="flex-grow: 1; width: 1920px; height: 1080px; background-color: #030812; padding: 24px; flex-direction: column; justify-content: space-between;">
+        <!-- Top Bar Showcase: Top Row Pills from §7 -->
+        <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center; width: 100%;">
+            <!-- Mode Switch: Driving HUD vs Full Studio (163x40 each, 10px gap) -->
+            <ui:VisualElement style="flex-direction: row; gap: 10px;">
+                <ui:Button text="Driving HUD" class="btn btn-primary" style="width: 163px; height: 40px; border-radius: var(--r-pill);">
+                    <ui:VisualElement class="btn-icon-leading" style="width: 18px; height: 18px; background-image: url('/Assets/project/UI/icons/ph_steering_wheel.svg'); -unity-background-image-tint-color: var(--primary-text);" />
+                </ui:Button>
+                <ui:Button text="Full Studio" class="btn btn-secondary" style="width: 163px; height: 40px; border-radius: var(--r-pill);">
+                    <ui:VisualElement class="btn-icon-leading" style="width: 18px; height: 18px; background-image: url('/Assets/project/UI/icons/ph_mountains.svg'); -unity-background-image-tint-color: var(--secondary-text);" />
+                </ui:Button>
+            </ui:VisualElement>
+
+            <!-- Center Showcase Title -->
+            <ui:VisualElement style="align-items: center;">
+                <ui:Label text="VR ROVER DIGITAL TWIN STUDIO · UI-KIT" style="font-family: var(--font-heading); font-size: 16px; -unity-font-style: bold; letter-spacing: 5px; color: var(--accent);" />
+                <ui:Label text="Design System Tokens · Components · Icons · Fonts" style="font-family: var(--font-body); font-size: 11px; color: var(--text-3);" />
+            </ui:VisualElement>
+
+            <!-- Top Right Pills: Planet (163x40) and Minimize (73x40) -->
+            <ui:VisualElement style="flex-direction: row; gap: 10px;">
+                <ui:Button text="Mars" class="btn btn-secondary" style="width: 163px; height: 40px; border-radius: var(--r-pill);">
+                    <ui:VisualElement class="btn-icon-leading" style="width: 18px; height: 18px; background-image: url('/Assets/project/UI/icons/ph_planet.svg'); -unity-background-image-tint-color: var(--secondary-text);" />
+                </ui:Button>
+                <ui:Button class="btn btn-secondary" style="width: 73px; height: 40px; border-radius: var(--r-pill); justify-content: center; padding: 0;">
+                    <ui:VisualElement style="width: 18px; height: 18px; background-image: url('/Assets/project/UI/icons/ph_minus.svg'); -unity-background-image-tint-color: var(--secondary-text);" />
+                </ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Main Showcase Content: 4 Columns of Components -->
+        <ui:VisualElement style="flex-direction: row; flex-grow: 1; gap: 16px; margin-top: 14px; margin-bottom: 14px;">
+            <!-- Column 1: Buttons & Icon Controls -->
+            <ui:VisualElement style="width: 440px; flex-direction: column; gap: 12px;">
+                <!-- Buttons Panel -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="SEMANTIC BUTTON SET (§5.1)" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement style="flex-direction: row; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 12px;">
+                        <ui:Button class="btn btn-primary" style="width: 48%; margin: 0;">
+                            <ui:VisualElement class="btn-icon-leading" style="background-image: url('/Assets/project/UI/icons/ph_cursor_click.svg'); -unity-background-image-tint-color: var(--primary-text);" />
+                            <ui:Label text="Click to spawn" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button class="btn btn-secondary" style="width: 48%; margin: 0;">
+                            <ui:VisualElement class="btn-icon-leading" style="background-image: url('/Assets/project/UI/icons/ph_crosshair.svg'); -unity-background-image-tint-color: var(--secondary-text);" />
+                            <ui:Label text="Centre spawn" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button class="btn btn-confirm" style="width: 48%; margin: 0;">
+                            <ui:VisualElement class="btn-icon-leading" style="background-image: url('/Assets/project/UI/icons/ph_arrows_clockwise.svg'); -unity-background-image-tint-color: var(--confirm-text);" />
+                            <ui:Label text="Apply &amp; rebuild" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button class="btn btn-cancel" style="width: 48%; margin: 0;">
+                            <ui:VisualElement class="btn-icon-leading" style="background-image: url('/Assets/project/UI/icons/ph_x.svg'); -unity-background-image-tint-color: var(--cancel-text);" />
+                            <ui:Label text="Cancel action" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button text="Destructive action" class="btn btn-danger" style="width: 48%; margin: 0;" />
+                        <ui:Button text="Disabled action" class="btn btn-disabled" style="width: 48%; margin: 0;" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center; border-top-width: 1px; border-top-color: var(--border); padding-top: 8px;">
+                        <ui:Label text="Icon Buttons:" class="metric-label" />
+                        <ui:VisualElement style="flex-direction: row; gap: 8px;">
+                            <ui:Button class="btn-icon-circle">
+                                <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_shuffle.svg'); -unity-background-image-tint-color: var(--text-1);" />
+                            </ui:Button>
+                            <ui:Button class="btn-icon-circle">
+                                <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_arrow_u_up_left.svg'); -unity-background-image-tint-color: var(--text-1);" />
+                            </ui:Button>
+                            <ui:Button class="btn-icon-circle">
+                                <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_arrow_u_up_right.svg'); -unity-background-image-tint-color: var(--text-1);" />
+                            </ui:Button>
+                            <ui:Button class="btn-icon-circle">
+                                <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_download_simple.svg'); -unity-background-image-tint-color: var(--text-1);" />
+                            </ui:Button>
+                            <ui:Button class="btn-icon-circle" style="background-color: var(--primary-bg); border-color: var(--accent);">
+                                <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_arrows_out_simple.svg'); -unity-background-image-tint-color: var(--accent);" />
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Segmented Controls Panel -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="PAINTER TOOLS (5-SEGMENT)" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="segmented-bar" style="height: 48px;">
+                        <ui:Button class="segmented-item segmented-item-active" style="flex-direction: column; align-items: center; justify-content: center;">
+                            <ui:VisualElement style="width: 14px; height: 14px; margin-bottom: 2px; background-image: url('/Assets/project/UI/icons/ph_arrow_up.svg'); -unity-background-image-tint-color: var(--text-1);" />
+                            <ui:Label text="Raise" style="font-size: 11px; color: var(--text-1);" />
+                        </ui:Button>
+                        <ui:Button class="segmented-item" style="flex-direction: column; align-items: center; justify-content: center;">
+                            <ui:VisualElement style="width: 14px; height: 14px; margin-bottom: 2px; background-image: url('/Assets/project/UI/icons/ph_arrow_down.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                            <ui:Label text="Lower" style="font-size: 11px; color: var(--text-2);" />
+                        </ui:Button>
+                        <ui:Button class="segmented-item" style="flex-direction: column; align-items: center; justify-content: center;">
+                            <ui:VisualElement style="width: 14px; height: 14px; margin-bottom: 2px; background-image: url('/Assets/project/UI/icons/ph_waves.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                            <ui:Label text="Smooth" style="font-size: 11px; color: var(--text-2);" />
+                        </ui:Button>
+                        <ui:Button class="segmented-item" style="flex-direction: column; align-items: center; justify-content: center;">
+                            <ui:VisualElement style="width: 14px; height: 14px; margin-bottom: 2px; background-image: url('/Assets/project/UI/icons/ph_equals.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                            <ui:Label text="Flat" style="font-size: 11px; color: var(--text-2);" />
+                        </ui:Button>
+                        <ui:Button class="segmented-item" style="flex-direction: column; align-items: center; justify-content: center;">
+                            <ui:VisualElement style="width: 14px; height: 14px; margin-bottom: 2px; background-image: url('/Assets/project/UI/icons/ph_waveform.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                            <ui:Label text="Noise" style="font-size: 11px; color: var(--text-2);" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Column 2: Inputs, Sliders, Switches & Dropdowns -->
+            <ui:VisualElement style="width: 440px; flex-direction: column; gap: 12px;">
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="SLIDERS &amp; INPUT CONTROLS" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <!-- Slider 1 -->
+                    <ui:VisualElement class="slider-group">
+                        <ui:VisualElement class="slider-label-row">
+                            <ui:Label text="Elevation scale" class="slider-title" />
+                            <ui:Label text="120 m" class="slider-readout" />
+                        </ui:VisualElement>
+                        <ui:Slider low-value="5" high-value="500" value="120" class="custom-slider" />
+                    </ui:VisualElement>
+
+                    <!-- Slider 2 -->
+                    <ui:VisualElement class="slider-group">
+                        <ui:VisualElement class="slider-label-row">
+                            <ui:Label text="Brush radius" class="slider-title" />
+                            <ui:Label text="8%" class="slider-readout" />
+                        </ui:VisualElement>
+                        <ui:Slider low-value="0" high-value="100" value="8" class="custom-slider" />
+                    </ui:VisualElement>
+
+                    <!-- Height Remap Curve (4-segment) -->
+                    <ui:VisualElement style="margin-top: 4px; margin-bottom: 8px;">
+                        <ui:Label text="Height remap curve" class="slider-title" style="margin-bottom: 4px;" />
+                        <ui:VisualElement class="segmented-bar" style="height: 32px;">
+                            <ui:Button text="Linear" class="segmented-item segmented-item-active" />
+                            <ui:Button text="Exp" class="segmented-item" />
+                            <ui:Button text="Ridge" class="segmented-item" />
+                            <ui:Button text="Basin" class="segmented-item" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Dropdown -->
+                    <ui:VisualElement style="margin-bottom: 10px;">
+                        <ui:Label text="Heightmap resolution" class="slider-title" style="margin-bottom: 4px;" />
+                        <ui:VisualElement class="custom-dropdown">
+                            <ui:VisualElement class="unity-base-popup-field__input">
+                                <ui:Label text="513 x 513 (Very High)" class="unity-base-popup-field__text" />
+                                <ui:VisualElement style="width: 14px; height: 14px; background-image: url('/Assets/project/UI/icons/ph_caret_down.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Seed Input -->
+                    <ui:VisualElement style="margin-bottom: 10px;">
+                        <ui:Label text="Seed randomise" class="slider-title" style="margin-bottom: 4px;" />
+                        <ui:VisualElement style="flex-direction: row; gap: 8px;">
+                            <ui:IntegerField value="48291" class="custom-input" style="flex-grow: 1;" />
+                            <ui:Button class="btn-icon-circle-sm" style="width: 32px; height: 32px;">
+                                <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_shuffle.svg'); -unity-background-image-tint-color: var(--accent);" />
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Toggle Pill Switches -->
+                    <ui:VisualElement style="margin-top: 2px;">
+                        <ui:VisualElement class="toggle-switch-row" style="margin-bottom: 8px;">
+                            <ui:Label text="Follow planet profile" class="toggle-switch-label" />
+                            <ui:Toggle value="true" class="toggle-switch" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="toggle-switch-row">
+                            <ui:Label text="Live preview" class="toggle-switch-label" />
+                            <ui:Toggle value="false" class="toggle-switch" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Column 3: Metrics, Wheel Tiles & Lists -->
+            <ui:VisualElement style="width: 440px; flex-direction: column; gap: 12px;">
+                <!-- Telemetry Pod -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="KINEMATICS / SPEED (§8)" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="metric-grid-2x2">
+                        <ui:VisualElement class="metric-cell">
+                            <ui:Label text="Speed (linear)" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label text="0.48" class="metric-value" />
+                                <ui:Label text="m/s" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell">
+                            <ui:Label text="Speed (ground)" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label text="1.73" class="metric-value" />
+                                <ui:Label text="km/h" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell">
+                            <ui:Label text="Acceleration" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label text="+0.12" class="metric-value" />
+                                <ui:Label text="m/s²" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell">
+                            <ui:Label text="G-force" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label text="0.38" class="metric-value" />
+                                <ui:Label text="g" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Wheel Tiles Grid (Actuators) -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="ACTUATORS / WHEEL TRACTION" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement style="flex-direction: row; flex-wrap: wrap; justify-content: space-between;">
+                        <ui:VisualElement class="wheel-tile">
+                            <ui:Label text="FL" class="wheel-tile-label" />
+                            <ui:VisualElement class="wheel-dash-container">
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                            </ui:VisualElement>
+                            <ui:Label text="GOOD" class="wheel-status-text" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="wheel-tile">
+                            <ui:Label text="FR" class="wheel-tile-label" />
+                            <ui:VisualElement class="wheel-dash-container">
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                            </ui:VisualElement>
+                            <ui:Label text="GOOD" class="wheel-status-text" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="wheel-tile">
+                            <ui:Label text="RL" class="wheel-tile-label" />
+                            <ui:VisualElement class="wheel-dash-container">
+                                <ui:VisualElement class="wheel-dash-segment" style="background-color: var(--fair);" />
+                                <ui:VisualElement class="wheel-dash-segment" style="background-color: var(--fair);" />
+                                <ui:VisualElement class="wheel-dash-segment" style="background-color: var(--fair);" />
+                                <ui:VisualElement class="wheel-dash-segment" style="background-color: var(--fair);" />
+                                <ui:VisualElement class="wheel-dash-segment" style="background-color: var(--disabled-border);" />
+                            </ui:VisualElement>
+                            <ui:Label text="FAIR" class="wheel-status-text" style="color: var(--fair);" />
+                        </ui:VisualElement>
+
+                        <ui:VisualElement class="wheel-tile">
+                            <ui:Label text="RR" class="wheel-tile-label" />
+                            <ui:VisualElement class="wheel-dash-container">
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                                <ui:VisualElement class="wheel-dash-segment" />
+                            </ui:VisualElement>
+                            <ui:Label text="GOOD" class="wheel-status-text" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Rover List Rows -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="list-row list-row-active">
+                        <ui:VisualElement class="list-row-icon" style="background-image: url('/Assets/project/UI/icons/ph_robot.svg');" />
+                        <ui:Label text="Clearpath Husky A200" class="list-row-title" />
+                        <ui:VisualElement class="list-row-check" style="background-image: url('/Assets/project/UI/icons/ph_check.svg');" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="list-row">
+                        <ui:VisualElement class="list-row-icon" style="background-image: url('/Assets/project/UI/icons/ph_robot.svg'); -unity-background-image-tint-color: var(--text-3);" />
+                        <ui:Label text="Deep Robotics M20" class="list-row-title" style="color: var(--text-2);" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="list-row">
+                        <ui:VisualElement class="list-row-icon" style="background-image: url('/Assets/project/UI/icons/ph_robot.svg'); -unity-background-image-tint-color: var(--text-3);" />
+                        <ui:Label text="NASA Perseverance M2020" class="list-row-title" style="color: var(--text-2);" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Column 4: Material Swatches, Chips & Placement Banner -->
+            <ui:VisualElement style="width: 440px; flex-direction: column; gap: 12px;">
+                <!-- Material Chips Panel -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="PLANETARY SURFACE MATERIAL" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement style="flex-direction: row; flex-wrap: wrap; justify-content: space-between;">
+                        <ui:VisualElement class="material-chip material-chip-active">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #C1440E;" />
+                            <ui:Label text="Martian rust" class="material-chip-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="material-chip">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #8C92AC;" />
+                            <ui:Label text="Lunar regolith" class="material-chip-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="material-chip">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #2B2C30;" />
+                            <ui:Label text="Basalt" class="material-chip-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="material-chip">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #A5D6A7;" />
+                            <ui:Label text="Polar ice" class="material-chip-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="material-chip">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #D4A373;" />
+                            <ui:Label text="Sandstone" class="material-chip-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="material-chip">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #38B6FF;" />
+                            <ui:Label text="Topo grid" class="material-chip-label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Placement Banner & Key-caps Preview -->
+                <ui:VisualElement class="panel-card" style="width: 100%;">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="PLACEMENT BANNER (§10)" class="panel-title" />
+                    </ui:VisualElement>
+
+                    <!-- Exact Placement Banner Pill -->
+                    <ui:VisualElement style="height: 44px; border-radius: var(--r-pill); background-color: var(--surface); border-width: 1px; border-color: var(--accent); padding: 0 14px; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <ui:VisualElement style="flex-direction: row; align-items: center; gap: 8px;">
+                            <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_cursor_click.svg'); -unity-background-image-tint-color: var(--accent);" />
+                            <ui:Label text="Click terrain to place Husky" style="font-family: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-1);" />
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; gap: 6px;">
+                            <ui:Button text="Centre spawn" class="btn btn-secondary" style="height: 28px; padding: 0 8px; font-size: 11px;">
+                                <ui:VisualElement class="btn-icon-leading" style="width: 12px; height: 12px; background-image: url('/Assets/project/UI/icons/ph_crosshair.svg'); -unity-background-image-tint-color: var(--secondary-text);" />
+                            </ui:Button>
+                            <ui:Button text="Cancel" class="btn btn-cancel" style="height: 28px; padding: 0 8px; font-size: 11px;">
+                                <ui:VisualElement class="btn-icon-leading" style="width: 12px; height: 12px; background-image: url('/Assets/project/UI/icons/ph_x.svg'); -unity-background-image-tint-color: var(--cancel-text);" />
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Key Caps -->
+                    <ui:VisualElement style="flex-direction: row; align-items: center; gap: 4px;">
+                        <ui:Label text="Key Hints:" class="metric-label" style="margin-right: 4px;" />
+                        <ui:Label text="Q" class="key-cap" />
+                        <ui:Label text="E" class="key-cap" />
+                        <ui:Label text="Esc" class="key-cap" />
+                        <ui:Label text="Tab" class="key-cap" />
+                        <ui:Label text="H" class="key-cap" />
+                        <ui:Label text="V" class="key-cap" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Bottom Floating Controls Preview from §7 -->
+        <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: flex-end; width: 100%;">
+            <!-- Camera Group (Bottom Left) -->
+            <ui:VisualElement style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                <ui:VisualElement class="corner-chip" style="flex-direction: row; align-items: center; gap: 6px; padding: 4px 12px;">
+                    <ui:VisualElement style="width: 14px; height: 14px; background-image: url('/Assets/project/UI/icons/ph_video_camera.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                    <ui:Label text="Camera" style="font-family: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-2);" />
+                </ui:VisualElement>
+                <ui:VisualElement class="segmented-bar" style="width: 278px; height: 40px;">
+                    <ui:Button text="Free" class="segmented-item" />
+                    <ui:Button text="Front" class="segmented-item segmented-item-active" />
+                    <ui:Button text="Rear" class="segmented-item" />
+                    <ui:Button text="Left" class="segmented-item" />
+                    <ui:Button text="Right" class="segmented-item" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Driving Mode Group (Bottom Right) -->
+            <ui:VisualElement style="flex-direction: column; align-items: flex-end; gap: 4px;">
+                <ui:VisualElement class="corner-chip" style="flex-direction: row; align-items: center; gap: 6px; padding: 4px 12px;">
+                    <ui:VisualElement style="width: 14px; height: 14px; background-image: url('/Assets/project/UI/icons/ph_gauge.svg'); -unity-background-image-tint-color: var(--text-2);" />
+                    <ui:Label text="Driving mode" style="font-family: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-2);" />
+                </ui:VisualElement>
+                <ui:VisualElement class="segmented-bar" style="width: 278px; height: 40px;">
+                    <ui:Button text="Stop" class="segmented-item" />
+                    <ui:Button text="Cruise" class="segmented-item segmented-item-active" />
+                    <ui:Button text="Explore" class="segmented-item" />
+                    <ui:Button text="Precision" class="segmented-item" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

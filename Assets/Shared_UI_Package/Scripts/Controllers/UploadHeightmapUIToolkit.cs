@@ -153,6 +153,7 @@ namespace ProjectName.Terrain
         private int currentSeed = 0;
 
         // Terrain Lab: 2D Canvas Painter & Dirty-Rect Undo/Redo
+        private VisualElement painterBrushCursor;
         private Image heightmapPainterImage;
         private Button btnBrushRaise, btnBrushLower, btnBrushSmooth, btnBrushFlatten, btnBrushNoise;
         private Button btnUndo, btnRedo;
@@ -257,12 +258,18 @@ namespace ProjectName.Terrain
             VisualElement root = uiDocument.rootVisualElement;
             if (root == null) return;
 
+            root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+
             // Roots & Layout Elements
             studioRoot = root.Q<VisualElement>("StudioRoot");
             studioMainGrid = root.Q<VisualElement>("StudioMainGrid");
             colLeft = root.Q<VisualElement>("ColLeft");
             colCenter = root.Q<VisualElement>("ColCenter");
             colRight = root.Q<VisualElement>("ColRight");
+            var scrollLeft = root.Q<ScrollView>("ScrollColLeft");
+            if (scrollLeft != null) scrollLeft.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            var scrollRight = root.Q<ScrollView>("ScrollColRight");
+            if (scrollRight != null) scrollRight.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             cardPosition = root.Q<VisualElement>("CardPosition");
             cardEnvironment = root.Q<VisualElement>("CardEnvironment");
 
@@ -287,6 +294,8 @@ namespace ProjectName.Terrain
 
             if (btnPlanetBadge != null)
             {
+                var lbl = btnPlanetBadge.Q<Label>("LblPlanetName");
+                if (lbl != null) btnPlanetBadge.text = "";
                 btnPlanetBadge.clicked += () =>
                 {
                     if (PlanetSelectionUI.Instance != null)
@@ -337,7 +346,11 @@ namespace ProjectName.Terrain
             if (btnPresetFractal != null) btnPresetFractal.clicked += () => SelectPreset(HeightmapPreset.ProceduralFractal);
 
             btnGenerateTerrain = root.Q<Button>("BtnGenerateTerrain");
-            if (btnGenerateTerrain != null) btnGenerateTerrain.clicked += OnGenerateTerrainClicked;
+            if (btnGenerateTerrain != null)
+            {
+                btnGenerateTerrain.text = "";
+                btnGenerateTerrain.clicked += OnGenerateTerrainClicked;
+            }
 
             // Deploy Rover
             btnRoverHusky = root.Q<Button>("BtnRoverHusky");
@@ -496,7 +509,20 @@ namespace ProjectName.Terrain
             if (btnImportPNG != null) btnImportPNG.clicked += OnImportPNGClicked;
             if (btnExportPNG != null) btnExportPNG.clicked += OnExportPNGClicked;
 
-            // 2D Canvas Painter
+            // 2D Canvas Painter & Dynamic Brush Cursor
+            painterBrushCursor = root.Q<VisualElement>("PainterBrushCursor");
+            if (heightmapPreviewImage != null)
+            {
+                heightmapPreviewImage.RegisterCallback<PointerDownEvent>(OnPainterPointerDown);
+                heightmapPreviewImage.RegisterCallback<PointerMoveEvent>(OnPainterPointerMove);
+                heightmapPreviewImage.RegisterCallback<PointerUpEvent>(OnPainterPointerUp);
+                heightmapPreviewImage.RegisterCallback<PointerLeaveEvent>(OnPainterPointerLeave);
+            }
+            if (minimapContainer != null)
+            {
+                minimapContainer.RegisterCallback<PointerLeaveEvent>(OnPainterPointerLeave);
+            }
+
             heightmapPainterImage = root.Q<Image>("HeightmapPainterImage");
             if (heightmapPainterImage != null)
             {
@@ -534,6 +560,16 @@ namespace ProjectName.Terrain
                 {
                     brushRadius = evt.newValue;
                     if (labelBrushRadiusVal != null) labelBrushRadiusVal.text = $"{(int)(brushRadius * 100f)}%";
+                    if (painterBrushCursor != null && painterBrushCursor.style.display == DisplayStyle.Flex)
+                    {
+                        var targetImg = heightmapPreviewImage ?? heightmapPainterImage;
+                        float canvasW = targetImg != null ? targetImg.resolvedStyle.width : 164f;
+                        if (canvasW <= 0f && minimapContainer != null) canvasW = minimapContainer.resolvedStyle.width;
+                        if (canvasW <= 0f) canvasW = 164f;
+                        float rPx = Mathf.Max(3f, brushRadius * canvasW);
+                        painterBrushCursor.style.width = rPx * 2f;
+                        painterBrushCursor.style.height = rPx * 2f;
+                    }
                 });
             }
 
@@ -618,6 +654,11 @@ namespace ProjectName.Terrain
             dropdownResolution = root.Q<DropdownField>("DropdownResolution");
             if (dropdownResolution != null)
             {
+                if (tuningConfig.resolution == 257) dropdownResolution.index = 0;
+                else if (tuningConfig.resolution == 1025) dropdownResolution.index = 2;
+                else if (tuningConfig.resolution == 2049) dropdownResolution.index = 3;
+                else dropdownResolution.index = 1;
+
                 dropdownResolution.RegisterValueChangedCallback(OnResolutionChanged);
             }
 
@@ -752,6 +793,7 @@ namespace ProjectName.Terrain
         public void SetDrivingHudMode(bool hudMode)
         {
             isDrivingHudMode = hudMode;
+            if (painterBrushCursor != null) painterBrushCursor.style.display = DisplayStyle.None;
 
             if (studioRoot == null && uiDocument != null && uiDocument.rootVisualElement != null)
             {
@@ -768,10 +810,14 @@ namespace ProjectName.Terrain
                 if (hudMode)
                 {
                     studioRoot.AddToClassList("hud-mode-root");
+                    studioRoot.AddToClassList("mode-driving");
+                    studioRoot.RemoveFromClassList("mode-studio");
                 }
                 else
                 {
                     studioRoot.RemoveFromClassList("hud-mode-root");
+                    studioRoot.RemoveFromClassList("mode-driving");
+                    studioRoot.AddToClassList("mode-studio");
                 }
             }
 
@@ -782,6 +828,8 @@ namespace ProjectName.Terrain
 
             SetBtnClass(btnModeDriving, "view-switch-active", hudMode);
             SetBtnClass(btnModeStudio, "view-switch-active", !hudMode);
+            SetBtnClass(btnModeDriving, "segmented-active", hudMode);
+            SetBtnClass(btnModeStudio, "segmented-active", !hudMode);
         }
 
         public void SetStudioMinimized(bool minimized)
@@ -893,6 +941,24 @@ namespace ProjectName.Terrain
                 header.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
+            var shellTop = studioRoot != null ? studioRoot.Q<VisualElement>("ShellTopRow") : null;
+            if (shellTop != null)
+            {
+                shellTop.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            var shellBottomLeft = studioRoot != null ? studioRoot.Q<VisualElement>("ShellBottomLeft") : null;
+            if (shellBottomLeft != null)
+            {
+                shellBottomLeft.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            var shellBottomRight = studioRoot != null ? studioRoot.Q<VisualElement>("ShellBottomRight") : null;
+            if (shellBottomRight != null)
+            {
+                shellBottomRight.style.display = active ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
             if (studioRoot != null)
             {
                 if (active)
@@ -919,6 +985,12 @@ namespace ProjectName.Terrain
 
         private void OnMinimapImageClicked(ClickEvent evt)
         {
+            // In Studio mode, minimap is used for painting, not rover relocation
+            if (!isDrivingHudMode && (RoverPlacementController.Instance == null || !RoverPlacementController.Instance.IsPlacementActive))
+            {
+                return;
+            }
+
             if (heightmapPreviewImage == null) return;
             Vector2 localPos = evt.localPosition;
             float w = heightmapPreviewImage.resolvedStyle.width;
@@ -1371,7 +1443,16 @@ namespace ProjectName.Terrain
             string pName = profile != null ? profile.planetName.ToUpper() : "MARS";
             if (btnPlanetBadge != null)
             {
-                btnPlanetBadge.text = pName;
+                var lbl = btnPlanetBadge.Q<Label>("LblPlanetName");
+                if (lbl != null)
+                {
+                    lbl.text = pName;
+                    btnPlanetBadge.text = "";
+                }
+                else
+                {
+                    btnPlanetBadge.text = pName;
+                }
             }
 
             if (valEnvTemp != null)
@@ -1556,6 +1637,11 @@ namespace ProjectName.Terrain
             SetBtnClass(btnModeExplore, "mode-pill-active", false);
             SetBtnClass(btnModePrecision, "mode-pill-active", false);
 
+            SetBtnClass(btnModeStop, "segmented-active", false);
+            SetBtnClass(btnModeCruise, "segmented-active", false);
+            SetBtnClass(btnModeExplore, "segmented-active", false);
+            SetBtnClass(btnModePrecision, "segmented-active", false);
+
             if (lblHelperHint != null) lblHelperHint.text = "[Deploy a Rover from the sidebar to drive]";
         }
 
@@ -1577,6 +1663,11 @@ namespace ProjectName.Terrain
                 SetBtnClass(btnModeCruise, "mode-pill-active", mode == RoverController_m2020.DriveMode.PointTurn);
                 SetBtnClass(btnModeExplore, "mode-pill-active", mode == RoverController_m2020.DriveMode.Crab);
                 SetBtnClass(btnModePrecision, "mode-pill-active", mode == RoverController_m2020.DriveMode.TankDrive);
+
+                SetBtnClass(btnModeStop, "segmented-active", mode == RoverController_m2020.DriveMode.Ackermann);
+                SetBtnClass(btnModeCruise, "segmented-active", mode == RoverController_m2020.DriveMode.PointTurn);
+                SetBtnClass(btnModeExplore, "segmented-active", mode == RoverController_m2020.DriveMode.Crab);
+                SetBtnClass(btnModePrecision, "segmented-active", mode == RoverController_m2020.DriveMode.TankDrive);
             }
             else
             {
@@ -1588,6 +1679,11 @@ namespace ProjectName.Terrain
                 SetBtnClass(btnModeCruise, "mode-pill-active", activeMode == "CRUISE");
                 SetBtnClass(btnModeExplore, "mode-pill-active", activeMode == "EXPLORE");
                 SetBtnClass(btnModePrecision, "mode-pill-active", activeMode == "PRECISION");
+
+                SetBtnClass(btnModeStop, "segmented-active", activeMode == "STOP");
+                SetBtnClass(btnModeCruise, "segmented-active", activeMode == "CRUISE");
+                SetBtnClass(btnModeExplore, "segmented-active", activeMode == "EXPLORE");
+                SetBtnClass(btnModePrecision, "segmented-active", activeMode == "PRECISION");
             }
         }
 
@@ -1631,11 +1727,17 @@ namespace ProjectName.Terrain
             SetBtnClass(btnCamRight, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
 
-            if (btnCamFront != null) btnCamFront.text = (currentCamPerspective == RoverCameraRig.Perspective.Front) ? "● FRONT" : "FRONT";
-            if (btnCamRear != null) btnCamRear.text = (currentCamPerspective == RoverCameraRig.Perspective.Rear) ? "● REAR" : "REAR";
-            if (btnCamLeft != null) btnCamLeft.text = (currentCamPerspective == RoverCameraRig.Perspective.Left) ? "● LEFT" : "LEFT";
-            if (btnCamRight != null) btnCamRight.text = (currentCamPerspective == RoverCameraRig.Perspective.Right) ? "● RIGHT" : "RIGHT";
-            if (btnCamTop != null) btnCamTop.text = (currentCamPerspective == RoverCameraRig.Perspective.Top) ? "● TOP" : "TOP";
+            SetBtnClass(btnCamFront, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Front);
+            SetBtnClass(btnCamRear, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Rear);
+            SetBtnClass(btnCamLeft, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
+            SetBtnClass(btnCamRight, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
+            SetBtnClass(btnCamTop, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
+
+            if (btnCamFront != null) btnCamFront.text = "Front";
+            if (btnCamRear != null) btnCamRear.text = "Rear";
+            if (btnCamLeft != null) btnCamLeft.text = "Left";
+            if (btnCamRight != null) btnCamRight.text = "Right";
+            if (btnCamTop != null) btnCamTop.text = "Free";
         }
 
         // -------------------------------------------------------------
@@ -1725,7 +1827,7 @@ namespace ProjectName.Terrain
 
         private void OnPainterPointerDown(PointerDownEvent evt)
         {
-            if (heightmapPainterImage == null || currentHeights == null) return;
+            if (isDrivingHudMode || currentHeights == null) return;
             isPainting = true;
             strokeTouchedCells.Clear();
             PaintAtPointerPosition(evt.localPosition);
@@ -1733,8 +1835,33 @@ namespace ProjectName.Terrain
 
         private void OnPainterPointerMove(PointerMoveEvent evt)
         {
+            if (isDrivingHudMode)
+            {
+                if (painterBrushCursor != null) painterBrushCursor.style.display = DisplayStyle.None;
+                return;
+            }
+
+            UpdateBrushCursor(evt.localPosition);
+
             if (!isPainting) return;
             PaintAtPointerPosition(evt.localPosition);
+        }
+
+        private void UpdateBrushCursor(Vector2 localPos)
+        {
+            if (painterBrushCursor == null) return;
+
+            var targetImg = heightmapPreviewImage ?? heightmapPainterImage;
+            float canvasW = targetImg != null ? targetImg.resolvedStyle.width : 164f;
+            if (canvasW <= 0f && minimapContainer != null) canvasW = minimapContainer.resolvedStyle.width;
+            if (canvasW <= 0f) canvasW = 164f;
+
+            float radiusPx = Mathf.Max(3f, brushRadius * canvasW);
+            painterBrushCursor.style.left = localPos.x - radiusPx;
+            painterBrushCursor.style.top = localPos.y - radiusPx;
+            painterBrushCursor.style.width = radiusPx * 2f;
+            painterBrushCursor.style.height = radiusPx * 2f;
+            painterBrushCursor.style.display = DisplayStyle.Flex;
         }
 
         private void OnPainterPointerUp(PointerUpEvent evt)
@@ -1744,16 +1871,28 @@ namespace ProjectName.Terrain
 
         private void OnPainterPointerLeave(PointerLeaveEvent evt)
         {
+            if (painterBrushCursor != null)
+            {
+                painterBrushCursor.style.display = DisplayStyle.None;
+            }
             EndStroke();
         }
 
         private void PaintAtPointerPosition(Vector2 localPos)
         {
-            if (heightmapPainterImage == null || currentHeights == null) return;
+            if (currentHeights == null) return;
 
-            float w = heightmapPainterImage.resolvedStyle.width;
-            float h = heightmapPainterImage.resolvedStyle.height;
-            if (w <= 0f || h <= 0f) return;
+            var targetImg = heightmapPreviewImage ?? heightmapPainterImage;
+            float w = targetImg != null ? targetImg.resolvedStyle.width : 0f;
+            float h = targetImg != null ? targetImg.resolvedStyle.height : 0f;
+
+            if ((w <= 0f || h <= 0f) && minimapContainer != null)
+            {
+                w = minimapContainer.resolvedStyle.width;
+                h = minimapContainer.resolvedStyle.height;
+            }
+            if (w <= 0f) w = 164f;
+            if (h <= 0f) h = 164f;
 
             float u = Mathf.Clamp01(localPos.x / w);
             float v = Mathf.Clamp01(1.0f - (localPos.y / h)); // Invert Y
@@ -2197,7 +2336,9 @@ namespace ProjectName.Terrain
             if (btnGenerateTerrain != null)
             {
                 btnGenerateTerrain.SetEnabled(false);
-                btnGenerateTerrain.text = "GENERATING TERRAIN... ⏳";
+                var btnLbl = btnGenerateTerrain.Q<Label>(className: "btn-text");
+                if (btnLbl != null) btnLbl.text = "Generating...";
+                else btnGenerateTerrain.text = "Generating...";
             }
 
             try
@@ -2260,7 +2401,9 @@ namespace ProjectName.Terrain
                 if (btnGenerateTerrain != null)
                 {
                     btnGenerateTerrain.SetEnabled(true);
-                    btnGenerateTerrain.text = "GENERATE NEW PLANETARY TERRAIN";
+                    var btnLbl = btnGenerateTerrain.Q<Label>(className: "btn-text");
+                    if (btnLbl != null) btnLbl.text = "Generate Terrain";
+                    else btnGenerateTerrain.text = "Generate Terrain";
                 }
             }
         }
@@ -2355,6 +2498,22 @@ namespace ProjectName.Terrain
         {
             if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
             if (flowController != null) flowController.CenterActiveRoverOnTerrain();
+        }
+
+        private void OnRootGeometryChanged(GeometryChangedEvent evt)
+        {
+            if (studioRoot == null) return;
+            bool isCompact = evt.newRect.height < 820f || evt.newRect.width < 1400f;
+            if (isCompact)
+            {
+                if (!studioRoot.ClassListContains("compact-view"))
+                    studioRoot.AddToClassList("compact-view");
+            }
+            else
+            {
+                if (studioRoot.ClassListContains("compact-view"))
+                    studioRoot.RemoveFromClassList("compact-view");
+            }
         }
 
         private void OnDisable()

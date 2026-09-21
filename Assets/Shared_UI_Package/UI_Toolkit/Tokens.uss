@@ -1,0 +1,85 @@
+:root {
+    /* -------------------------------------------------------------
+       Pure Black Technical Design System Tokens
+       ------------------------------------------------------------- */
+    /* Primary panel background: #0A0A0A / #111111 */
+    --surface: rgba(10, 10, 10, 0.95);
+    /* Secondary / nested surfaces: #141414 / #161616 */
+    --surface-2: #141414;
+    /* Tertiary / active item surfaces: #202020 */
+    --surface-3: #202020;
+    --scrim: rgba(0, 0, 0, 0.78);
+
+    /* Neutral borders without blue tint */
+    --border: #2A2A2A;
+    --border-hi: #3D3D3D;
+
+    /* Technical Accent Color: Pure Cyber Cyan/Teal (reserved for active states and actions) */
+    --accent: #00D4FF;
+    --accent-hover: #33DDFF;
+    --accent-glow: rgba(0, 212, 255, 0.20);
+    --accent-dim: rgba(0, 212, 255, 0.12);
+
+    /* Semantic Button Sets (Solid technical fills on black) */
+    --primary-bg: #1A1A1A;
+    --primary-border: #00D4FF;
+    --primary-text: #FFFFFF;
+
+    --secondary-bg: #141414;
+    --secondary-border: #2E2E2E;
+    --secondary-text: #E4E4E7;
+
+    --confirm-bg: #122416;
+    --confirm-border: #22C55E;
+    --confirm-text: #86EFAC;
+
+    --cancel-bg: #271414;
+    --cancel-border: #EF4444;
+    --cancel-text: #FCA5A5;
+
+    --danger-bg: #2C1013;
+    --danger-border: #EF4444;
+    --danger-text: #FCA5A5;
+
+    --disabled-bg: #111111;
+    --disabled-border: #222222;
+    --disabled-text: #52525B;
+
+    /* Status-Only Tones */
+    --good: #22C55E;
+    --fair: #F59E0B;
+    --poor: #EF4444;
+
+    /* Typography Color Hierarchy */
+    --text-1: #FFFFFF; /* Primary white numeric values, headers & titles */
+    --text-2: #A1A1AA; /* Secondary neutral text, labels, body */
+    --text-3: #71717A; /* Muted micro-labels, units */
+
+    /* -------------------------------------------------------------
+       Strict Rectangular Language Tokens (Max 8px/10px panels, 6px controls)
+       ------------------------------------------------------------- */
+    --r-panel: 8px;     /* Maximum corner radius for cards and panels */
+    --r-inner: 6px;     /* Inner containers, rows, inputs */
+    --r-btn: 6px;       /* All buttons, chips, tabs, selectors */
+    --r-pill: 6px;      /* Eliminated 999px pills; all controls are 6px rectangular */
+    --r-sm: 4px;        /* Tool buttons, slider tracks & thumbs, status tags */
+
+    /* Spacing & Sizing Tokens */
+    --screen-margin: 20px;
+    --panel-gap: 6px;
+    --panel-pad: 10px 12px;
+    --title-gap: 8px;
+    --row-gap: 6px;
+
+    --h-control: 38px;
+    --h-control-sm: 30px;
+    --h-tile: 30px;
+
+    --side-col-width: 316px;
+
+    /* -------------------------------------------------------------
+       Typography Fonts
+       ------------------------------------------------------------- */
+    --font-heading: url("/Assets/project/UI/fonts/Rajdhani-SemiBold.ttf");
+    --font-body: url("/Assets/project/UI/fonts/Inter.ttf");
+}

@@ -1,0 +1,1000 @@
+/* =========================================================================
+   Components.uss - Atomic Component Library (Pure Black Technical Theme)
+   Follows strict rectangular language: 8px panels, 6px buttons/controls, 4px small tools.
+   Zero pills or egg shapes. Clear button affordances with 1px borders & hover highlights.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   1. Panels & Cards
+   ------------------------------------------------------------------------- */
+.panel-card {
+    background-color: var(--surface);
+    border-radius: var(--r-panel);
+    padding: var(--panel-pad);
+    border-width: 1px;
+    border-color: var(--border);
+    border-top-color: var(--border-hi);
+    border-top-width: 1px;
+    width: var(--side-col-width);
+    flex-shrink: 0;
+    margin-bottom: var(--panel-gap);
+    transition: opacity 180ms ease-out, translate 180ms ease-out;
+}
+
+.panel-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--title-gap);
+    min-height: 22px;
+}
+
+.panel-title {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    color: var(--text-2);
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0;
+}
+
+.panel-actions-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+/* -------------------------------------------------------------------------
+   2. Metric Grid & Cells
+   ------------------------------------------------------------------------- */
+.metric-grid-2x2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.metric-cell {
+    width: 48%;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.metric-label {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 10px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.metric-value-row {
+    flex-direction: row;
+    align-items: baseline;
+}
+
+.metric-value {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    min-width: 48px;
+    -unity-text-align: middle-left;
+    margin: 0;
+    padding: 0;
+}
+
+.metric-unit {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    color: var(--text-3);
+    margin-left: 4px;
+    -unity-text-align: middle-left;
+}
+
+/* -------------------------------------------------------------------------
+   3. Buttons (Clear 1px Border Affordance, 6px Radius, Pure Black Styling)
+   ------------------------------------------------------------------------- */
+.btn {
+    height: var(--h-control-sm);
+    border-radius: var(--r-btn);
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 0 12px;
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--surface-2);
+    color: var(--text-1);
+    transition: background-color 100ms ease-out, border-color 100ms ease-out, color 100ms ease-out;
+}
+
+.btn > TextElement,
+.btn > .unity-text-element {
+    margin-left: 6px;
+    padding: 0;
+    align-self: center;
+    -unity-text-align: middle-center;
+}
+
+.btn-text {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    margin: 0;
+    margin-left: 6px;
+    padding: 0;
+}
+.btn-primary .btn-text { color: var(--primary-text); }
+.btn-secondary .btn-text { color: var(--secondary-text); }
+.btn-confirm .btn-text { color: var(--confirm-text); }
+.btn-cancel .btn-text { color: var(--cancel-text); }
+.btn-danger .btn-text { color: var(--danger-text); }
+.btn-disabled .btn-text { color: var(--disabled-text); }
+
+.btn-icon-leading {
+    width: 14px;
+    height: 14px;
+    margin-right: 0;
+    flex-shrink: 0;
+    align-self: center;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Primary Button: Solid dark fill with cyan border & white text */
+.btn-primary {
+    background-color: #1A1A1A;
+    border-color: var(--accent);
+    color: #FFFFFF;
+}
+.btn-primary:hover {
+    background-color: #262626;
+    border-color: var(--accent-hover);
+    color: #FFFFFF;
+}
+.btn-primary:active {
+    background-color: #112833;
+    border-color: var(--accent);
+}
+
+/* Secondary Button: Clean neutral dark fill with 1px border */
+.btn-secondary {
+    background-color: var(--secondary-bg);
+    border-color: var(--secondary-border);
+    color: var(--secondary-text);
+}
+.btn-secondary:hover {
+    background-color: #222222;
+    border-color: #4A4A4A;
+    color: #FFFFFF;
+}
+.btn-secondary:active {
+    background-color: #0E0E0E;
+    border-color: #555555;
+}
+
+/* Confirm Button: Technical dark green fill with clear green border */
+.btn-confirm {
+    background-color: var(--confirm-bg);
+    border-color: var(--confirm-border);
+    color: var(--confirm-text);
+}
+.btn-confirm:hover {
+    background-color: #1A3820;
+    border-color: #4ADE80;
+    color: #FFFFFF;
+}
+.btn-confirm:active {
+    background-color: #0E1A11;
+}
+
+/* Cancel Button */
+.btn-cancel {
+    background-color: var(--cancel-bg);
+    border-color: var(--cancel-border);
+    color: var(--cancel-text);
+}
+.btn-cancel:hover {
+    background-color: #381A1A;
+    border-color: #F87171;
+    color: #FFFFFF;
+}
+.btn-cancel:active {
+    background-color: #1A0E0E;
+}
+
+/* Danger Button */
+.btn-danger {
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+}
+.btn-danger:hover {
+    background-color: #3C1216;
+    border-color: #F87171;
+    color: #FFFFFF;
+}
+.btn-danger:active {
+    background-color: #1C090B;
+}
+
+/* Disabled Button */
+.btn-disabled, .btn:disabled {
+    background-color: var(--disabled-bg);
+    border-color: var(--disabled-border);
+    color: var(--disabled-text);
+    opacity: 0.6;
+}
+
+/* Rectangular Tool & Icon Buttons (Replaces former circular buttons) */
+.btn-icon-circle,
+.btn-icon-tool {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--r-btn);
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+}
+.btn-icon-circle:hover,
+.btn-icon-tool:hover {
+    background-color: #222222;
+    border-color: #444444;
+}
+.btn-icon-circle:active,
+.btn-icon-tool:active {
+    background-color: #12242E;
+    border-color: var(--accent);
+}
+
+.btn-icon-circle-sm,
+.btn-icon-tool-sm {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--r-sm);
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+}
+.btn-icon-circle-sm:hover,
+.btn-icon-tool-sm:hover {
+    background-color: #222222;
+    border-color: #444444;
+}
+.btn-icon-circle-sm:active,
+.btn-icon-tool-sm:active {
+    background-color: #12242E;
+    border-color: var(--accent);
+}
+
+/* Focus Ring */
+.btn:focus, .btn-icon-circle:focus, .btn-icon-circle-sm:focus {
+    border-color: var(--accent);
+    border-width: 1px;
+}
+
+/* -------------------------------------------------------------------------
+   4. Rectangular Segmented Control with Internal Dividers
+   ------------------------------------------------------------------------- */
+.segmented-bar {
+    background-color: var(--surface-2);
+    border-radius: var(--r-btn);
+    border-width: 1px;
+    border-color: var(--border);
+    flex-direction: row;
+    align-items: stretch;
+    padding: 2px;
+    flex-shrink: 0;
+}
+
+.segmented-item {
+    flex-grow: 1;
+    height: 100%;
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: transparent;
+    background-color: transparent;
+    color: var(--text-2);
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 11px;
+    -unity-font-style: normal;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    margin: 0;
+    transition: background-color 100ms ease-out, border-color 100ms ease-out, color 100ms ease-out;
+}
+.segmented-item:hover {
+    background-color: #222222;
+    border-color: #383838;
+    color: var(--text-1);
+}
+.segmented-item-active,
+.segmented-item.segmented-active,
+.segmented-item.view-switch-active,
+.segmented-item.mode-pill-active {
+    background-color: #16242B;
+    border-color: var(--accent);
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+.segmented-item-active .segmented-text,
+.segmented-item.segmented-active .segmented-text {
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+/* -------------------------------------------------------------------------
+   5. Technical Rectangular Toggle Switch
+   ------------------------------------------------------------------------- */
+.toggle-switch-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+}
+
+.toggle-switch-label {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    color: var(--text-2);
+}
+
+.unity-toggle.toggle-switch {
+    margin: 0;
+    padding: 0;
+}
+.unity-toggle.toggle-switch > .unity-toggle__label {
+    display: none;
+}
+.unity-toggle.toggle-switch > .unity-toggle__input {
+    width: 32px;
+    height: 18px;
+    background-color: var(--surface-2);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: var(--border);
+    margin: 0;
+    padding: 1px;
+    justify-content: center;
+}
+.unity-toggle.toggle-switch:hover > .unity-toggle__input {
+    border-color: #444444;
+}
+.unity-toggle.toggle-switch:checked > .unity-toggle__input {
+    background-color: #12242E;
+    border-color: var(--accent);
+}
+.unity-toggle.toggle-switch .unity-toggle__checkmark {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background-color: #555555;
+    border-width: 0;
+    background-image: none;
+    align-self: flex-start;
+    transition: translate 120ms ease-out, background-color 120ms ease-out;
+}
+.unity-toggle.toggle-switch:checked .unity-toggle__checkmark {
+    align-self: flex-end;
+    background-color: var(--accent);
+}
+
+/* Custom Technical Toggle */
+.custom-toggle {
+    margin: 0;
+    padding: 0;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.custom-toggle > .unity-toggle__label,
+.custom-toggle > .unity-base-field__label {
+    min-width: 0;
+    flex-grow: 0;
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    margin: 0 6px 0 0;
+    padding: 0;
+}
+
+.custom-toggle > .unity-toggle__input,
+.custom-toggle > .unity-base-field__input {
+    width: 28px;
+    height: 16px;
+    background-color: var(--surface-2);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: var(--border);
+    margin: 0;
+    padding: 1px;
+    justify-content: center;
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+.custom-toggle:hover > .unity-toggle__input {
+    border-color: #444444;
+}
+
+.custom-toggle .unity-toggle__checkmark {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    background-color: var(--text-3);
+    background-image: none;
+    border-width: 0;
+    margin: 0;
+    translate: 0 0;
+    transition: translate 120ms ease-out, background-color 120ms ease-out;
+}
+
+.custom-toggle:checked > .unity-toggle__input,
+.custom-toggle:checked > .unity-base-field__input {
+    background-color: #12242E;
+    border-color: var(--accent);
+}
+
+.custom-toggle:checked .unity-toggle__checkmark {
+    background-color: var(--accent);
+    translate: 12px 0;
+}
+
+/* -------------------------------------------------------------------------
+   6. Custom Sliders (Rectangular Track & Thumb)
+   ------------------------------------------------------------------------- */
+.slider-group {
+    flex-direction: column;
+    height: 36px;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.slider-label-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.slider-title {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: var(--text-2);
+    text-transform: uppercase;
+}
+
+.slider-readout {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    min-width: 40px;
+    -unity-text-align: middle-right;
+}
+
+.unity-slider.custom-slider {
+    margin: 0;
+    padding: 0;
+    height: 16px;
+}
+.unity-slider.custom-slider > .unity-slider__label {
+    display: none;
+}
+.unity-slider.custom-slider .unity-slider__drag-container {
+    height: 16px;
+    justify-content: center;
+}
+.unity-slider.custom-slider .unity-slider__tracker {
+    height: 4px;
+    background-color: var(--surface-3);
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: #222222;
+    margin-top: 0;
+    top: 6px;
+}
+/* Rectangular slider thumb with 3px radius */
+.unity-slider.custom-slider .unity-slider__dragger {
+    width: 10px;
+    height: 14px;
+    border-radius: 3px;
+    background-color: var(--accent);
+    border-width: 1px;
+    border-color: #050505;
+    margin-top: -5px;
+    transition: background-color 80ms ease-out, scale 80ms ease-out;
+}
+.unity-slider.custom-slider .unity-slider__dragger:hover {
+    background-color: var(--accent-hover);
+    scale: 1.1;
+}
+
+/* -------------------------------------------------------------------------
+   7. Rectangular DropdownField
+   ------------------------------------------------------------------------- */
+.custom-dropdown {
+    margin: 0;
+    padding: 0;
+    height: var(--h-control-sm);
+}
+.custom-dropdown > .unity-base-field__label {
+    display: none;
+}
+.custom-dropdown .unity-base-popup-field__input {
+    height: var(--h-control-sm);
+    background-color: var(--surface-2);
+    border-radius: var(--r-btn);
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 0 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 100ms ease-out, background-color 100ms ease-out;
+}
+.custom-dropdown:hover .unity-base-popup-field__input {
+    border-color: #444444;
+    background-color: #1A1A1A;
+}
+.custom-dropdown:focus .unity-base-popup-field__input {
+    border-color: var(--accent);
+}
+.custom-dropdown .unity-base-popup-field__text,
+.custom-dropdown .unity-dropdown-field__text,
+.custom-dropdown TextElement {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    color: var(--text-1);
+    -unity-font-style: normal;
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+    padding: 0;
+    margin: 0;
+}
+.custom-dropdown .unity-base-popup-field__arrow {
+    width: 12px;
+    height: 12px;
+    -unity-background-image-tint-color: var(--text-2);
+    align-self: center;
+}
+
+/* -------------------------------------------------------------------------
+   8. Text & Integer Inputs
+   ------------------------------------------------------------------------- */
+.custom-input,
+.text-input {
+    margin: 0;
+    padding: 0;
+    height: var(--h-control-sm);
+}
+.custom-input > .unity-base-field__label,
+.text-input > .unity-base-field__label {
+    display: none;
+}
+.custom-input .unity-base-text-field__input,
+.text-input .unity-base-text-field__input,
+.text-input .unity-integer-field__input {
+    background-color: var(--surface-2);
+    border-radius: var(--r-btn);
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 4px 8px;
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    color: var(--text-1);
+    -unity-text-align: middle-left;
+    transition: border-color 100ms ease-out;
+}
+.custom-input:hover .unity-base-text-field__input,
+.text-input:hover .unity-base-text-field__input {
+    border-color: #444444;
+}
+.custom-input:focus .unity-base-text-field__input,
+.text-input:focus .unity-base-text-field__input {
+    border-color: var(--accent);
+}
+
+/* -------------------------------------------------------------------------
+   9. List Rows (Rover Selection, Deployment)
+   ------------------------------------------------------------------------- */
+.list-row,
+.rover-row {
+    height: 32px;
+    border-radius: var(--r-btn);
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    flex-direction: row;
+    align-items: center;
+    padding: 0 8px;
+    margin-bottom: 4px;
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+}
+.list-row:hover,
+.rover-row:hover {
+    background-color: #1F1F1F;
+    border-color: #444444;
+}
+.list-row-active,
+.rover-row-active {
+    background-color: #16242B;
+    border-color: var(--accent);
+}
+
+.list-row-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    -unity-background-image-tint-color: var(--accent);
+}
+
+.list-row-title,
+.rover-row-title {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.status-badge {
+    border-radius: var(--r-sm);
+    padding: 2px 6px;
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: var(--text-3);
+    background-color: var(--surface-3);
+    border-width: 1px;
+    border-color: var(--border);
+}
+.status-badge-active,
+.rover-active-tag {
+    color: var(--good);
+    border-color: var(--good);
+    background-color: rgba(34, 197, 94, 0.15);
+}
+
+/* -------------------------------------------------------------------------
+   10. Wheel Tiles (Actuators)
+   ------------------------------------------------------------------------- */
+.wheel-tile {
+    height: var(--h-tile);
+    background-color: var(--surface-2);
+    border-radius: var(--r-btn);
+    border-width: 1px;
+    border-color: var(--border);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    width: 48%;
+    margin-bottom: 4px;
+}
+
+.wheel-tile-label {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--text-2);
+}
+
+.wheel-dash-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+}
+
+.wheel-dash-segment {
+    width: 5px;
+    height: 10px;
+    border-radius: 1px;
+    background-color: var(--good);
+}
+
+.wheel-status-text {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 10px;
+    color: var(--text-3);
+    margin-left: 4px;
+}
+
+/* -------------------------------------------------------------------------
+   11. Chips, Keys, Tooltips & Swatches (All Rectangular 6px)
+   ------------------------------------------------------------------------- */
+.key-cap {
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--surface-2);
+    padding: 2px 6px;
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: var(--text-2);
+    margin: 0 2px;
+}
+
+.corner-chip {
+    border-radius: var(--r-sm);
+    background-color: rgba(14, 14, 14, 0.90);
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 2px 6px;
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 9px;
+    color: var(--text-2);
+}
+
+.color-swatch-circle {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Material Chips - 6px Rectangular with 1px Border */
+.material-chip,
+.material-chip-btn {
+    height: 28px;
+    border-radius: var(--r-btn);
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    flex-direction: row;
+    align-items: center;
+    padding: 0 8px;
+    margin-bottom: 4px;
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+}
+.material-chip:hover,
+.material-chip-btn:hover {
+    background-color: #202020;
+    border-color: #444444;
+}
+.material-chip-active,
+.material-chip-btn.material-btn-active {
+    background-color: #16242B;
+    border-color: var(--accent);
+}
+.material-chip-label {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: var(--text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.material-chip-active .material-chip-label,
+.material-chip-btn.material-btn-active .material-chip-label {
+    color: var(--text-1);
+}
+
+/* -------------------------------------------------------------------------
+   12. Placement Banner (Rectangular 8px, Pure Black)
+   ------------------------------------------------------------------------- */
+.placement-banner-pill,
+.placement-banner {
+    position: absolute;
+    top: var(--screen-margin);
+    align-self: center;
+    height: 42px;
+    border-radius: var(--r-panel);
+    background-color: #0E0E0E;
+    border-width: 1px;
+    border-color: var(--accent);
+    padding: 0 14px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 180ms ease-out, translate 180ms ease-out;
+}
+
+.banner-left-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.banner-title,
+.placement-banner-text {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+}
+
+.banner-subtitle {
+    font-family: var(--font-body);
+    -unity-font: var(--font-body);
+    -unity-font-definition: var(--font-body);
+    font-size: 11px;
+    color: var(--text-3);
+    flex-direction: row;
+    align-items: center;
+}
+
+/* -------------------------------------------------------------------------
+   13. Planet Selection Modal & Scrim (Rectangular 8px)
+   ------------------------------------------------------------------------- */
+.modal-scrim-backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--scrim);
+    align-items: center;
+    justify-content: center;
+    transition: opacity 180ms ease-out;
+}
+
+.modal-card {
+    width: 640px;
+    max-height: 70%;
+    background-color: var(--surface);
+    border-radius: var(--r-panel);
+    border-width: 1px;
+    border-color: var(--border);
+    border-top-color: var(--border-hi);
+    padding: 14px;
+    flex-direction: column;
+}
+
+.modal-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border);
+}
+
+.modal-title {
+    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    letter-spacing: 1.5px;
+}
+
+.modal-body {
+    flex-direction: row;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.modal-left-rail {
+    width: 200px;
+    border-right-width: 1px;
+    border-right-color: var(--border);
+    padding-right: 10px;
+    flex-direction: column;
+}
+
+.modal-right-pane {
+    flex-grow: 1;
+    padding-left: 14px;
+    flex-direction: column;
+}
+
+.modal-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top-width: 1px;
+    border-top-color: var(--border);
+}
+
+/* -------------------------------------------------------------------------
+   14. Phosphor Vector Icons & Tints
+   ------------------------------------------------------------------------- */
+.icon-12 { width: 12px; height: 12px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon-14 { width: 14px; height: 14px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon-16 { width: 16px; height: 16px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.icon-20 { width: 20px; height: 20px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+
+.icon-arrow-down { background-image: url("/Assets/project/UI/icons/ph_arrow_down.svg"); }
+.icon-arrow-up { background-image: url("/Assets/project/UI/icons/ph_arrow_up.svg"); }
+.icon-undo { background-image: url("/Assets/project/UI/icons/ph_arrow_u_up_left.svg"); }
+.icon-redo { background-image: url("/Assets/project/UI/icons/ph_arrow_u_up_right.svg"); }
+.icon-refresh { background-image: url("/Assets/project/UI/icons/ph_arrows_clockwise.svg"); }
+.icon-restore { background-image: url("/Assets/project/UI/icons/ph_arrows_out_simple.svg"); }
+.icon-caret-down { background-image: url("/Assets/project/UI/icons/ph_caret_down.svg"); }
+.icon-check { background-image: url("/Assets/project/UI/icons/ph_check.svg"); }
+.icon-crosshair { background-image: url("/Assets/project/UI/icons/ph_crosshair.svg"); }
+.icon-cursor-click { background-image: url("/Assets/project/UI/icons/ph_cursor_click.svg"); }
+.icon-download { background-image: url("/Assets/project/UI/icons/ph_download_simple.svg"); }
+.icon-equals { background-image: url("/Assets/project/UI/icons/ph_equals.svg"); }
+.icon-gauge { background-image: url("/Assets/project/UI/icons/ph_gauge.svg"); }
+.icon-minus { background-image: url("/Assets/project/UI/icons/ph_minus.svg"); }
+.icon-mountains { background-image: url("/Assets/project/UI/icons/ph_mountains.svg"); }
+.icon-planet { background-image: url("/Assets/project/UI/icons/ph_planet.svg"); }
+.icon-robot { background-image: url("/Assets/project/UI/icons/ph_robot.svg"); }
+.icon-shuffle { background-image: url("/Assets/project/UI/icons/ph_shuffle.svg"); }
+.icon-steering-wheel { background-image: url("/Assets/project/UI/icons/ph_steering_wheel.svg"); }
+.icon-upload { background-image: url("/Assets/project/UI/icons/ph_upload_simple.svg"); }
+.icon-video-camera { background-image: url("/Assets/project/UI/icons/ph_video_camera.svg"); }
+.icon-waveform { background-image: url("/Assets/project/UI/icons/ph_waveform.svg"); }
+.icon-waves { background-image: url("/Assets/project/UI/icons/ph_waves.svg"); }
+.icon-x { background-image: url("/Assets/project/UI/icons/ph_x.svg"); }
+
+.tint-text-1 { -unity-background-image-tint-color: var(--text-1); }
+.tint-text-2 { -unity-background-image-tint-color: var(--text-2); }
+.tint-text-3 { -unity-background-image-tint-color: var(--text-3); }
+.tint-accent { -unity-background-image-tint-color: var(--accent); }
+.tint-good { -unity-background-image-tint-color: var(--good); }
+.tint-fair { -unity-background-image-tint-color: var(--fair); }
+.tint-poor { -unity-background-image-tint-color: var(--poor); }

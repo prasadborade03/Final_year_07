@@ -38,14 +38,23 @@ namespace ProjectName.UI
         public PlanetaryProfile selectedProfile;
         public List<PlanetaryProfile> availableProfiles = new List<PlanetaryProfile>();
 
-        public static PlanetSelectionUI Instance { get; private set; }
+        private static PlanetSelectionUI _instance;
+        public static PlanetSelectionUI Instance
+        {
+            get
+            {
+                if (_instance == null) _instance = UnityEngine.Object.FindAnyObjectByType<PlanetSelectionUI>();
+                return _instance;
+            }
+            private set => _instance = value;
+        }
 
         private bool isOpen = false;
         private readonly StringBuilder sb = new StringBuilder(1024);
 
         private void Awake()
         {
-            if (Instance == null) Instance = this;
+            if (_instance == null) _instance = this;
         }
 
         private void Start()
