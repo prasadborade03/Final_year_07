@@ -144,7 +144,7 @@
 }
 
 .planet-name-text {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 12px;
@@ -222,7 +222,7 @@
 }
 
 .pill-label {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 10px;
@@ -377,7 +377,7 @@
 }
 
 .rover-row-title {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -390,7 +390,7 @@
 .status-badge {
     border-radius: var(--r-sm);
     padding: 1px 6px;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -411,7 +411,7 @@
    5. Mode A: Driving HUD Cards Specific Styles
    ------------------------------------------------------------------------- */
 .stat-coords-val {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -456,7 +456,7 @@
 }
 
 .wheel-name {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -465,7 +465,7 @@
 }
 
 .wheel-status {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -572,7 +572,7 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 1px 5px;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 8px;
@@ -587,7 +587,7 @@
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -687,7 +687,7 @@
 }
 
 .history-tag {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -737,7 +737,7 @@
 }
 
 .slider-label {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -752,7 +752,7 @@
 }
 
 .slider-val-label {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 10px;
@@ -789,7 +789,7 @@
 }
 
 .material-chip-label {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -839,7 +839,7 @@
 }
 
 .placement-banner-text {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;

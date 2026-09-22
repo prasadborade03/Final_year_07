@@ -108,9 +108,55 @@ namespace ProjectName.UI
 
             if (isOpen)
             {
+                EnsureVRCanvasPosition();
                 LoadProfiles();
                 PopulatePlanetList();
                 RefreshDiffInspector();
+            }
+        }
+
+        private void EnsureVRCanvasPosition()
+        {
+            if (modalRoot == null) return;
+            Canvas canvas = modalRoot.GetComponentInParent<Canvas>();
+            if (canvas == null) return;
+
+            EnsureVRCanvasSetup(canvas);
+
+            if (canvas.renderMode == RenderMode.WorldSpace)
+            {
+                Camera cam = Camera.main ?? FindAnyObjectByType<Camera>();
+                if (cam != null)
+                {
+                    Vector3 forward = cam.transform.forward;
+                    forward.y = 0f;
+                    if (forward.sqrMagnitude < 0.001f) forward = cam.transform.up;
+                    forward.Normalize();
+
+                    canvas.transform.position = cam.transform.position + forward * 1.5f + Vector3.up * 0.05f;
+                    canvas.transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+                }
+            }
+        }
+
+        private void EnsureVRCanvasSetup(Canvas canvas)
+        {
+            if (canvas == null) return;
+
+            bool isVR = UnityEngine.XR.XRSettings.isDeviceActive || (Camera.main != null && Camera.main.stereoTargetEye != StereoTargetEyeMask.None);
+
+            if (isVR)
+            {
+                canvas.renderMode = RenderMode.WorldSpace;
+                canvas.worldCamera = Camera.main;
+                canvas.transform.localScale = Vector3.one * 0.001f;
+
+                var raycasterType = Type.GetType("UnityEngine.XR.Interaction.Toolkit.UI.TrackedDeviceGraphicRaycaster, Unity.XR.Interaction.Toolkit")
+                                 ?? Type.GetType("UnityEngine.XR.Interaction.Toolkit.UI.TrackedDeviceGraphicRaycaster");
+                if (raycasterType != null && canvas.GetComponent(raycasterType) == null)
+                {
+                    canvas.gameObject.AddComponent(raycasterType);
+                }
             }
         }
 
@@ -316,6 +362,8 @@ namespace ProjectName.UI
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080);
             }
+
+            EnsureVRCanvasSetup(canvas);
 
             // Modal Root Container
             modalRoot = new GameObject("PlanetSelectionModal", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));

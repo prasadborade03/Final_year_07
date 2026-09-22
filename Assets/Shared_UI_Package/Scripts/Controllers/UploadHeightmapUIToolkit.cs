@@ -201,6 +201,11 @@ namespace ProjectName.Terrain
             if (terrainGenerator == null) terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
             if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
 
+            if (GetComponent<VRUIPositioner>() == null)
+            {
+                gameObject.AddComponent<VRUIPositioner>();
+            }
+
             currentHeights = HeightmapLoader.GeneratePresetHeights(
                 HeightmapPreset.GaleCrater,
                 tuningConfig.resolution,

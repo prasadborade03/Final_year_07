@@ -30,7 +30,7 @@
 }
 
 .panel-title {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -65,7 +65,7 @@
 }
 
 .metric-label {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 10px;
@@ -82,7 +82,7 @@
 }
 
 .metric-value {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 20px;
@@ -95,7 +95,7 @@
 }
 
 .metric-unit {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -113,7 +113,7 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 0 12px;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -136,7 +136,7 @@
 }
 
 .btn-text {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -324,7 +324,7 @@
     border-color: transparent;
     background-color: transparent;
     color: var(--text-2);
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -366,7 +366,7 @@
 }
 
 .toggle-switch-label {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -427,7 +427,7 @@
 .custom-toggle > .unity-base-field__label {
     min-width: 0;
     flex-grow: 0;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -495,7 +495,7 @@
 }
 
 .slider-title {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 10px;
@@ -505,7 +505,7 @@
 }
 
 .slider-readout {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -585,7 +585,7 @@
 .custom-dropdown .unity-base-popup-field__text,
 .custom-dropdown .unity-dropdown-field__text,
 .custom-dropdown TextElement {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -624,7 +624,7 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 4px 8px;
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -677,7 +677,7 @@
 
 .list-row-title,
 .rover-row-title {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -691,7 +691,7 @@
 .status-badge {
     border-radius: var(--r-sm);
     padding: 2px 6px;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -726,7 +726,7 @@
 }
 
 .wheel-tile-label {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 11px;
@@ -748,7 +748,7 @@
 }
 
 .wheel-status-text {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 10px;
@@ -765,7 +765,7 @@
     border-color: var(--border);
     background-color: var(--surface-2);
     padding: 2px 6px;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 10px;
@@ -780,7 +780,7 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 2px 6px;
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 9px;
@@ -821,7 +821,7 @@
     border-color: var(--accent);
 }
 .material-chip-label {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 10px;
@@ -863,7 +863,7 @@
 
 .banner-title,
 .placement-banner-text {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 12px;
@@ -872,7 +872,7 @@
 }
 
 .banner-subtitle {
-    font-family: var(--font-body);
+    -unity-font: var(--font-body);
     -unity-font: var(--font-body);
     -unity-font-definition: var(--font-body);
     font-size: 11px;
@@ -919,7 +919,7 @@
 }
 
 .modal-title {
-    font-family: var(--font-heading);
+    -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
     -unity-font-definition: var(--font-heading);
     font-size: 13px;

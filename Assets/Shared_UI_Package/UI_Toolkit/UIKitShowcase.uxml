@@ -17,8 +17,8 @@
 
             <!-- Center Showcase Title -->
             <ui:VisualElement style="align-items: center;">
-                <ui:Label text="VR ROVER DIGITAL TWIN STUDIO · UI-KIT" style="font-family: var(--font-heading); font-size: 16px; -unity-font-style: bold; letter-spacing: 5px; color: var(--accent);" />
-                <ui:Label text="Design System Tokens · Components · Icons · Fonts" style="font-family: var(--font-body); font-size: 11px; color: var(--text-3);" />
+                <ui:Label text="VR ROVER DIGITAL TWIN STUDIO · UI-KIT" style="-unity-font: var(--font-heading); font-size: 16px; -unity-font-style: bold; letter-spacing: 5px; color: var(--accent);" />
+                <ui:Label text="Design System Tokens · Components · Icons · Fonts" style="-unity-font: var(--font-body); font-size: 11px; color: var(--text-3);" />
             </ui:VisualElement>
 
             <!-- Top Right Pills: Planet (163x40) and Minimize (73x40) -->
@@ -355,7 +355,7 @@
                     <ui:VisualElement style="height: 44px; border-radius: var(--r-pill); background-color: var(--surface); border-width: 1px; border-color: var(--accent); padding: 0 14px; flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                         <ui:VisualElement style="flex-direction: row; align-items: center; gap: 8px;">
                             <ui:VisualElement style="width: 16px; height: 16px; background-image: url('/Assets/project/UI/icons/ph_cursor_click.svg'); -unity-background-image-tint-color: var(--accent);" />
-                            <ui:Label text="Click terrain to place Husky" style="font-family: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-1);" />
+                            <ui:Label text="Click terrain to place Husky" style="-unity-font: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-1);" />
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; gap: 6px;">
                             <ui:Button text="Centre spawn" class="btn btn-secondary" style="height: 28px; padding: 0 8px; font-size: 11px;">
@@ -387,7 +387,7 @@
             <ui:VisualElement style="flex-direction: column; align-items: flex-start; gap: 4px;">
                 <ui:VisualElement class="corner-chip" style="flex-direction: row; align-items: center; gap: 6px; padding: 4px 12px;">
                     <ui:VisualElement style="width: 14px; height: 14px; background-image: url('/Assets/project/UI/icons/ph_video_camera.svg'); -unity-background-image-tint-color: var(--text-2);" />
-                    <ui:Label text="Camera" style="font-family: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-2);" />
+                    <ui:Label text="Camera" style="-unity-font: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-2);" />
                 </ui:VisualElement>
                 <ui:VisualElement class="segmented-bar" style="width: 278px; height: 40px;">
                     <ui:Button text="Free" class="segmented-item" />
@@ -402,7 +402,7 @@
             <ui:VisualElement style="flex-direction: column; align-items: flex-end; gap: 4px;">
                 <ui:VisualElement class="corner-chip" style="flex-direction: row; align-items: center; gap: 6px; padding: 4px 12px;">
                     <ui:VisualElement style="width: 14px; height: 14px; background-image: url('/Assets/project/UI/icons/ph_gauge.svg'); -unity-background-image-tint-color: var(--text-2);" />
-                    <ui:Label text="Driving mode" style="font-family: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-2);" />
+                    <ui:Label text="Driving mode" style="-unity-font: var(--font-heading); font-size: 12px; -unity-font-style: bold; color: var(--text-2);" />
                 </ui:VisualElement>
                 <ui:VisualElement class="segmented-bar" style="width: 278px; height: 40px;">
                     <ui:Button text="Stop" class="segmented-item" />
