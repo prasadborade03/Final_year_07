@@ -35,8 +35,8 @@ namespace ProjectName.UI
         }
 
         [Header("Iron Man HUD Configuration")]
-        [Tooltip("Sticky mode: HeadLocked = Always in view like Iron Man helmet visor.")]
-        public StickyMode stickyMode = StickyMode.HeadLocked;
+        [Tooltip("Sticky mode: WorldAnchor = Stationary in world space (non-sticky).")]
+        public StickyMode stickyMode = StickyMode.WorldAnchor;
 
         [Tooltip("Forward distance in meters from camera to UI panel. Sweet spot for Quest 2: 1.15m.")]
         public float forwardDistance = 1.15f;

@@ -145,6 +145,13 @@ namespace ProjectName.Terrain
             }
             tCollider.terrainData = terrainData;
 
+            // Ensure TeleportationArea is present for VR grounded locomotion (§5)
+            var teleArea = terrainObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
+            if (teleArea == null)
+            {
+                terrainObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
+            }
+
             // Apply planetary surface material (PBR layers or shader template)
             if (materialManager != null)
             {

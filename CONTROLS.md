@@ -40,17 +40,17 @@
 
 ---
 
-### 🥽 Virtual Reality (Meta Quest 2 / XR) Controls
+### 🥽 Virtual Reality (Meta Quest 2 / XR) Controls (`VR_Module.unity`)
 
-| Controller Action | Hand | Functionality |
-|---|---|---|
-| **Laser Pointer Ray** | Left & Right Hand | Point at UI panels, buttons, sliders, or 3D terrain. Turns vibrant cyan on valid hover. |
-| **Index Trigger (Click)** | Right / Left Hand | **Click UI elements**, push on-screen buttons, and **click terrain to deploy/place rover**. |
-| **Grip Button (Hold)** | Right / Left Hand | Grabs physical interactive objects in scene (via `XRGrabInteractable`); flexes hand model. |
-| **Secondary Button (<kbd>B</kbd> / <kbd>Y</kbd>)** | Right (<kbd>B</kbd>) or Left (<kbd>Y</kbd>) | **Toggle Iron Man Sticky VR HUD** on or off smoothly with fade animation. |
-| **Thumbstick (Tilt)** | Left Hand | **Locomotion / Teleportation**: Push forward to display teleport arc, release to blink. |
-| **Thumbstick (Snap Turn)** | Right Hand | **Snap Turn**: Quick rotation increments in VR space. |
-| **Index Trigger (Analog squeeze)** | Left & Right Hand | Drives skeletal finger animations (pinch / squeeze). |
+| Controller Action | Hand | Functionality | Current Status |
+|---|---|---|---|
+| **Near-Far Curved Ray** | Left & Right Hand | Curved bezier pointer with line visual for pointing at UI Toolkit elements and 3D terrain. | **Active** (XRI 3.5.1 Near-Far Interactor) |
+| **Index Trigger (Click / Select)** | Right & Left Hand | **Click UI buttons**, manipulate sliders/toggles, and interact with the world. | **Active** (`XRI Left/Right Interaction/Select`) |
+| **Secondary Button (<kbd>B</kbd>)** | Right Controller | **Toggle Studio UI**: Hides UI (`SetActive(false)`) or recalls it directly in front of current gaze ($1.35$m forward, stationary world-anchored). | **Active** (`FloatingUIRecallController`) |
+| **Keyboard Fallbacks (<kbd>B</kbd> / <kbd>U</kbd>)** | Desktop / Simulator | Triggers the same B-button Studio UI toggle/recall during editor testing. | **Active** |
+| **Head Tracking (6DOF)** | Headset (HMD) | Natural 1:1 head rotation and position in Floor tracking space (zero stickiness, no camera fighting). | **Active** (`TrackedPoseDriver: Head`) |
+| **Controller Pose Tracking** | Left & Right Hand | Ergonomic resting pose in front of user (`±0.25m` X, `1.10m` Y, `0.35m` Z). Tracks 1:1 with real hands. | **Active** (`TrackedPoseDriver: Left/Right`) |
+| **Locomotion (Teleport / Snap Turn / Free-Fly)** | Left & Right Sticks | Intentionally stripped/disabled for this baseline scene to guarantee clean tracking and no input conflict. | *Deferred for future step-by-step addition* |
 
 ---
 
@@ -272,62 +272,98 @@ The camera system automatically synchronizes in `LateUpdate` after ArticulationB
 
 ---
 
-## 4. Virtual Reality (VR) Controls Reference
+## 4. Virtual Reality (VR) Controls Reference (`VR_Module.unity`)
 
-The simulation includes first-class Meta Quest 2 and OpenXR integration with dual straight laser pointers, physical hand models, and world-space UI interaction.
+The `VR_Module.unity` scene features an official **Unity XR Interaction Toolkit 3.5.1 + URP** architecture, matching the official Unity VR Template standards. All previous experimental locomotion, sticky head-locked visors, and conflicting camera scripts have been cleanly stripped out, providing a rock-solid, tracking-verified baseline.
 
-### 🕹️ Meta Quest 2 Touch Controller Mapping
+---
 
+### 🕹️ Meta Quest Touch Controller Physical Layout & Mappings
+
+```text
+               LEFT CONTROLLER                                 RIGHT CONTROLLER
+             ┌─────────────────┐                             ┌─────────────────┐
+             │  (Y) Reserved   │                             │  [B] STUDIO UI  │
+             │                 │                             │      TOGGLE     │
+             │  (X) Reserved   │                             │                 │
+             │                 │                             │  (A) Reserved   │
+             │  (L Thumbstick) │                             │                 │
+             │   [Clean/Free]  │                             │  (R Thumbstick) │
+             │                 │                             │   [Clean/Free]  │
+             │ ┌─────────────┐ │                             │ ┌─────────────┐ │
+             │ │  L TRIGGER  │ │                             │ │  R TRIGGER  │ │
+             │ │ Click / UI  │ │                             │ │ Click / UI  │ │
+             │ └─────────────┘ │                             │ └─────────────┘ │
+             │ ┌─────────────┐ │                             │ ┌─────────────┐ │
+             │ │   L GRIP    │ │                             │ │   R GRIP    │ │
+             │ │  [Reserved] │ │                             │ │  [Reserved] │ │
+             │ └─────────────┘ │                             │ └─────────────┘ │
+             └─────────────────┘                             └─────────────────┘
 ```
-     LEFT CONTROLLER                      RIGHT CONTROLLER
-    ┌─────────────────┐                  ┌─────────────────┐
-    │  [Y] Sticky HUD │                  │  [B] Sticky HUD │
-    │  [X] Action     │                  │  [A] Action     │
-    │  (L Thumbstick) │                  │  (R Thumbstick) │
-    │   Teleport Arc  │                  │   Snap Turn     │
-    │  [L Trigger]    │                  │  [R Trigger]    │
-    │   UI Click /    │                  │   UI Click /    │
-    │   Rover Place   │                  │   Rover Place   │
-    │  [L Grip]       │                  │  [R Grip]       │
-    │   Grab Object   │                  │   Grab Object   │
-    └─────────────────┘                  └─────────────────┘
+
+#### Detailed Input Action Bindings:
+
+| Physical Control | Hand | Component / Binding | Behavior in `VR_Module.unity` |
+|---|---|---|---|
+| **Secondary Button (<kbd>B</kbd>)** | **Right Hand** | `FloatingUIRecallController` (`<XRController>{RightHand}/secondaryButton`) | **Toggles Studio UI**: If visible, hides the panel (`SetActive(false)`). If hidden, recalls the panel to eye level $1.35$m directly in front of the player's current gaze and locks it in world space. |
+| **Index Trigger** | **Both Hands** | `NearFarInteractor` (`XRI Left/Right Interaction/Select`) | **Click / Select**: Interacts with UI buttons, sliders, dropdowns, and interactive scene objects via curved raycast. |
+| **Curved Ray Laser** | **Both Hands** | `CurveInteractionCaster` + `LineVisual` | Emits a graceful curved bezier ray with real-time collision detection. Highlights hovered UI elements. |
+| **Headset 6DOF Tracking** | **HMD** | `TrackedPoseDriver` (`XRI Head`) | Natural 1:1 orientation and translation in **Floor** tracking mode. No sticky HUD, no mouse override, no camera fighting. |
+| **Controller Tracking** | **Both Hands** | `TrackedPoseDriver` (`XRI Left/Right`) | Tracks official Quest 2 `UniversalController` 3D models with animated triggers and thumbsticks. Controllers rest naturally at hand height in front of the body. |
+| **Keyboard Desktop Fallback** | **Keyboard** | <kbd>B</kbd> or <kbd>U</kbd> Key | Triggers the same B-button UI Toggle & Recall behavior during in-editor testing. |
+
+---
+
+### 🏛️ XR Origin Architecture & Hierarchy
+
+The active VR hierarchy under `VR_Module.unity` follows the official XRI 3.5.1 gold standard:
+
+```text
+XR Origin                                       [XROrigin in Floor Mode @ (0, 76.55, -3.50)]
+├── Camera Offset                               [Floor Offset Object @ local (0, 0, 0)]
+│   └── Main Camera                             [SOLE active camera; TrackedPoseDriver: Head]
+├── Left Controller                             [TrackedPoseDriver: LeftHand @ local (-0.25, 1.10, 0.35)]
+│   ├── Near-Far Interactor                     [Active; Curve/Sphere Caster, SimpleHapticFeedback]
+│   │   └── LineVisual                          [CurveVisualController, LineRenderer]
+│   └── Left Controller Visual                  [ControllerAnimator, UniversalController 3D Model]
+│       └── UniversalController                 [Bumper, Home, Base, TouchPad, Trigger, Buttons]
+└── Right Controller                            [TrackedPoseDriver: RightHand @ local (0.25, 1.10, 0.35)]
+    ├── Near-Far Interactor                     [Active; Curve/Sphere Caster, SimpleHapticFeedback]
+    │   └── LineVisual                          [CurveVisualController, LineRenderer]
+    └── Right Controller Visual                 [ControllerAnimator, UniversalController 3D Model]
+        └── UniversalController                 [Bumper, Home, Base, TouchPad, Trigger, Buttons]
 ```
 
-#### Dual Laser Pointers & UI Raycast
-- Each controller emits a straight laser ray equipped with a torus hit reticle.
-- **Hovering**: When the ray hovers over any interactive button, slider, or dropdown in UI Toolkit or uGUI, the ray line illuminates in **vibrant cyan**, and a gentle haptic vibration ($15\%$ amplitude, $0.04$s) pulses through your controller.
-- **Clicking**: Squeezing the **Index Trigger** clicks the hovered button and triggers a firm tactile click impulse ($45\%$ amplitude, $0.08$s).
+---
 
-#### Placing Rovers in VR
-- When a rover is selected, point your laser pointer at any location on the 3D terrain surface.
-- The 3D ghost placement ring aligns with the terrain normal.
-- Pull the **Index Trigger** to confirm the placement and drop the rover into the world.
+### 🌐 World-Anchored UI vs. Legacy "Sticky" Visor
 
-#### "Iron Man" Sticky VR HUD
-- The UI Toolkit dashboard is projected in world space directly in front of your headset.
-- **Toggle Visibility**: Press the secondary button (<kbd>B</kbd> on the Right controller or <kbd>Y</kbd> on the Left controller) to fade the HUD in or out.
-- **Sticky Modes**:
-  - **HeadLocked** (Default): Visor mode — strictly locked to your headset orientation, always readable like an Iron Man helmet display ($1.15$m forward distance).
-  - **SmoothFollow**: Holographic HUD — smoothly glides to follow head movement with natural inertia.
-  - **WorldAnchor**: Stays anchored at a fixed coordinate in 3D world space.
+In earlier iterations, the UI was parented to the headset camera in `HeadLocked` mode ("Iron Man Visor"), which caused the entire dashboard to drag across the viewport whenever the player turned their head, creating severe visual stickiness and motion discomfort.
 
-#### VR Locomotion
-- **Teleportation**: Push forward on the **Left Thumbstick** to project a parabolic teleportation arc onto the terrain. Release the stick to instantly teleport to the reticle destination.
-- **Snap Turning**: Flick the **Right Thumbstick** left or right to quickly rotate your view by $45^\circ$.
+In `VR_Module.unity`:
+1. **World-Anchored by Default**: The `UIManager` (UI Toolkit UIDocument) is situated at `(0.00, 77.30, -1.80)`, standing comfortably in 3D world space like a physical mission console.
+2. **Zero Camera Fighting**: No scripts parent the UI to the camera or modify the camera's local rotation.
+3. **Dynamic Gaze Recall**: When the player presses the **B Button** to bring back the UI, `FloatingUIRecallController` calculates the user's flat horizontal forward vector (ignoring pitch tilt so the panel does not plant on the ground) and places the UI $1.35$m in front of them, facing them. Once placed, it stays completely stationary in world space.
+
+---
+
+### 🚧 Locomotion Baseline Notice
+
+To guarantee clean, glitch-free tracking and zero input conflicts:
+- Free-fly flight, teleportation, continuous movement, and snap-turning are **intentionally omitted** from this initial baseline.
+- The scene is fully pre-configured with `XR Interaction Manager` and `EventSystem (XRUIInputModule)`, ready for clean, modular additions (such as teleport locomotion or snap turning) in future steps.
 
 ---
 
 ### 💻 XR Device Simulator (Desktop VR Testing)
 
-If running the VR scene inside the Unity Editor without a VR headset connected, the **XR Device Simulator** provides mouse and keyboard emulation:
+When running `VR_Module.unity` inside the Unity Editor without a physical headset attached:
 
-- <kbd>Tab</kbd>: Cycle simulator control between **Left Hand**, **Right Hand**, or **Both Hands**.
-- **Right Mouse Button** + Move Mouse: Rotate simulated controller orientation.
-- **Left Mouse Button**: Pull controller Index Trigger (click/select).
-- <kbd>G</kbd>: Squeeze controller Grip button.
-- **WASD**: Move simulated controller in 3D space.
-
----
+- **B Button UI Toggle**: Press <kbd>B</kbd> or <kbd>U</kbd> on your keyboard.
+- **Cycle Active Simulator Hand**: Press <kbd>Tab</kbd> to cycle between **Left Hand**, **Right Hand**, or **Both Hands**.
+- **Rotate Controller**: Hold <kbd>RMB</kbd> and move your mouse to aim the curved controller ray.
+- **Pull Trigger (UI Click)**: Press <kbd>LMB</kbd> to select or click buttons.
+- **Move Simulated Rig**: Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> while controlling the simulator device.
 
 ## 5. How Everything is Clicked & Input Safety Guards
 
