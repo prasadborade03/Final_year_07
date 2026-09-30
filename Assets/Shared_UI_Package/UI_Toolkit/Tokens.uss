@@ -78,8 +78,8 @@
     --side-col-width: 316px;
 
     /* -------------------------------------------------------------
-       Typography Fonts
+       Typography Fonts (TextCore SDF for crystal clear VR rendering)
        ------------------------------------------------------------- */
-    --font-heading: url("/Assets/project/UI/fonts/Rajdhani-SemiBold.ttf");
-    --font-body: url("/Assets/project/UI/fonts/Inter.ttf");
+    --font-heading: url("/Assets/project/UI/fonts/Rajdhani-SemiBold TextCore SDF.asset");
+    --font-body: url("/Assets/project/UI/fonts/Inter TextCore SDF.asset");
 }

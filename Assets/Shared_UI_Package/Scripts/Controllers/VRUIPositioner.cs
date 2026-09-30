@@ -406,43 +406,32 @@ namespace ProjectName.UI
                 cachedCollider.center = Vector3.zero;
                 cachedCollider.size = new Vector3(1.92f, 1.08f, 0.05f);
             }
+
+            // Enforce crystal-clear, unlit, shadow-free rendering across all UI renderers
+            var renderers = GetComponentsInChildren<Renderer>(true);
+            foreach (var r in renderers)
+            {
+                r.receiveShadows = false;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            }
         }
 
         public static void SetPanelSettingsWorldSpace(PanelSettings panelSettings)
         {
             if (panelSettings == null) return;
-            var prop = typeof(PanelSettings).GetProperty("renderMode");
-            if (prop != null && prop.CanWrite)
-            {
-                var enumType = prop.PropertyType;
-                object targetVal = null;
-                try
-                {
-                    targetVal = Enum.Parse(enumType, "WorldSpace");
-                }
-                catch
-                {
-                    try
-                    {
-                        targetVal = Enum.Parse(enumType, "World");
-                    }
-                    catch
-                    {
-                        targetVal = Enum.ToObject(enumType, 1);
-                    }
-                }
 
-                if (targetVal != null)
-                {
-                    try
-                    {
-                        prop.SetValue(panelSettings, targetVal);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogWarning("[VRUIPositioner] Failed to set renderMode on PanelSettings: " + ex.Message);
-                    }
-                }
+            try
+            {
+                panelSettings.renderMode = PanelRenderMode.WorldSpace;
+                panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
+                panelSettings.clearDepthStencil = true;
+                panelSettings.forceGammaRendering = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[VRUIPositioner] Failed to configure PanelSettings: " + ex.Message);
             }
         }
     }

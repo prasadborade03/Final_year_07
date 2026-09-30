@@ -1,4 +1,5 @@
 using UnityEngine;
+using ProjectName.Rover;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -10,7 +11,7 @@ using UnityEngine.InputSystem;
 /// 2. Point Turn / Pivot In-Place (Zero radius 360 spin)
 /// 3. Crab Steering (Diagonal translation)
 /// 4. Differential / Tank Drive
-/// Supports both New Input System (Keyboard.current) and legacy Input fallback.
+/// Supports VR Left Stick, Desktop WASD/Arrows, and Gamepad.
 /// </summary>
 public class RoverController_m2020 : MonoBehaviour
 {
@@ -55,6 +56,17 @@ public class RoverController_m2020 : MonoBehaviour
     private float currentSteering = 0f;
     private bool isChassisLifted = false;
 
+    private void OnEnable()
+    {
+        RoverInputProvider.OnDriveModeChanged += SetDriveMode;
+        SetDriveMode(RoverInputProvider.CurrentDriveModeString);
+    }
+
+    private void OnDisable()
+    {
+        RoverInputProvider.OnDriveModeChanged -= SetDriveMode;
+    }
+
     void Start()
     {
         if (importer == null)
@@ -95,57 +107,43 @@ public class RoverController_m2020 : MonoBehaviour
         Debug.Log($"[RoverController_m2020] Speed regime set to: {currentSpeedMode} (maxSpeed: {maxSpeedDegPerSec} deg/s)");
     }
 
+    [Header("Analog Joystick Simulation")]
+    public Vector2 virtualJoystick => new Vector2(currentSteering, currentThrottle);
+
     void Update()
     {
         if (importer == null) return;
 
-        if (isInputBlocked)
+        // If typing in UI, DesktopFreeFlyCamera grab is active, or placement is active, block driving inputs
+        if (isInputBlocked || DesktopFreeFlyCamera.IsFreeFlyGrabActive || RoverInputProvider.IsInputBlocked())
         {
+            currentThrottle = Mathf.Lerp(currentThrottle, 0f, Time.deltaTime * inputSmoothing);
+            currentSteering = Mathf.Lerp(currentSteering, 0f, Time.deltaTime * inputSmoothing);
             importer.SetWheelSpeeds(0f, 0f);
             return;
         }
 
-        float rawThrottle = overrideThrottle;
-        float rawSteer = overrideSteer;
+        Vector2 driveInput = RoverInputProvider.GetDriveInput();
+        float rawThrottle = Mathf.Clamp(driveInput.y + overrideThrottle, -1f, 1f);
+        float rawSteer = Mathf.Clamp(driveInput.x + overrideSteer, -1f, 1f);
         bool modeToggled = false;
         bool liftToggled = false;
 
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) rawThrottle += 1f;
-            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) rawThrottle -= 1f;
-            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) rawSteer += 1f;
-            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) rawSteer -= 1f;
-
             if (Keyboard.current.mKey.wasPressedThisFrame) modeToggled = true;
             if (Keyboard.current.spaceKey.wasPressedThisFrame) liftToggled = true;
-
-            // Numeric keys 1..4 select steering mode directly
-            if (Keyboard.current.digit1Key.wasPressedThisFrame) SetSteeringMode(DriveMode.Ackermann);
-            else if (Keyboard.current.digit2Key.wasPressedThisFrame) SetSteeringMode(DriveMode.PointTurn);
-            else if (Keyboard.current.digit3Key.wasPressedThisFrame) SetSteeringMode(DriveMode.Crab);
-            else if (Keyboard.current.digit4Key.wasPressedThisFrame) SetSteeringMode(DriveMode.TankDrive);
         }
         else
 #endif
         {
             try
             {
-                rawThrottle += Input.GetAxisRaw(throttleAxis);
-                rawSteer += Input.GetAxisRaw(steerAxis);
                 if (Input.GetKeyDown(toggleModeKey)) modeToggled = true;
                 if (Input.GetKeyDown(liftChassisKey)) liftToggled = true;
-
-                if (Input.GetKeyDown(KeyCode.Alpha1)) SetSteeringMode(DriveMode.Ackermann);
-                else if (Input.GetKeyDown(KeyCode.Alpha2)) SetSteeringMode(DriveMode.PointTurn);
-                else if (Input.GetKeyDown(KeyCode.Alpha3)) SetSteeringMode(DriveMode.Crab);
-                else if (Input.GetKeyDown(KeyCode.Alpha4)) SetSteeringMode(DriveMode.TankDrive);
             }
-            catch
-            {
-                // Fallback if legacy axes are unmapped
-            }
+            catch {}
         }
 
         // Toggle Steering Mode with key press [M]
@@ -166,7 +164,7 @@ public class RoverController_m2020 : MonoBehaviour
             }
         }
 
-        // Smooth inputs to prevent abrupt physical jerks
+        // Smooth inputs to prevent abrupt physical jerks (analog joystick ramp)
         currentThrottle = Mathf.Lerp(currentThrottle, Mathf.Clamp(rawThrottle, -1f, 1f), Time.deltaTime * inputSmoothing);
         currentSteering = Mathf.Lerp(currentSteering, Mathf.Clamp(rawSteer, -1f, 1f), Time.deltaTime * inputSmoothing);
 

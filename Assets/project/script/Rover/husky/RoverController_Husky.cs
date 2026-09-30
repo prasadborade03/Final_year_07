@@ -1,14 +1,16 @@
 using UnityEngine;
+using ProjectName.Rover;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// Production keyboard controller for Clearpath Husky A200 skid-steer rover.
+/// Production keyboard & VR controller for Clearpath Husky A200 skid-steer rover.
 /// 
 /// Controls:
-/// W/A/S/D: Skid-steer drive mix
-/// 1 / 2 / 3 / 4: Drive Mode presets (Stop, Precision, Explore, Cruise)
+/// VR: Left Thumbstick (Y = Throttle, X = Steer)
+/// Desktop: W/A/S/D or Arrow keys
+/// Speed Regimes: VR Button A/X cycles 1->2->3->4->1, Desktop 1/2/3/4 keys
 /// </summary>
 public class RoverController_husky : MonoBehaviour
 {
@@ -35,6 +37,32 @@ public class RoverController_husky : MonoBehaviour
     [Header("Overrides (Automation / Testing)")]
     public float overrideThrottle = 0f;
     public float overrideSteer = 0f;
+
+    [Header("Analog Joystick Simulation")]
+    [Tooltip("Rate at which virtual joystick deflects and returns to center (units/sec)")]
+    public float joystickRampSpeed = 6.0f;
+    [Tooltip("Current continuous analog joystick vector: x = steer [-1, 1], y = throttle [-1, 1]")]
+    public Vector2 virtualJoystick = Vector2.zero;
+
+    private void OnEnable()
+    {
+        RoverInputProvider.OnDriveModeChanged += SetDriveMode;
+        SetDriveMode(RoverInputProvider.CurrentDriveModeString);
+    }
+
+    private void OnDisable()
+    {
+        RoverInputProvider.OnDriveModeChanged -= SetDriveMode;
+    }
+
+    /// <summary>
+    /// Programmatic / VR controller input injection (acts as virtual joystick).
+    /// </summary>
+    public void SetInputs(float throttle, float steer)
+    {
+        virtualJoystick.y = Mathf.Clamp(throttle, -1f, 1f);
+        virtualJoystick.x = Mathf.Clamp(steer, -1f, 1f);
+    }
 
     public void SetDriveMode(string mode)
     {
@@ -68,55 +96,28 @@ public class RoverController_husky : MonoBehaviour
         if (roverImporter == null)
             return;
 
-        // If typing in UI, block driving inputs
-        if (isInputBlocked)
+        // If typing in UI, DesktopFreeFlyCamera grab is active, or placement is active, block driving inputs
+        if (isInputBlocked || DesktopFreeFlyCamera.IsFreeFlyGrabActive || RoverInputProvider.IsInputBlocked())
         {
+            virtualJoystick = Vector2.MoveTowards(virtualJoystick, Vector2.zero, joystickRampSpeed * Time.deltaTime);
             roverImporter.SetWheelSpeeds(0f, 0f);
             return;
         }
 
-        // Numeric key shortcuts (1 = STOP, 2 = PRECISION, 3 = EXPLORE, 4 = CRUISE)
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.digit1Key.wasPressedThisFrame) SetDriveMode("STOP");
-            else if (Keyboard.current.digit2Key.wasPressedThisFrame) SetDriveMode("PRECISION");
-            else if (Keyboard.current.digit3Key.wasPressedThisFrame) SetDriveMode("EXPLORE");
-            else if (Keyboard.current.digit4Key.wasPressedThisFrame) SetDriveMode("CRUISE");
-        }
-#endif
-        if (Input.GetKeyDown(KeyCode.Alpha1)) SetDriveMode("STOP");
-        else if (Input.GetKeyDown(KeyCode.Alpha2)) SetDriveMode("PRECISION");
-        else if (Input.GetKeyDown(KeyCode.Alpha3)) SetDriveMode("EXPLORE");
-        else if (Input.GetKeyDown(KeyCode.Alpha4)) SetDriveMode("CRUISE");
+        // 1. Read target analog inputs from central provider (VR Left Stick + Desktop WASD + Gamepad)
+        Vector2 driveInput = RoverInputProvider.GetDriveInput();
+        float targetThrottle = Mathf.Clamp(driveInput.y + overrideThrottle, -1f, 1f);
+        float targetSteer = Mathf.Clamp(driveInput.x + overrideSteer, -1f, 1f);
 
-        // 1. Read keys with fallback
-        float throttle = overrideThrottle;
-        float steer = overrideSteer;
+        // 2. Continuous analog joystick smoothing (ramps from 0 to 1 like physical stick)
+        virtualJoystick.x = Mathf.MoveTowards(virtualJoystick.x, targetSteer, joystickRampSpeed * Time.deltaTime);
+        virtualJoystick.y = Mathf.MoveTowards(virtualJoystick.y, targetThrottle, joystickRampSpeed * Time.deltaTime);
 
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) throttle += 1f;
-            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) throttle -= 1f;
-            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) steer += 1f;
-            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) steer -= 1f;
-        }
-        else
-#endif
-        {
-            throttle += Input.GetAxis("Vertical");
-            steer += Input.GetAxis("Horizontal");
-        }
+        // 3. Classic tank / skid-steer mix scaled by active speed regime
+        float left  = (virtualJoystick.y + virtualJoystick.x) * maxWheelSpeed;
+        float right = (virtualJoystick.y - virtualJoystick.x) * maxWheelSpeed;
 
-        throttle = Mathf.Clamp(throttle, -1f, 1f);
-        steer = Mathf.Clamp(steer, -1f, 1f);
-
-        // 2. Classic tank / skid-steer mix
-        float left  = (throttle + steer) * maxWheelSpeed;
-        float right = (throttle - steer) * maxWheelSpeed;
-
-        // 3. Send to importer
+        // 4. Send to importer
         if (!invertWheelMapping)
             roverImporter.SetWheelSpeeds(left, right);
         else

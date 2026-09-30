@@ -12,6 +12,7 @@ public class OrbitCamera : MonoBehaviour
     void LateUpdate()
     {
         if (target == null) return;
+        if (DesktopFreeFlyCamera.IsFreeFlyGrabActive) return;
 
         if (Input.GetMouseButton(1))
         {

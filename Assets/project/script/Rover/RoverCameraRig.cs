@@ -151,6 +151,11 @@ namespace ProjectName.Rover
 
         private void LateUpdate()
         {
+            if (DesktopFreeFlyCamera.IsFreeFlyGrabActive)
+            {
+                return;
+            }
+
             if (currentPerspective == Perspective.Free)
             {
                 if (freeFlyCamera != null && !freeFlyCamera.enabled)
@@ -309,6 +314,7 @@ namespace ProjectName.Rover
         {
             // UI input guard: do not orbit/zoom when mouse is hovering over interactive UI
             if (IsPointerOverUI()) return;
+            if (DesktopFreeFlyCamera.IsFreeFlyGrabActive) return;
 
             // RMB Orbit
             if (Input.GetMouseButton(1))
