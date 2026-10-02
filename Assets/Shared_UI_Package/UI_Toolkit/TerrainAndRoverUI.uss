@@ -146,7 +146,7 @@
 .planet-name-text {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 12px;
     -unity-font-style: bold;
     letter-spacing: 1.5px;
@@ -224,7 +224,7 @@
 .pill-label {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -379,7 +379,7 @@
 .rover-row-title {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -392,7 +392,7 @@
     padding: 1px 6px;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     -unity-font-style: bold;
     color: var(--text-3);
@@ -413,7 +413,7 @@
 .stat-coords-val {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--accent);
@@ -458,7 +458,7 @@
 .wheel-name {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -467,7 +467,7 @@
 .wheel-status {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     -unity-font-style: bold;
 }
@@ -574,7 +574,7 @@
     padding: 1px 5px;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 8px;
     color: var(--text-3);
     pointer-events: none;
@@ -589,7 +589,7 @@
     border-color: var(--border);
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -639,7 +639,7 @@
     padding: 0 6px;
     margin: 0;
     -unity-text-align: middle-left;
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
 }
 
@@ -689,7 +689,7 @@
 .history-tag {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     color: var(--text-3);
     padding: 0 4px;
@@ -739,7 +739,7 @@
 .slider-label {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -754,7 +754,7 @@
 .slider-val-label {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -791,7 +791,7 @@
 .material-chip-label {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -841,7 +841,7 @@
 .placement-banner-text {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     color: var(--text-1);
     -unity-font-style: bold;

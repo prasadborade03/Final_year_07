@@ -48,5 +48,5 @@ MonoBehaviour:
   m_BitmapShader: {fileID: 9001, guid: 0000000000000000f000000000000000, type: 0}
   m_SpriteShader: {fileID: 19012, guid: 0000000000000000f000000000000000, type: 0}
   m_ICUDataAsset: {fileID: 20204, guid: 0000000000000000f000000000000000, type: 0}
-  forceGammaRendering: 1
-  textSettings: {fileID: 11400000, guid: 9662d3ea7af084c4fa0ba1b7ecdb2e59, type: 2}
+  forceGammaRendering: 0
+  textSettings: {fileID: 0}

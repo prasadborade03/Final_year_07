@@ -79,10 +79,16 @@ namespace ProjectName.UI
             uiDocument = GetComponent<UIDocument>();
             cachedCollider = GetComponent<BoxCollider>();
 
-            // Restore last known visibility
-            isHUDVisible = PlayerPrefs.GetInt(PrefKey_HUDVisible, 1) == 1;
-            currentOpacity = isHUDVisible ? 1f : 0f;
-            targetOpacity = isHUDVisible ? 1f : 0f;
+            // Studio UI must always be visible and active on scene startup
+            isHUDVisible = true;
+            currentOpacity = 1f;
+            targetOpacity = 1f;
+
+            if (PlayerPrefs.HasKey(PrefKey_HUDVisible))
+            {
+                PlayerPrefs.DeleteKey(PrefKey_HUDVisible);
+                PlayerPrefs.Save();
+            }
         }
 
         private void Start()
@@ -141,24 +147,32 @@ namespace ProjectName.UI
             bool triggerModeToggle = false;
             bool triggerHUDToggle = false;
 
-            // 1. Controller Secondary Button (B on Right controller, Y on Left controller)
-            bool secondaryDown = false;
-            var leftHand = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-            if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool lSec) && lSec)
-            {
-                secondaryDown = true;
-            }
-            var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-            if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool rSec) && rSec)
-            {
-                secondaryDown = true;
-            }
+            // Check if FloatingUIRecallController is active in the scene.
+            // If present, let it exclusively handle the B-button / Secondary button to prevent dual-trigger conflicts.
+            bool hasRecallController = ProjectName.VR.FloatingUIRecallController.Instance != null ||
+                                       FindFirstObjectByType<ProjectName.VR.FloatingUIRecallController>() != null;
 
-            if (secondaryDown && !wasSecondaryButtonPressed)
+            if (!hasRecallController)
             {
-                triggerHUDToggle = true;
+                // 1. Controller Secondary Button (B on Right controller, Y on Left controller)
+                bool secondaryDown = false;
+                var leftHand = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+                if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool lSec) && lSec)
+                {
+                    secondaryDown = true;
+                }
+                var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+                if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool rSec) && rSec)
+                {
+                    secondaryDown = true;
+                }
+
+                if (secondaryDown && !wasSecondaryButtonPressed)
+                {
+                    triggerHUDToggle = true;
+                }
+                wasSecondaryButtonPressed = secondaryDown;
             }
-            wasSecondaryButtonPressed = secondaryDown;
 
             // 2. New Input System Keyboard
 #if ENABLE_INPUT_SYSTEM
@@ -166,7 +180,7 @@ namespace ProjectName.UI
             {
                 if (Keyboard.current.rKey.wasPressedThisFrame) triggerRecenter = true;
                 if (Keyboard.current.hKey.wasPressedThisFrame) triggerModeToggle = true;
-                if (Keyboard.current.uKey.wasPressedThisFrame) triggerHUDToggle = true;
+                if (!hasRecallController && Keyboard.current.uKey.wasPressedThisFrame) triggerHUDToggle = true;
 
                 // Adjust distance with +/- or [/]
                 if (Keyboard.current.equalsKey.wasPressedThisFrame || Keyboard.current.numpadPlusKey.wasPressedThisFrame)
@@ -183,7 +197,7 @@ namespace ProjectName.UI
             // 3. Legacy Input Fallback
             if (!triggerRecenter && Input.GetKeyDown(recenterKey)) triggerRecenter = true;
             if (!triggerModeToggle && Input.GetKeyDown(toggleModeKey)) triggerModeToggle = true;
-            if (!triggerHUDToggle && Input.GetKeyDown(toggleHUDKey)) triggerHUDToggle = true;
+            if (!hasRecallController && !triggerHUDToggle && Input.GetKeyDown(toggleHUDKey)) triggerHUDToggle = true;
 
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus)) AdjustDistance(0.15f);
             if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus)) AdjustDistance(-0.15f);
@@ -191,6 +205,14 @@ namespace ProjectName.UI
             if (triggerRecenter) Recenter();
             if (triggerModeToggle) CycleStickyMode();
             if (triggerHUDToggle) ToggleHUD();
+        }
+
+        public void ForceShow()
+        {
+            isHUDVisible = true;
+            targetOpacity = 1f;
+            currentOpacity = 1f;
+            ApplyHUDVisibility(instant: true);
         }
 
         public void AdjustDistance(float delta)
@@ -306,10 +328,15 @@ namespace ProjectName.UI
                 transform.localRotation = Quaternion.identity;
                 transform.localScale = Vector3.one;
             }
-            else
+            else if (stickyMode == StickyMode.SmoothFollow)
             {
                 DetachFromCamera();
                 Recenter();
+            }
+            else // WorldAnchor
+            {
+                DetachFromCamera();
+                // In WorldAnchor mode, keep the current world position (do NOT overwrite with Recenter)
             }
         }
 
@@ -406,32 +433,43 @@ namespace ProjectName.UI
                 cachedCollider.center = Vector3.zero;
                 cachedCollider.size = new Vector3(1.92f, 1.08f, 0.05f);
             }
-
-            // Enforce crystal-clear, unlit, shadow-free rendering across all UI renderers
-            var renderers = GetComponentsInChildren<Renderer>(true);
-            foreach (var r in renderers)
-            {
-                r.receiveShadows = false;
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-                r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-            }
         }
 
         public static void SetPanelSettingsWorldSpace(PanelSettings panelSettings)
         {
             if (panelSettings == null) return;
+            var prop = typeof(PanelSettings).GetProperty("renderMode");
+            if (prop != null && prop.CanWrite)
+            {
+                var enumType = prop.PropertyType;
+                object targetVal = null;
+                try
+                {
+                    targetVal = Enum.Parse(enumType, "WorldSpace");
+                }
+                catch
+                {
+                    try
+                    {
+                        targetVal = Enum.Parse(enumType, "World");
+                    }
+                    catch
+                    {
+                        targetVal = Enum.ToObject(enumType, 1);
+                    }
+                }
 
-            try
-            {
-                panelSettings.renderMode = PanelRenderMode.WorldSpace;
-                panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
-                panelSettings.clearDepthStencil = true;
-                panelSettings.forceGammaRendering = true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[VRUIPositioner] Failed to configure PanelSettings: " + ex.Message);
+                if (targetVal != null)
+                {
+                    try
+                    {
+                        prop.SetValue(panelSettings, targetVal);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning("[VRUIPositioner] Failed to set renderMode on PanelSettings: " + ex.Message);
+                    }
+                }
             }
         }
     }

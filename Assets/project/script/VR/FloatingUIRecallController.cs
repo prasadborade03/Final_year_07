@@ -64,10 +64,14 @@ namespace ProjectName.VR
 
         private bool wasSecondaryButtonPressed = false;
 
+        public static FloatingUIRecallController Instance { get; private set; }
+
         public bool IsUIVisible => isUIVisible;
 
         private void Awake()
         {
+            Instance = this;
+
             if (xrCamera == null)
             {
                 ResolveXRCamera();
@@ -213,6 +217,13 @@ namespace ProjectName.VR
 
             studioUIRoot.SetActive(false);
             isUIVisible = false;
+
+            var positioner = studioUIRoot.GetComponent<ProjectName.UI.VRUIPositioner>();
+            if (positioner != null)
+            {
+                positioner.HideHUD();
+            }
+
             Debug.Log("[FloatingUIRecallController] Studio UI hidden (SetActive=false).");
         }
 
@@ -221,6 +232,11 @@ namespace ProjectName.VR
         /// </summary>
         public void RecallAndShowUI()
         {
+            if (studioUIRoot == null)
+            {
+                var uiDoc = FindAnyObjectByType<UnityEngine.UIElements.UIDocument>();
+                if (uiDoc != null) studioUIRoot = uiDoc.gameObject;
+            }
             if (studioUIRoot == null) return;
 
             if (xrCamera == null)
@@ -255,6 +271,22 @@ namespace ProjectName.VR
             studioUIRoot.SetActive(true);
             studioUIRoot.transform.SetPositionAndRotation(panelPosition, panelRotation);
             isUIVisible = true;
+
+            // Ensure VRUIPositioner displays the visual tree and enables BoxCollider
+            var positioner = studioUIRoot.GetComponent<ProjectName.UI.VRUIPositioner>();
+            if (positioner != null)
+            {
+                positioner.ForceShow();
+            }
+            else
+            {
+                var uiDoc = studioUIRoot.GetComponent<UnityEngine.UIElements.UIDocument>();
+                if (uiDoc != null && uiDoc.rootVisualElement != null)
+                {
+                    uiDoc.rootVisualElement.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
+                    uiDoc.rootVisualElement.style.opacity = 1f;
+                }
+            }
 
             Debug.Log($"[FloatingUIRecallController] Studio UI recalled in front of user at {panelPosition}. Fixed in world space.");
         }

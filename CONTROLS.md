@@ -58,9 +58,6 @@
 | **Controller Pose Tracking** | Left & Right Hand | Ergonomic resting pose in front of user (`±0.25m` X, `1.10m` Y, `0.35m` Z). Tracks 1:1 with real hands. | **Active** (`TrackedPoseDriver: Left/Right`) |
 | **Locomotion (Teleport / Snap Turn)** | Left & Right Sticks | Intentionally omitted for this baseline scene to guarantee clean tracking and no input conflict. | *Deferred for future step-by-step addition* |
 
-> [!NOTE]
-> **Studio UI Clarity Upgrade**: Studio UI rendering upgraded for higher resolution + no shadow reception for maximum clarity on Quest. Uses TextCore SDFAA vector distance field fonts, ConstantPixelSize scaling, expanded 1024px dynamic atlas, linear color force-gamma correction, and unlit shadow-free UI renderer settings.
-
 ---
 
 ## 2. Interactive Workflow (Phase-by-Phase)

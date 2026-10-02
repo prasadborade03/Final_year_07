@@ -32,7 +32,7 @@
 .panel-title {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 1px;
@@ -67,7 +67,7 @@
 .metric-label {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     -unity-font-style: bold;
     letter-spacing: 1px;
@@ -84,7 +84,7 @@
 .metric-value {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 20px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -97,7 +97,7 @@
 .metric-unit {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     color: var(--text-3);
     margin-left: 4px;
@@ -115,7 +115,7 @@
     padding: 0 12px;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
@@ -138,7 +138,7 @@
 .btn-text {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
@@ -326,7 +326,7 @@
     color: var(--text-2);
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: normal;
     align-items: center;
@@ -368,7 +368,7 @@
 .toggle-switch-label {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     color: var(--text-2);
 }
@@ -429,7 +429,7 @@
     flex-grow: 0;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -497,7 +497,7 @@
 .slider-title {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -507,7 +507,7 @@
 .slider-readout {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -587,7 +587,7 @@
 .custom-dropdown TextElement {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     color: var(--text-1);
     -unity-font-style: normal;
@@ -626,7 +626,7 @@
     padding: 4px 8px;
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     color: var(--text-1);
     -unity-text-align: middle-left;
@@ -679,7 +679,7 @@
 .rover-row-title {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -693,7 +693,7 @@
     padding: 2px 6px;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     -unity-font-style: bold;
     color: var(--text-3);
@@ -728,7 +728,7 @@
 .wheel-tile-label {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -750,7 +750,7 @@
 .wheel-status-text {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     color: var(--text-3);
     margin-left: 4px;
@@ -767,7 +767,7 @@
     padding: 2px 6px;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -782,7 +782,7 @@
     padding: 2px 6px;
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 9px;
     color: var(--text-2);
 }
@@ -823,7 +823,7 @@
 .material-chip-label {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
@@ -865,7 +865,7 @@
 .placement-banner-text {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 12px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -874,7 +874,7 @@
 .banner-subtitle {
     -unity-font: var(--font-body);
     -unity-font: var(--font-body);
-    -unity-font-definition: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 11px;
     color: var(--text-3);
     flex-direction: row;
@@ -921,7 +921,7 @@
 .modal-title {
     -unity-font: var(--font-heading);
     -unity-font: var(--font-heading);
-    -unity-font-definition: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
     font-size: 13px;
     -unity-font-style: bold;
     color: var(--text-1);

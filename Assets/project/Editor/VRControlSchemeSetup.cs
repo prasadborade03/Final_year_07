@@ -530,12 +530,14 @@ namespace ProjectName.EditorScripts
 
         private static void SetupDeviceSimulator()
         {
+#pragma warning disable CS0618
             var sim = Resources.FindObjectsOfTypeAll<UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation.XRDeviceSimulator>();
             if (sim.Length > 0)
             {
                 sim[0].gameObject.SetActive(true);
                 Debug.Log("[VRControlSchemeSetup] Activated XR Device Simulator in scene.");
             }
+#pragma warning restore CS0618
         }
 
         private static void SetupTestCube()
