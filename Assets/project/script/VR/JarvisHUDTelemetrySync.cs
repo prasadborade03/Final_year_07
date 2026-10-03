@@ -138,10 +138,24 @@ namespace ProjectName.VR
                 lblHeading.text = $"{yaw:000}° {cardinal}";
             }
 
-            // Update Target Rover Range
+            // Update Input Focus & Banner Subtext
             var ctrl = JarvisCameraFlightController.Instance;
             if (ctrl != null)
             {
+                if (lblBannerSubtext != null)
+                {
+                    if (ctrl.activeInputFocus == JarvisCameraFlightController.InputFocus.Rover)
+                    {
+                        lblBannerSubtext.text = JarvisCameraFlightController.IsCameraFlyingActive
+                            ? "RMB CAMERA FLIGHT (ROVER MUTED)"
+                            : "INPUT: ROVER [C TO FLY CAM]";
+                    }
+                    else
+                    {
+                        lblBannerSubtext.text = "INPUT: FREE CAMERA [C TO DRIVE ROVER]";
+                    }
+                }
+
                 var rover = ctrl.GetActiveRoverTransform();
                 if (rover != null)
                 {

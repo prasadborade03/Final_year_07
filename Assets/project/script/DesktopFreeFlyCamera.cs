@@ -29,7 +29,7 @@ using UnityEngine.InputSystem;
     {
         public static DesktopFreeFlyCamera Instance { get; private set; }
 
-        public static bool IsFreeFlyGrabActive => Instance != null && Instance.isGrabActive;
+        public static bool IsFreeFlyGrabActive => (Instance != null && Instance.isGrabActive) || ProjectName.VR.JarvisCameraFlightController.IsCameraFlyingActive;
 
         [Header("Speed & Dynamics")]
         [Tooltip("Base translation speed in meters/second")]
