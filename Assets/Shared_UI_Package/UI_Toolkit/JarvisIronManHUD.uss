@@ -1,0 +1,517 @@
+/* =========================================================================
+   JarvisIronManHUD.uss - Iron Man Helmet / Jarvis Suit VR HUD Stylesheet
+   Features:
+   - Translucent Holographic Cyber-Glass (see terrain & rovers through UI)
+   - Iconic Arc Reactor Cyan (#00E5FF) and Tactical Amber/Emerald Accents
+   - Peripheral Head-Mounted Visor framing with high readability
+   - Unobstructed central 3D gameplay view
+   ========================================================================= */
+
+:root {
+    /* -------------------------------------------------------------
+       Jarvis Holographic Cyber-Glass Tokens
+       ------------------------------------------------------------- */
+    /* Semi-transparent deep cyber-glass: enables seeing the 3D game view through panels */
+    --surface: rgba(4, 18, 34, 0.45);
+    --surface-2: rgba(8, 28, 52, 0.52);
+    --surface-3: rgba(12, 38, 68, 0.62);
+    --scrim: rgba(2, 10, 20, 0.35);
+
+    /* Luminous Arc Cyan Wireframes */
+    --border: rgba(0, 229, 255, 0.38);
+    --border-hi: rgba(0, 245, 255, 0.85);
+
+    /* Jarvis Arc Reactor Cyan Accent */
+    --accent: #00E5FF;
+    --accent-hover: #38E1FF;
+    --accent-glow: rgba(0, 229, 255, 0.32);
+    --accent-dim: rgba(0, 229, 255, 0.16);
+
+    /* Semantic Buttons (Holographic Glass Fills) */
+    --primary-bg: rgba(0, 229, 255, 0.22);
+    --primary-border: #00E5FF;
+    --primary-text: #FFFFFF;
+
+    --secondary-bg: rgba(6, 26, 48, 0.48);
+    --secondary-border: rgba(0, 229, 255, 0.40);
+    --secondary-text: #E0F7FA;
+
+    --confirm-bg: rgba(0, 230, 118, 0.22);
+    --confirm-border: #00E676;
+    --confirm-text: #B9F6CA;
+
+    --cancel-bg: rgba(255, 23, 68, 0.22);
+    --cancel-border: #FF1744;
+    --cancel-text: #FF8A80;
+
+    --danger-bg: rgba(255, 23, 68, 0.28);
+    --danger-border: #FF1744;
+    --danger-text: #FF8A80;
+
+    --disabled-bg: rgba(6, 16, 26, 0.35);
+    --disabled-border: rgba(0, 229, 255, 0.15);
+    --disabled-text: rgba(128, 222, 234, 0.45);
+
+    /* Status Indicators */
+    --good: #00E676;
+    --fair: #FFB300;
+    --poor: #FF1744;
+
+    /* Typography: High-Contrast Luminous White & Cyan */
+    --text-1: #FFFFFF;
+    --text-2: #80DEEA;
+    --text-3: #4DD0E1;
+
+    /* High-Tech Rectangular Geometry */
+    --r-panel: 6px;
+    --r-inner: 4px;
+    --r-btn: 4px;
+    --r-pill: 4px;
+    --r-sm: 3px;
+}
+
+/* -------------------------------------------------------------------------
+   1. Holographic Panels & Cards
+   ------------------------------------------------------------------------- */
+.panel-card {
+    background-color: var(--surface);
+    border-radius: var(--r-panel);
+    padding: 8px 10px;
+    border-width: 1px;
+    border-color: var(--border);
+    border-top-color: var(--border-hi);
+    border-top-width: 2px;
+    border-left-color: rgba(0, 229, 255, 0.65);
+    border-left-width: 2px;
+    width: 100%;
+    flex-shrink: 0;
+    margin-bottom: var(--panel-gap);
+    transition: opacity 180ms ease-out, translate 180ms ease-out, border-color 150ms ease-out;
+}
+
+.panel-card:hover {
+    border-color: rgba(0, 229, 255, 0.65);
+    border-top-color: #38E1FF;
+}
+
+.panel-title {
+    color: #00E5FF;
+    letter-spacing: 1.5px;
+    -unity-font-style: bold;
+}
+
+/* -------------------------------------------------------------------------
+   2. Metric Values & Readouts
+   ------------------------------------------------------------------------- */
+.metric-value {
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+.metric-label {
+    color: #4DD0E1;
+    letter-spacing: 1px;
+}
+
+.metric-unit {
+    color: #80DEEA;
+}
+
+.stat-coords-val {
+    color: #00E5FF;
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    border-left-color: #00E5FF;
+    border-left-width: 2px;
+}
+
+/* -------------------------------------------------------------------------
+   3. Buttons & Interactive Controls
+   ------------------------------------------------------------------------- */
+.btn {
+    border-radius: var(--r-btn);
+    border-width: 1px;
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.btn-primary {
+    background-color: var(--primary-bg);
+    border-color: var(--primary-border);
+    color: #FFFFFF;
+}
+
+.btn-primary:hover {
+    background-color: rgba(0, 229, 255, 0.38);
+    border-color: #38E1FF;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-bg);
+    border-color: var(--secondary-border);
+    color: var(--secondary-text);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(12, 42, 72, 0.65);
+    border-color: var(--accent);
+    color: #FFFFFF;
+}
+
+/* Mode Switches & Segmented Bars */
+.mode-toggle-bar,
+.bottom-segmented-bar,
+.curve-segmented-bar,
+.brush-segmented-bar {
+    background-color: var(--surface);
+    border-color: var(--border);
+    border-top-color: rgba(0, 229, 255, 0.70);
+    border-top-width: 1px;
+}
+
+.segmented-item.segmented-active,
+.segmented-item.view-switch-active,
+.segmented-item.mode-pill-active,
+.segmented-item.brush-btn-active,
+.segmented-item.curve-btn-active {
+    background-color: rgba(0, 229, 255, 0.28);
+    border-color: var(--accent);
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+.segmented-item:hover {
+    background-color: rgba(0, 229, 255, 0.15);
+    color: #FFFFFF;
+}
+
+/* Rover Selection Rows */
+.rover-row {
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    border-left-color: rgba(0, 229, 255, 0.30);
+    border-left-width: 2px;
+}
+
+.rover-row:hover {
+    background-color: rgba(10, 36, 62, 0.60);
+    border-color: rgba(0, 229, 255, 0.60);
+}
+
+.rover-row-active {
+    background-color: rgba(0, 229, 255, 0.22);
+    border-color: var(--accent);
+    border-left-color: #00E5FF;
+    border-left-width: 3px;
+}
+
+.rover-row-active .rover-row-title {
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+/* Status Badges */
+.status-badge {
+    background-color: rgba(6, 26, 48, 0.50);
+    border-color: var(--border);
+    color: #80DEEA;
+}
+
+.status-badge-active {
+    background-color: rgba(0, 230, 118, 0.20);
+    border-color: #00E676;
+    color: #00E676;
+    -unity-font-style: bold;
+}
+
+/* Wheel Actuator Tiles */
+.wheel-cell,
+.wheel-tile {
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    border-left-color: rgba(0, 229, 255, 0.40);
+    border-left-width: 2px;
+}
+
+.wheel-tile-name {
+    color: #00E5FF;
+    -unity-font-style: bold;
+}
+
+.wheel-status-text {
+    color: #00E676;
+}
+
+.wheel-segment.seg-active {
+    background-color: #00E5FF;
+}
+
+/* Sliders */
+.custom-slider .unity-base-slider__tracker {
+    background-color: rgba(6, 26, 48, 0.70);
+    border-color: var(--border);
+    border-width: 1px;
+}
+
+.custom-slider .unity-base-slider__dragger {
+    background-color: #00E5FF;
+    border-radius: 2px;
+}
+
+.slider-label {
+    color: #80DEEA;
+}
+
+.slider-val-label {
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+/* Top Shell Pills */
+.planet-pill,
+.minimize-pill {
+    background-color: var(--surface);
+    border-color: var(--border);
+    border-top-color: var(--accent);
+    border-top-width: 1px;
+}
+
+.planet-pill:hover,
+.minimize-pill:hover {
+    background-color: rgba(0, 229, 255, 0.20);
+    border-color: #00E5FF;
+}
+
+.planet-name-text {
+    color: #00E5FF;
+}
+
+/* -------------------------------------------------------------------------
+   4. Iron Man Helmet Visor Reticle & Central HUD Elements
+   ------------------------------------------------------------------------- */
+.jarvis-visor-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Jarvis Top Visor Banner */
+.jarvis-top-banner {
+    position: absolute;
+    top: 14px;
+    align-self: center;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 12px;
+    background-color: rgba(4, 18, 34, 0.50);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    border-top-color: #00E5FF;
+    border-top-width: 2px;
+    pointer-events: none;
+}
+
+.jarvis-banner-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #00E5FF;
+}
+
+.jarvis-banner-text {
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: #00E5FF;
+    letter-spacing: 2px;
+    margin: 0;
+    padding: 0;
+}
+
+.jarvis-banner-subtext {
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 9px;
+    color: #80DEEA;
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Central Visor Reticle (Unobstructed View) */
+.jarvis-reticle-box {
+    width: 320px;
+    height: 200px;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Reticle Left & Right Framing Brackets */
+.jarvis-reticle-bracket-left {
+    position: absolute;
+    left: 0;
+    top: 30px;
+    bottom: 30px;
+    width: 18px;
+    border-left-width: 2px;
+    border-left-color: rgba(0, 229, 255, 0.70);
+    border-top-width: 2px;
+    border-top-color: rgba(0, 229, 255, 0.70);
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 229, 255, 0.70);
+}
+
+.jarvis-reticle-bracket-right {
+    position: absolute;
+    right: 0;
+    top: 30px;
+    bottom: 30px;
+    width: 18px;
+    border-right-width: 2px;
+    border-right-color: rgba(0, 229, 255, 0.70);
+    border-top-width: 2px;
+    border-top-color: rgba(0, 229, 255, 0.70);
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 229, 255, 0.70);
+}
+
+/* Center Crosshair Ring */
+.jarvis-reticle-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.40);
+    align-items: center;
+    justify-content: center;
+}
+
+.jarvis-reticle-crosshair {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: #00E5FF;
+    background-color: rgba(0, 229, 255, 0.25);
+}
+
+/* Pitch / Horizon Wing Marks */
+.jarvis-horizon-line-left {
+    position: absolute;
+    left: 45px;
+    width: 40px;
+    height: 1px;
+    background-color: rgba(0, 229, 255, 0.45);
+}
+
+.jarvis-horizon-line-right {
+    position: absolute;
+    right: 45px;
+    width: 40px;
+    height: 1px;
+    background-color: rgba(0, 229, 255, 0.45);
+}
+
+/* Jarvis Bottom Telemetry Footer */
+.jarvis-bottom-status {
+    position: absolute;
+    bottom: 12px;
+    align-self: center;
+    flex-direction: row;
+    gap: 16px;
+    padding: 3px 14px;
+    background-color: rgba(4, 18, 34, 0.45);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.35);
+    pointer-events: none;
+}
+
+.jarvis-status-item {
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 9px;
+    color: #80DEEA;
+    letter-spacing: 1px;
+}
+
+.jarvis-status-val {
+    color: #00E5FF;
+    -unity-font-style: bold;
+}
+
+/* Side Visor Telemetry Wings */
+.jarvis-wing-left {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    translate: 0 -50%;
+    padding: 6px 10px;
+    background-color: rgba(4, 18, 34, 0.40);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.35);
+    border-left-width: 2px;
+    border-left-color: #00E5FF;
+    pointer-events: none;
+    gap: 4px;
+}
+
+.jarvis-wing-right {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    translate: 0 -50%;
+    padding: 6px 10px;
+    background-color: rgba(4, 18, 34, 0.40);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.35);
+    border-right-width: 2px;
+    border-right-color: #00E5FF;
+    pointer-events: none;
+    gap: 4px;
+}
+
+.jarvis-wing-metric {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.jarvis-wing-lbl {
+    font-size: 9px;
+    color: #80DEEA;
+    letter-spacing: 1px;
+    -unity-font-style: bold;
+}
+
+.jarvis-wing-val {
+    font-size: 11px;
+    color: #00E5FF;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+.jarvis-perspective-pill {
+    padding: 2px 8px;
+    background-color: rgba(0, 229, 255, 0.18);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: #00E5FF;
+    color: #00E5FF;
+    font-size: 9px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}

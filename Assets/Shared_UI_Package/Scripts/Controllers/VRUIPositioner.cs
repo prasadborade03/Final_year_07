@@ -351,15 +351,14 @@ namespace ProjectName.UI
 
         private void UpdateHeadLocked()
         {
-            if (transform.parent != targetCamera.transform)
-            {
-                transform.SetParent(targetCamera.transform, false);
-                isParented = true;
-            }
+            if (isParented) DetachFromCamera();
 
-            // Keep local position locked in front of camera
-            transform.localPosition = new Vector3(0f, heightOffset, forwardDistance);
-            transform.localRotation = Quaternion.identity;
+            Vector3 camPos = targetCamera.transform.position;
+            Vector3 camForward = targetCamera.transform.forward;
+            Vector3 camUp = targetCamera.transform.up;
+
+            transform.position = camPos + (camForward * forwardDistance) + (camUp * heightOffset);
+            transform.rotation = Quaternion.LookRotation(camForward, camUp);
         }
 
         private void UpdateSmoothFollow()
@@ -373,8 +372,9 @@ namespace ProjectName.UI
             Vector3 desiredPos = camPos + (camForward * forwardDistance) + (camUp * heightOffset);
             Quaternion desiredRot = Quaternion.LookRotation(camForward, camUp);
 
-            transform.position = Vector3.Lerp(transform.position, desiredPos, Time.deltaTime * smoothFollowSpeed);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, Time.deltaTime * smoothFollowSpeed);
+            float t = 1f - Mathf.Exp(-smoothFollowSpeed * Time.unscaledDeltaTime);
+            transform.position = Vector3.Lerp(transform.position, desiredPos, t);
+            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, t);
         }
 
         public void Recenter()

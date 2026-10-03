@@ -77,9 +77,12 @@ namespace ProjectName.Editor
                 if (positioner != null)
                 {
                     positioner.isHUDVisible = true;
-                    positioner.stickyMode = VRUIPositioner.StickyMode.WorldAnchor;
+                    if (currentScene.name.IndexOf("jarvis", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        positioner.stickyMode = VRUIPositioner.StickyMode.WorldAnchor;
+                    }
                     EditorUtility.SetDirty(positioner);
-                    Debug.Log("[UIDiagnosticFixer] VRUIPositioner reset: isHUDVisible=true, stickyMode=WorldAnchor.");
+                    Debug.Log($"[UIDiagnosticFixer] VRUIPositioner checked: isHUDVisible=true, stickyMode={positioner.stickyMode}.");
                 }
 
                 // Ensure BoxCollider for VR raycasting
