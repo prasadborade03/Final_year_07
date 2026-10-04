@@ -77,9 +77,14 @@ namespace ProjectName.Editor
                 if (positioner != null)
                 {
                     positioner.isHUDVisible = true;
-                    positioner.stickyMode = VRUIPositioner.StickyMode.WorldAnchor;
+                    positioner.forwardDistance = 1.10f;
+                    positioner.heightOffset = -0.08f;
+                    if (currentScene.name.IndexOf("jarvis", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        positioner.stickyMode = VRUIPositioner.StickyMode.WorldAnchor;
+                    }
                     EditorUtility.SetDirty(positioner);
-                    Debug.Log("[UIDiagnosticFixer] VRUIPositioner reset: isHUDVisible=true, stickyMode=WorldAnchor.");
+                    Debug.Log($"[UIDiagnosticFixer] VRUIPositioner checked: isHUDVisible=true, forwardDistance={positioner.forwardDistance}, stickyMode={positioner.stickyMode}.");
                 }
 
                 // Ensure BoxCollider for VR raycasting
@@ -105,6 +110,30 @@ namespace ProjectName.Editor
                     }
                 }
 
+                // Ensure XR Device Simulator does not spawn huge world-space UI ribbon blocking the sky
+                var sim = UnityEngine.Object.FindAnyObjectByType<UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation.XRDeviceSimulator>();
+                if (sim != null)
+                {
+                    var simSo = new SerializedObject(sim);
+                    var uiProp = simSo.FindProperty("m_DeviceSimulatorUI");
+                    if (uiProp != null && uiProp.objectReferenceValue != null)
+                    {
+                        uiProp.objectReferenceValue = null;
+                        simSo.ApplyModifiedProperties();
+                        EditorUtility.SetDirty(sim);
+                        Debug.Log("[UIDiagnosticFixer] Cleared m_DeviceSimulatorUI on XRDeviceSimulator.");
+                    }
+                    var simUIChild = sim.transform.Find("XR Device Simulator UI(Clone)");
+                    if (simUIChild != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(simUIChild.gameObject);
+                        Debug.Log("[UIDiagnosticFixer] Destroyed XR Device Simulator UI(Clone).");
+                    }
+                }
+
+                // 4. Ensure Strictly Single Terrain in Scene (Purge any overlapping/duplicate terrains)
+                FixTerrainDuplicates(currentScene);
+
                 // Save scene if dirty
                 if (currentScene.isDirty)
                 {
@@ -119,6 +148,46 @@ namespace ProjectName.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log("<color=#00FF88><b>[UIDiagnosticFixer] Diagnosis & Repair complete!</b></color>");
+        }
+
+        private static void FixTerrainDuplicates(UnityEngine.SceneManagement.Scene currentScene)
+        {
+            var terrains = UnityEngine.Object.FindObjectsByType<UnityEngine.Terrain>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (terrains.Length <= 1) return;
+
+            Debug.LogWarning($"[UIDiagnosticFixer] Found {terrains.Length} terrains in scene '{currentScene.name}'. Purging duplicates to prevent overlapping heightmaps...");
+
+            // Find primary terrain (prefer one with rock scatterer or teleportation area or children)
+            UnityEngine.Terrain primary = terrains[0];
+            for (int i = 0; i < terrains.Length; i++)
+            {
+                var t = terrains[i];
+                if (t.GetComponent<ProjectName.Terrain.PlanetRockScatterer>() != null ||
+                    t.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>() != null ||
+                    t.transform.childCount > 0)
+                {
+                    primary = t;
+                    break;
+                }
+            }
+
+            int purged = 0;
+            for (int i = 0; i < terrains.Length; i++)
+            {
+                var t = terrains[i];
+                if (t != primary && t != null && t.gameObject != null)
+                {
+                    Debug.Log($"[UIDiagnosticFixer] Purging duplicate terrain GameObject '{t.gameObject.name}'.");
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
+                    purged++;
+                }
+            }
+
+            if (purged > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(currentScene);
+                Debug.Log($"[UIDiagnosticFixer] Successfully purged {purged} duplicate terrain(s). Strictly 1 terrain remains.");
+            }
         }
 
         private static void FixPanelSettingsAsset(string assetPath)
@@ -136,8 +205,15 @@ namespace ProjectName.Editor
         {
             if (ps == null) return;
 
-            // 1. Remove textSettings if it causes FontAsset null material crash
-            ps.textSettings = null;
+            // 1. Assign proper TextCore SDF PanelTextSettings for razor-sharp VR text
+            if (ps.textSettings == null)
+            {
+                var pts = AssetDatabase.LoadAssetAtPath<PanelTextSettings>("Assets/project/UI/WorkbenchPanelTextSettings.asset");
+                if (pts != null)
+                {
+                    ps.textSettings = pts;
+                }
+            }
 
             // 2. Configure WorldSpace
             ps.renderMode = PanelRenderMode.WorldSpace;
@@ -153,11 +229,11 @@ namespace ProjectName.Editor
             if (gammaProp != null) gammaProp.boolValue = false;
             so.ApplyModifiedProperties();
 
-            // 4. Dynamic atlas settings
+            // 4. Dynamic atlas settings (High resolution for VR readability)
             var atlas = ps.dynamicAtlasSettings;
-            atlas.minAtlasSize = 512;
+            atlas.minAtlasSize = 1024;
             atlas.maxAtlasSize = 4096;
-            atlas.maxSubTextureSize = 1024;
+            atlas.maxSubTextureSize = 2048;
             ps.dynamicAtlasSettings = atlas;
         }
     }

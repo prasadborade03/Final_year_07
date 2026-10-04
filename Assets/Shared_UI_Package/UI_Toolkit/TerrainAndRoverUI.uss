@@ -144,10 +144,9 @@
 }
 
 .planet-name-text {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 12px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 16px;
     -unity-font-style: bold;
     letter-spacing: 1.5px;
     color: var(--text-1);
@@ -206,8 +205,8 @@
     bottom: var(--screen-margin);
     left: var(--screen-margin);
     flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    align-items: stretch;
+    gap: 6px;
     pointer-events: auto;
 }
 
@@ -216,16 +215,15 @@
     bottom: var(--screen-margin);
     right: var(--screen-margin);
     flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    align-items: stretch;
+    gap: 6px;
     pointer-events: auto;
 }
 
 .pill-label {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 10px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 16px;
     -unity-font-style: bold;
     color: var(--text-2);
     background-color: var(--surface);
@@ -239,25 +237,30 @@
 }
 
 .bottom-segmented-bar {
-    width: 278px;
-    height: 36px;
+    width: 100%;
+    height: 48px;
     border-radius: var(--r-btn);
     background-color: var(--surface);
     border-width: 1px;
     border-color: var(--border);
-    padding: 2px;
+    padding: 3px;
+    flex-direction: row;
+    align-items: center;
 }
 
 .bottom-segmented-bar .segmented-item {
     border-radius: var(--r-sm);
-    font-size: 11px;
+    font-size: 16px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .bottom-segmented-bar .segmented-item.mode-pill-active,
 .bottom-segmented-bar .segmented-item.segmented-active {
-    background-color: #16242B;
-    border-color: var(--accent);
-    color: #FFFFFF;
+    background-color: #00E5FF;
+    border-color: #00E5FF;
+    color: #040E1C;
     -unity-font-style: bold;
 }
 
@@ -377,10 +380,9 @@
 }
 
 .rover-row-title {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-1);
     margin-left: 6px;
@@ -390,10 +392,9 @@
 .status-badge {
     border-radius: var(--r-sm);
     padding: 1px 6px;
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-3);
     background-color: var(--surface-2);
@@ -411,10 +412,9 @@
    5. Mode A: Driving HUD Cards Specific Styles
    ------------------------------------------------------------------------- */
 .stat-coords-val {
-    -unity-font: var(--font-body);
-    -unity-font: var(--font-body);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--accent);
     background-color: var(--surface-2);
@@ -456,19 +456,17 @@
 }
 
 .wheel-name {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-2);
 }
 
 .wheel-status {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
     -unity-font-style: bold;
 }
 
@@ -572,9 +570,8 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 1px 5px;
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
     font-size: 8px;
     color: var(--text-3);
     pointer-events: none;
@@ -587,10 +584,9 @@
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-2);
     align-items: center;
@@ -640,7 +636,7 @@
     margin: 0;
     -unity-text-align: middle-left;
     /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    font-size: 15px;
 }
 
 #FieldSeed:hover {
@@ -664,7 +660,7 @@
     align-items: center;
     justify-content: center;
     gap: 3px;
-    font-size: 10px;
+    font-size: 14px;
     border-radius: var(--r-sm);
 }
 
@@ -687,10 +683,9 @@
 }
 
 .history-tag {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
     color: var(--text-3);
     padding: 0 4px;
 }
@@ -737,10 +732,9 @@
 }
 
 .slider-label {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-2);
     text-transform: uppercase;
@@ -752,10 +746,9 @@
 }
 
 .slider-val-label {
-    -unity-font: var(--font-body);
-    -unity-font: var(--font-body);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 10px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-1);
     width: 42px;
@@ -789,10 +782,9 @@
 }
 
 .material-chip-label {
-    -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-2);
     overflow: hidden;
@@ -839,10 +831,9 @@
 }
 
 .placement-banner-text {
-    -unity-font: var(--font-body);
-    -unity-font: var(--font-body);
-    /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+    font-size: 15px;
     color: var(--text-1);
     -unity-font-style: bold;
 }

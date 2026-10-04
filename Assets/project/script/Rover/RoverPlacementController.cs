@@ -750,6 +750,11 @@ namespace ProjectName.Rover
                 uiToolkit.SetPlacementBannerActive(false, "");
             }
 
+            if (ProjectName.VR.JarvisCameraFlightController.Instance != null && roverObj != null)
+            {
+                ProjectName.VR.JarvisCameraFlightController.Instance.SnapToRover(roverObj.transform);
+            }
+
             Debug.Log($"[RoverPlacement] Rover '{roverId}' successfully spawned and placed at {targetPoint} (yaw: {yaw:F1}°).");
         }
 

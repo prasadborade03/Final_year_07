@@ -75,11 +75,17 @@
     --h-control-sm: 30px;
     --h-tile: 30px;
 
-    --side-col-width: 316px;
+    --side-col-width: 390px;
 
     /* -------------------------------------------------------------
-       Typography Fonts
+       Typography Fonts & SDF Definitions (VR Signed Distance Fields)
        ------------------------------------------------------------- */
-    --font-heading: url("/Assets/project/UI/fonts/Rajdhani-SemiBold.ttf");
-    --font-body: url("/Assets/project/UI/fonts/Inter.ttf");
+    --font-heading-sdf: url("/Assets/project/UI/fonts/Rajdhani-SemiBold TextCore SDF.asset");
+    --font-body-sdf: url("/Assets/project/UI/fonts/Inter TextCore SDF.asset");
+    --font-heading: url("/Assets/project/UI/fonts/Rajdhani-SemiBold TextCore SDF.asset");
+    --font-body: url("/Assets/project/UI/fonts/Inter TextCore SDF.asset");
+
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
 }
+

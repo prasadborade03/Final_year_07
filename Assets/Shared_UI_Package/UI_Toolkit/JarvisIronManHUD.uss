@@ -1,0 +1,805 @@
+/* =========================================================================
+   JarvisIronManHUD.uss - Iron Man Helmet / Jarvis Suit VR HUD Stylesheet
+   Features:
+   - Translucent Holographic Cyber-Glass (see terrain & rovers through UI)
+   - Iconic Arc Reactor Cyan (#00E5FF) and Tactical Amber/Emerald Accents
+   - Peripheral Head-Mounted Visor framing with high readability
+   - Unobstructed central 3D gameplay view
+   ========================================================================= */
+
+:root {
+    /* -------------------------------------------------------------
+       Jarvis High-Contrast Cyber-Glass Tokens for VR & Desktop
+       ------------------------------------------------------------- */
+    /* Deep cyber-glass with 0.90+ opacity: ensures crystal-clear readability against any terrain */
+    --surface: rgba(4, 14, 28, 0.90);
+    --surface-2: rgba(7, 22, 42, 0.94);
+    --surface-3: rgba(12, 34, 62, 0.96);
+    --scrim: rgba(2, 8, 16, 0.85);
+
+    /* Luminous Arc Cyan Wireframes */
+    --border: rgba(0, 229, 255, 0.48);
+    --border-hi: rgba(0, 245, 255, 0.95);
+
+    /* Jarvis Arc Reactor Cyan Accent */
+    --accent: #00E5FF;
+    --accent-hover: #38E1FF;
+    --accent-glow: rgba(0, 229, 255, 0.40);
+    --accent-dim: rgba(0, 229, 255, 0.22);
+
+    /* Semantic Buttons */
+    --primary-bg: rgba(0, 229, 255, 0.32);
+    --primary-border: #00E5FF;
+    --primary-text: #FFFFFF;
+
+    --secondary-bg: rgba(8, 28, 54, 0.85);
+    --secondary-border: rgba(0, 229, 255, 0.55);
+    --secondary-text: #E0F7FA;
+
+    --confirm-bg: rgba(0, 230, 118, 0.30);
+    --confirm-border: #00FF88;
+    --confirm-text: #E8F5E9;
+
+    --cancel-bg: rgba(255, 23, 68, 0.30);
+    --cancel-border: #FF3366;
+    --cancel-text: #FFEBEE;
+
+    --danger-bg: rgba(255, 23, 68, 0.35);
+    --danger-border: #FF1744;
+    --danger-text: #FFFFFF;
+
+    --disabled-bg: rgba(6, 16, 26, 0.65);
+    --disabled-border: rgba(0, 229, 255, 0.25);
+    --disabled-text: rgba(128, 222, 234, 0.50);
+
+    /* Status Indicators */
+    --good: #00FF88;
+    --fair: #FFD600;
+    --poor: #FF3366;
+
+    /* Typography: High-Contrast Luminous White & Cyan */
+    --text-1: #FFFFFF;
+    --text-2: #E0F7FA;
+    --text-3: #80DEEA;
+
+    /* High-Tech Rectangular Geometry */
+    --r-panel: 8px;
+    --r-inner: 6px;
+    --r-btn: 6px;
+    --r-pill: 6px;
+    --r-sm: 4px;
+}
+
+/* -------------------------------------------------------------------------
+   Universal VR Signed Distance Field (SDF) Text Rules
+   ------------------------------------------------------------------------- */
+Label, Button, TextField {
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+    -unity-font-style: bold;
+}
+
+/* -------------------------------------------------------------------------
+   1. Holographic Panels & Cards
+   ------------------------------------------------------------------------- */
+.panel-card {
+    background-color: var(--surface);
+    border-radius: var(--r-panel);
+    padding: 12px 16px;
+    border-width: 1.5px;
+    border-color: var(--border);
+    border-top-color: var(--border-hi);
+    border-top-width: 2.5px;
+    border-left-color: rgba(0, 229, 255, 0.80);
+    border-left-width: 2.5px;
+    width: 100%;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+    transition: opacity 180ms ease-out, translate 180ms ease-out, border-color 150ms ease-out;
+}
+
+.panel-card:hover {
+    border-color: rgba(0, 229, 255, 0.85);
+    border-top-color: #38E1FF;
+}
+
+.panel-title {
+    color: #00E5FF;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    -unity-font-style: bold;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.panel-status-tag {
+    font-size: 15px;
+    color: #80DEEA;
+    letter-spacing: 0.5px;
+    -unity-font-style: bold;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+/* -------------------------------------------------------------------------
+   2. Metric Values & Readouts
+   ------------------------------------------------------------------------- */
+.metric-label {
+    color: #E0F7FA;
+    font-size: 16px;
+    letter-spacing: 1.2px;
+    -unity-font-style: bold;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.metric-value {
+    color: #FFFFFF;
+    font-size: 34px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.metric-unit {
+    color: #00E5FF;
+    font-size: 16px;
+    -unity-font-style: bold;
+    margin-left: 6px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.stat-coords-val {
+    color: #00E5FF;
+    font-size: 16px;
+    -unity-font-style: bold;
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    border-left-color: #00E5FF;
+    border-left-width: 3px;
+    padding: 6px 12px;
+    margin-top: 3px;
+    margin-bottom: 4px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+/* -------------------------------------------------------------------------
+   3. Buttons & Interactive Controls
+   ------------------------------------------------------------------------- */
+.btn {
+    height: 44px;
+    border-radius: var(--r-btn);
+    border-width: 1.5px;
+    padding: 0 16px;
+    font-size: 16px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.btn-text {
+    font-size: 16px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.btn-primary {
+    background-color: var(--primary-bg);
+    border-color: var(--primary-border);
+    color: #FFFFFF;
+}
+
+.btn-primary:hover {
+    background-color: rgba(0, 229, 255, 0.45);
+    border-color: #38E1FF;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-bg);
+    border-color: var(--secondary-border);
+    color: var(--secondary-text);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(12, 42, 72, 0.90);
+    border-color: var(--accent);
+    color: #FFFFFF;
+}
+
+/* Mode Switches & Segmented Bars */
+.mode-toggle-bar,
+.bottom-segmented-bar,
+.curve-segmented-bar,
+.brush-segmented-bar {
+    height: 42px;
+    background-color: var(--surface);
+    border-color: var(--border);
+    border-top-color: rgba(0, 229, 255, 0.85);
+    border-top-width: 2px;
+    padding: 3px;
+    border-radius: var(--r-panel);
+}
+
+.segmented-item {
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    padding: 0 12px;
+    height: 34px;
+}
+
+.segmented-text {
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+.segmented-item.segmented-active,
+.segmented-item.view-switch-active,
+.segmented-item.mode-pill-active,
+.segmented-item.brush-btn-active,
+.segmented-item.curve-btn-active {
+    background-color: rgba(0, 229, 255, 0.35);
+    border-color: var(--accent);
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+.segmented-item:hover {
+    background-color: rgba(0, 229, 255, 0.22);
+    color: #FFFFFF;
+}
+
+/* Rover Selection Rows */
+.rover-row {
+    height: 44px;
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    border-left-color: rgba(0, 229, 255, 0.50);
+    border-left-width: 3px;
+    padding: 0 12px;
+    margin-bottom: 5px;
+    border-radius: var(--r-inner);
+}
+
+.rover-row:hover {
+    background-color: rgba(10, 36, 62, 0.90);
+    border-color: rgba(0, 229, 255, 0.80);
+}
+
+.rover-row-active {
+    background-color: rgba(0, 229, 255, 0.28);
+    border-color: var(--accent);
+    border-left-color: #00E5FF;
+    border-left-width: 4px;
+}
+
+.rover-row-active .rover-row-title {
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+.rover-row-title {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+    letter-spacing: 0.5px;
+}
+
+/* Status Badges */
+.status-badge {
+    background-color: rgba(6, 26, 48, 0.80);
+    border-color: var(--border);
+    color: #80DEEA;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+}
+
+.status-badge-active {
+    background-color: rgba(0, 230, 118, 0.30);
+    border-color: #00FF88;
+    color: #00FF88;
+    -unity-font-style: bold;
+}
+
+/* Wheel Actuator Tiles */
+.wheel-cell,
+.wheel-tile {
+    height: 38px;
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    border-left-color: rgba(0, 229, 255, 0.60);
+    border-left-width: 3px;
+    padding: 0 10px;
+    border-radius: var(--r-inner);
+}
+
+.wheel-tile-name,
+.wheel-name {
+    color: #00E5FF;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.wheel-status-text,
+.wheel-status {
+    color: #00FF88;
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+.wheel-segment,
+.wheel-seg {
+    width: 8px;
+    height: 14px;
+    border-radius: 2px;
+}
+
+.wheel-segment.seg-active,
+.wheel-seg.seg-active {
+    background-color: #00FF88;
+}
+
+/* Sliders */
+.custom-slider .unity-base-slider__tracker {
+    background-color: rgba(6, 26, 48, 0.85);
+    border-color: var(--border);
+    border-width: 1px;
+    height: 8px;
+}
+
+.custom-slider .unity-base-slider__dragger {
+    background-color: #00E5FF;
+    border-radius: 3px;
+    width: 16px;
+    height: 16px;
+}
+
+.slider-label {
+    color: #80DEEA;
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+.slider-val-label {
+    color: #FFFFFF;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+/* Top Shell Pills */
+.planet-pill,
+.minimize-pill {
+    height: 38px;
+    background-color: var(--surface);
+    border-color: var(--border);
+    border-top-color: var(--accent);
+    border-top-width: 2px;
+    padding: 0 14px;
+    border-radius: var(--r-btn);
+}
+
+.planet-pill:hover,
+.minimize-pill:hover {
+    background-color: rgba(0, 229, 255, 0.30);
+    border-color: #00E5FF;
+}
+
+.planet-name-text {
+    color: #00E5FF;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.planet-pill:hover,
+.minimize-pill:hover {
+    background-color: rgba(0, 229, 255, 0.20);
+    border-color: #00E5FF;
+}
+
+.planet-name-text {
+    color: #00E5FF;
+}
+
+/* -------------------------------------------------------------------------
+   4. Iron Man Helmet Visor Reticle & Central HUD Elements
+   ------------------------------------------------------------------------- */
+.jarvis-visor-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Jarvis Top Visor Banner */
+.jarvis-top-banner {
+    position: absolute;
+    top: 14px;
+    align-self: center;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 12px;
+    background-color: rgba(4, 18, 34, 0.50);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    border-top-color: #00E5FF;
+    border-top-width: 2px;
+    pointer-events: none;
+}
+
+.jarvis-banner-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #00E5FF;
+}
+
+.jarvis-banner-text {
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #00E5FF;
+    letter-spacing: 2px;
+    margin: 0;
+    padding: 0;
+}
+
+.jarvis-banner-subtext {
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 14px;
+    color: #E0F7FA;
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Central Visor Reticle (Unobstructed View) */
+.jarvis-reticle-box {
+    width: 320px;
+    height: 200px;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Reticle Left & Right Framing Brackets */
+.jarvis-reticle-bracket-left {
+    position: absolute;
+    left: 0;
+    top: 30px;
+    bottom: 30px;
+    width: 18px;
+    border-left-width: 2px;
+    border-left-color: rgba(0, 229, 255, 0.70);
+    border-top-width: 2px;
+    border-top-color: rgba(0, 229, 255, 0.70);
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 229, 255, 0.70);
+}
+
+.jarvis-reticle-bracket-right {
+    position: absolute;
+    right: 0;
+    top: 30px;
+    bottom: 30px;
+    width: 18px;
+    border-right-width: 2px;
+    border-right-color: rgba(0, 229, 255, 0.70);
+    border-top-width: 2px;
+    border-top-color: rgba(0, 229, 255, 0.70);
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 229, 255, 0.70);
+}
+
+/* Center Crosshair Ring */
+.jarvis-reticle-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.40);
+    align-items: center;
+    justify-content: center;
+}
+
+.jarvis-reticle-crosshair {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: #00E5FF;
+    background-color: rgba(0, 229, 255, 0.25);
+}
+
+/* Pitch / Horizon Wing Marks */
+.jarvis-horizon-line-left {
+    position: absolute;
+    left: 45px;
+    width: 40px;
+    height: 1px;
+    background-color: rgba(0, 229, 255, 0.45);
+}
+
+.jarvis-horizon-line-right {
+    position: absolute;
+    right: 45px;
+    width: 40px;
+    height: 1px;
+    background-color: rgba(0, 229, 255, 0.45);
+}
+
+/* Jarvis Bottom Telemetry Footer */
+.jarvis-bottom-status {
+    position: absolute;
+    bottom: 12px;
+    align-self: center;
+    flex-direction: row;
+    gap: 16px;
+    padding: 4px 16px;
+    background-color: rgba(4, 18, 34, 0.75);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    pointer-events: none;
+}
+
+.jarvis-status-item {
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+    font-size: 15px;
+    color: #E0F7FA;
+    letter-spacing: 1px;
+}
+
+.jarvis-status-val {
+    color: #00E5FF;
+    -unity-font-style: bold;
+}
+
+/* Side Visor Telemetry Wings */
+.jarvis-wing-left {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    translate: 0 -50%;
+    padding: 8px 12px;
+    background-color: rgba(4, 18, 34, 0.75);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    border-left-width: 2.5px;
+    border-left-color: #00E5FF;
+    pointer-events: none;
+    gap: 6px;
+}
+
+.jarvis-wing-right {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    translate: 0 -50%;
+    padding: 8px 12px;
+    background-color: rgba(4, 18, 34, 0.75);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    border-right-width: 2.5px;
+    border-right-color: #00E5FF;
+    pointer-events: none;
+    gap: 6px;
+}
+
+.jarvis-wing-metric {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+}
+
+.jarvis-wing-lbl {
+    font-size: 14px;
+    color: #E0F7FA;
+    letter-spacing: 1px;
+    -unity-font-style: bold;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.jarvis-wing-val {
+    font-size: 16px;
+    color: #00E5FF;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.jarvis-perspective-pill {
+    padding: 3px 10px;
+    background-color: rgba(0, 229, 255, 0.22);
+    border-radius: var(--r-sm);
+    border-width: 1px;
+    border-color: #00E5FF;
+    color: #00E5FF;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+/* -------------------------------------------------------------------------
+   Dual Dedicated Interactive Boxes (Camera Box & Drive Box)
+   ------------------------------------------------------------------------- */
+.shell-bottom-left {
+    position: absolute;
+    bottom: 38px;
+    left: 310px;
+    padding: 18px 24px;
+    background-color: rgba(3, 10, 22, 0.98);
+    border-radius: var(--r-panel);
+    border-width: 2px;
+    border-color: rgba(0, 229, 255, 0.75);
+    border-top-width: 3.5px;
+    border-top-color: #00E5FF;
+    border-left-width: 3.5px;
+    border-left-color: #00E5FF;
+    pointer-events: auto;
+    gap: 10px;
+    width: 630px;
+}
+
+.shell-bottom-right {
+    position: absolute;
+    bottom: 38px;
+    right: 310px;
+    padding: 18px 24px;
+    background-color: rgba(3, 10, 22, 0.98);
+    border-radius: var(--r-panel);
+    border-width: 2px;
+    border-color: rgba(0, 229, 255, 0.75);
+    border-top-width: 3.5px;
+    border-top-color: #00E5FF;
+    border-right-width: 3.5px;
+    border-right-color: #00E5FF;
+    pointer-events: auto;
+    gap: 10px;
+    align-items: stretch;
+    width: 630px;
+}
+
+.box-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.box-title {
+    color: #00E5FF;
+    font-size: 28px;
+    -unity-font-style: bold;
+    letter-spacing: 1.5px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.box-subtitle {
+    color: #E0F7FA;
+    font-size: 18px;
+    letter-spacing: 0.8px;
+    -unity-font-style: bold;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+}
+
+.box-live-speed {
+    color: #00FF88;
+    font-size: 44px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-heading-sdf);
+}
+
+.bottom-segmented-bar {
+    height: 60px;
+    width: 100%;
+    background-color: rgba(5, 18, 36, 0.95);
+    border-radius: var(--r-inner);
+    border-width: 1.5px;
+    border-color: rgba(0, 229, 255, 0.55);
+    padding: 4px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bottom-segmented-bar .segmented-item {
+    height: 52px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    padding: 0 10px;
+    font-size: 21px;
+    -unity-font-style: bold;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+    color: #FFFFFF;
+    background-color: rgba(8, 28, 54, 0.80);
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.30);
+    margin: 0 3px;
+    align-items: center;
+    justify-content: center;
+}
+
+.bottom-segmented-bar .segmented-item:hover {
+    background-color: rgba(0, 229, 255, 0.30);
+    border-color: #00E5FF;
+    color: #FFFFFF;
+}
+
+.bottom-segmented-bar .segmented-item.segmented-active,
+.bottom-segmented-bar .segmented-item.mode-pill-active {
+    background-color: #00E5FF;
+    border-color: #00E5FF;
+    border-width: 1.5px;
+    color: #040E1C;
+    -unity-font-style: bold;
+}
+
+.box-footer-hint {
+    color: #80DEEA;
+    font-size: 17px;
+    letter-spacing: 0.5px;
+    margin-top: 6px;
+    -unity-font-style: bold;
+    -unity-font: initial;
+    -unity-font-definition: var(--font-body-sdf);
+}
+
+/* -------------------------------------------------------------------------
+   Ergonomic Spatial Positioning (Centralized for VR Sweet Spot)
+   ------------------------------------------------------------------------- */
+.col-left {
+    margin-left: 48px;
+    width: 390px;
+}
+
+.col-right {
+    margin-right: 48px;
+    width: 390px;
+}
+
+.shell-top-row {
+    top: 24px;
+    padding: 0 48px;
+}
+
+
+

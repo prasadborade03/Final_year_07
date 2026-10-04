@@ -58,6 +58,10 @@ namespace ProjectName.VR
         [Tooltip("Secondary keyboard shortcut for parity with HUD key.")]
         public KeyCode secondaryShortcut = KeyCode.U;
 
+        [Header("Iron Man Sticky HUD Mode")]
+        [Tooltip("If enabled, preserves sticky HeadLocked or SmoothFollow HUD instead of forcing WorldAnchor.")]
+        public bool enableIronManStickyHUD = false;
+
         [Header("State")]
         [SerializeField]
         private bool isUIVisible = true;
@@ -245,6 +249,20 @@ namespace ProjectName.VR
                 if (xrCamera == null) return;
             }
 
+            if (enableIronManStickyHUD)
+            {
+                studioUIRoot.SetActive(true);
+                isUIVisible = true;
+                var pos = studioUIRoot.GetComponent<ProjectName.UI.VRUIPositioner>();
+                if (pos != null)
+                {
+                    pos.ForceShow();
+                    pos.Recenter();
+                }
+                Debug.Log("[FloatingUIRecallController] Iron Man HUD recalled & centered in front of user.");
+                return;
+            }
+
             DeactivateLegacyStickyMode();
 
             // Spec §4.2 Math:
@@ -297,6 +315,7 @@ namespace ProjectName.VR
         /// </summary>
         private void DeactivateLegacyStickyMode()
         {
+            if (enableIronManStickyHUD) return;
             if (studioUIRoot == null) return;
 
             var legacyPositioner = studioUIRoot.GetComponent<ProjectName.UI.VRUIPositioner>();
