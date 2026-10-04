@@ -77,15 +77,6 @@ public class SimulationFlowController : MonoBehaviour
     {
         if (currentState == State.WaitingForClickToPlace)
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                if (pendingRobot != null) SetRoverFrozen(pendingRobot, false);
-                SetState(State.ActiveDriving);
-                pendingRobot = null;
-                SetGuideText("Placement cancelled.");
-                return;
-            }
-
             bool vrTriggerDown = CheckVRTriggerJustPressed();
             if (Input.GetMouseButtonDown(0) || vrTriggerDown)
             {
@@ -297,10 +288,6 @@ public class SimulationFlowController : MonoBehaviour
                 SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD. M20: Q/E knee lift. M2020: M (mode), Space (clearance).");
 
                 SetState(State.ActiveDriving);
-                if (ProjectName.VR.JarvisCameraFlightController.Instance != null && pendingRobot != null)
-                {
-                    ProjectName.VR.JarvisCameraFlightController.Instance.SnapToRover(pendingRobot.transform);
-                }
                 pendingRobot = null;
             }
             else

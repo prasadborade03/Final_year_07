@@ -40,44 +40,6 @@ public class RoverImporter_husky : MonoBehaviour
     private ArticulationBody rearLeftWheel;
     private ArticulationBody rearRightWheel;
 
-    private void Start()
-    {
-        if (currentRoverObject == null)
-        {
-            var preExisting = GameObject.Find("GeneratedHusky");
-            if (preExisting != null)
-            {
-                currentRoverObject = preExisting;
-                if (profile == null)
-                {
-                    profile = Resources.Load<RoverProfile>("RoverProfiles/HuskyProfile");
-                }
-
-                ArticulationBody trueRoot = null;
-                var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>();
-                foreach (var body in allBodies)
-                {
-                    body.useGravity = true;
-                    body.linearDamping = linearDamping;
-                    body.angularDamping = angularDamping;
-                    body.jointFriction = jointFriction;
-                    if (body.isRoot)
-                    {
-                        trueRoot = body;
-                    }
-                }
-
-                if (trueRoot != null)
-                {
-                    trueRoot.immovable = false;
-                    trueRoot.useGravity = true;
-                }
-
-                StartCoroutine(SetupAfterPhysicsFrame(currentRoverObject, trueRoot));
-            }
-        }
-    }
-
     public GameObject SpawnRover()
     {
         if (currentRoverObject != null)

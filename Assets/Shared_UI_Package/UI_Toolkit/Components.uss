@@ -30,9 +30,10 @@
 }
 
 .panel-title {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 1px;
     color: var(--text-2);
@@ -64,9 +65,10 @@
 }
 
 .metric-label {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 10px;
     -unity-font-style: bold;
     letter-spacing: 1px;
     color: var(--text-3);
@@ -80,8 +82,9 @@
 }
 
 .metric-value {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
     font-size: 20px;
     -unity-font-style: bold;
     color: var(--text-1);
@@ -92,9 +95,10 @@
 }
 
 .metric-unit {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     color: var(--text-3);
     margin-left: 4px;
     -unity-text-align: middle-left;
@@ -109,9 +113,10 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 0 12px;
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
     flex-direction: row;
@@ -131,9 +136,10 @@
 }
 
 .btn-text {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
     margin: 0;
@@ -318,9 +324,10 @@
     border-color: transparent;
     background-color: transparent;
     color: var(--text-2);
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: normal;
     align-items: center;
     justify-content: center;
@@ -359,9 +366,10 @@
 }
 
 .toggle-switch-label {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     color: var(--text-2);
 }
 
@@ -419,9 +427,10 @@
 .custom-toggle > .unity-base-field__label {
     min-width: 0;
     flex-grow: 0;
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
     margin: 0 6px 0 0;
@@ -486,18 +495,20 @@
 }
 
 .slider-title {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
     text-transform: uppercase;
 }
 
 .slider-readout {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
     min-width: 40px;
@@ -574,9 +585,10 @@
 .custom-dropdown .unity-base-popup-field__text,
 .custom-dropdown .unity-dropdown-field__text,
 .custom-dropdown TextElement {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     color: var(--text-1);
     -unity-font-style: normal;
     flex-grow: 1;
@@ -612,9 +624,10 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 4px 8px;
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     color: var(--text-1);
     -unity-text-align: middle-left;
     transition: border-color 100ms ease-out;
@@ -664,9 +677,10 @@
 
 .list-row-title,
 .rover-row-title {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-1);
     flex-grow: 1;
@@ -677,9 +691,10 @@
 .status-badge {
     border-radius: var(--r-sm);
     padding: 2px 6px;
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 9px;
     -unity-font-style: bold;
     color: var(--text-3);
     background-color: var(--surface-3);
@@ -711,9 +726,10 @@
 }
 
 .wheel-tile-label {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     -unity-font-style: bold;
     color: var(--text-2);
 }
@@ -732,9 +748,10 @@
 }
 
 .wheel-status-text {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 10px;
     color: var(--text-3);
     margin-left: 4px;
 }
@@ -748,9 +765,10 @@
     border-color: var(--border);
     background-color: var(--surface-2);
     padding: 2px 6px;
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
     margin: 0 2px;
@@ -762,9 +780,10 @@
     border-width: 1px;
     border-color: var(--border);
     padding: 2px 6px;
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 9px;
     color: var(--text-2);
 }
 
@@ -802,9 +821,10 @@
     border-color: var(--accent);
 }
 .material-chip-label {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 14px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 10px;
     -unity-font-style: bold;
     color: var(--text-2);
     overflow: hidden;
@@ -843,17 +863,19 @@
 
 .banner-title,
 .placement-banner-text {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 16px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 12px;
     -unity-font-style: bold;
     color: var(--text-1);
 }
 
 .banner-subtitle {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-body-sdf);
-    font-size: 15px;
+    -unity-font: var(--font-body);
+    -unity-font: var(--font-body);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 11px;
     color: var(--text-3);
     flex-direction: row;
     align-items: center;
@@ -897,9 +919,10 @@
 }
 
 .modal-title {
-    -unity-font: initial;
-    -unity-font-definition: var(--font-heading-sdf);
-    font-size: 16px;
+    -unity-font: var(--font-heading);
+    -unity-font: var(--font-heading);
+    /* -unity-font-definition disabled for TTF */
+    font-size: 13px;
     -unity-font-style: bold;
     color: var(--text-1);
     letter-spacing: 1.5px;
