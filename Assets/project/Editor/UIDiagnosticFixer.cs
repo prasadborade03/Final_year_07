@@ -108,6 +108,27 @@ namespace ProjectName.Editor
                     }
                 }
 
+                // Ensure XR Device Simulator does not spawn huge world-space UI ribbon blocking the sky
+                var sim = UnityEngine.Object.FindAnyObjectByType<UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation.XRDeviceSimulator>();
+                if (sim != null)
+                {
+                    var simSo = new SerializedObject(sim);
+                    var uiProp = simSo.FindProperty("m_DeviceSimulatorUI");
+                    if (uiProp != null && uiProp.objectReferenceValue != null)
+                    {
+                        uiProp.objectReferenceValue = null;
+                        simSo.ApplyModifiedProperties();
+                        EditorUtility.SetDirty(sim);
+                        Debug.Log("[UIDiagnosticFixer] Cleared m_DeviceSimulatorUI on XRDeviceSimulator.");
+                    }
+                    var simUIChild = sim.transform.Find("XR Device Simulator UI(Clone)");
+                    if (simUIChild != null)
+                    {
+                        UnityEngine.Object.DestroyImmediate(simUIChild.gameObject);
+                        Debug.Log("[UIDiagnosticFixer] Destroyed XR Device Simulator UI(Clone).");
+                    }
+                }
+
                 // Save scene if dirty
                 if (currentScene.isDirty)
                 {

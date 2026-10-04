@@ -30,12 +30,6 @@ namespace ProjectName.VR
         private Button btnCamTop;
         private Button btnCamFree;
 
-        private Button btnDriverFront;
-        private Button btnDriverRear;
-        private Button btnDriverLeft;
-        private Button btnDriverRight;
-        private Button btnDriverTop;
-        private Button btnDriverFree;
 
         private Transform mainCameraTransform;
         private Vector3 lastCamPos;
@@ -86,26 +80,12 @@ namespace ProjectName.VR
             btnCamTop = root.Q<Button>("BtnCamTop");
             btnCamFree = root.Q<Button>("BtnCamFree");
 
-            btnDriverFront = root.Q<Button>("BtnDriverCamFront");
-            btnDriverRear = root.Q<Button>("BtnDriverCamRear");
-            btnDriverLeft = root.Q<Button>("BtnDriverCamLeft");
-            btnDriverRight = root.Q<Button>("BtnDriverCamRight");
-            btnDriverTop = root.Q<Button>("BtnDriverCamTop");
-            btnDriverFree = root.Q<Button>("BtnDriverCamFree");
-
             if (btnCamFront != null) btnCamFront.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Front);
             if (btnCamRear != null) btnCamRear.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Rear);
             if (btnCamLeft != null) btnCamLeft.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Left);
             if (btnCamRight != null) btnCamRight.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Right);
             if (btnCamTop != null) btnCamTop.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Top);
             if (btnCamFree != null) btnCamFree.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.FreeFly);
-
-            if (btnDriverFront != null) btnDriverFront.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Front);
-            if (btnDriverRear != null) btnDriverRear.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Rear);
-            if (btnDriverLeft != null) btnDriverLeft.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Left);
-            if (btnDriverRight != null) btnDriverRight.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Right);
-            if (btnDriverTop != null) btnDriverTop.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.Top);
-            if (btnDriverFree != null) btnDriverFree.clicked += () => SwitchPerspective(JarvisCameraFlightController.PerspectiveMode.FreeFly);
         }
 
         private void SwitchPerspective(JarvisCameraFlightController.PerspectiveMode mode)
@@ -217,13 +197,6 @@ namespace ProjectName.VR
             SetBtnActive(btnCamRight, mode == JarvisCameraFlightController.PerspectiveMode.Right);
             SetBtnActive(btnCamTop, mode == JarvisCameraFlightController.PerspectiveMode.Top);
             SetBtnActive(btnCamFree, mode == JarvisCameraFlightController.PerspectiveMode.FreeFly);
-
-            SetBtnActive(btnDriverFront, mode == JarvisCameraFlightController.PerspectiveMode.Front);
-            SetBtnActive(btnDriverRear, mode == JarvisCameraFlightController.PerspectiveMode.Rear);
-            SetBtnActive(btnDriverLeft, mode == JarvisCameraFlightController.PerspectiveMode.Left);
-            SetBtnActive(btnDriverRight, mode == JarvisCameraFlightController.PerspectiveMode.Right);
-            SetBtnActive(btnDriverTop, mode == JarvisCameraFlightController.PerspectiveMode.Top);
-            SetBtnActive(btnDriverFree, mode == JarvisCameraFlightController.PerspectiveMode.FreeFly);
         }
 
         private void SetBtnActive(Button btn, bool active)
