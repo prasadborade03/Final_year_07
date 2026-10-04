@@ -814,7 +814,7 @@ namespace ProjectName.Terrain
 
             if (studioMainGrid != null)
             {
-                studioMainGrid.style.display = hudMode ? DisplayStyle.None : DisplayStyle.Flex;
+                studioMainGrid.style.display = DisplayStyle.Flex;
             }
 
             if (studioRoot != null)

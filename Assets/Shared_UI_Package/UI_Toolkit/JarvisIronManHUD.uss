@@ -796,13 +796,6 @@ Label, Button, TextField {
     width: 390px;
 }
 
-/* In Driving Mode: Hide side columns and top bar so user has 100% clear view of rover with ONLY the two interactive boxes */
-.mode-driving .col-left,
-.mode-driving .col-right,
-.mode-driving .shell-top-row {
-    display: none;
-}
-
 .shell-top-row {
     top: 24px;
     padding: 0 48px;
