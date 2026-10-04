@@ -26,8 +26,8 @@
             </ui:Button>
         </ui:VisualElement>
 
-        <!-- 2. Floating Top Row Shell -->
-        <ui:VisualElement name="ShellTopRow" class="shell-top-row" picking-mode="Ignore">
+        <!-- 2. Floating Top Row Shell (Hidden to leave 3D view unobstructed) -->
+        <ui:VisualElement name="ShellTopRow" class="shell-top-row" picking-mode="Ignore" style="display: none;">
             <!-- Mode Switch Pill (Driving HUD vs Full Studio) -->
             <ui:VisualElement class="segmented-bar mode-toggle-bar hud-interactive" picking-mode="Position">
                 <ui:Button name="BtnModeDriving" class="segmented-item mode-toggle-item" tooltip="Unobstructed 3D view for driving [Tab]">
@@ -106,7 +106,8 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:VisualElement name="StudioMainGrid" class="studio-main-grid" picking-mode="Ignore">
+        <!-- 3. Side Columns Main Grid (Hidden: removes unnecessary sliders and clutter) -->
+        <ui:VisualElement name="StudioMainGrid" class="studio-main-grid" picking-mode="Ignore" style="display: none;">
 
             <!-- =============================================================
                  LEFT COLUMN (316px)
@@ -596,28 +597,37 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 4. Floating Bottom Shell Controls -->
-        <!-- Bottom-Left: Camera Perspectives -->
+        <!-- =========================================================================
+             4. DUAL DEDICATED INTERACTIVE BOXES
+             ========================================================================= -->
+        <!-- Box 1 (Left): Rover Camera Perspectives -->
         <ui:VisualElement name="ShellBottomLeft" class="shell-bottom-left" picking-mode="Position">
-            <ui:Label text="Rover Camera Angle" class="pill-label" />
+            <ui:VisualElement class="box-header-row">
+                <ui:Label text="CAMERA PERSPECTIVES" class="box-title" />
+                <ui:Label text="[V] CYCLE · [F] FOCUS" class="box-subtitle" />
+            </ui:VisualElement>
             <ui:VisualElement class="segmented-bar bottom-segmented-bar">
                 <ui:Button name="BtnCamRear" text="Back" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view (Back)" />
-                <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front rover chase view" />
+                <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front chase view" />
                 <ui:Button name="BtnCamLeft" text="Left" class="segmented-item" tooltip="Left flank view" />
                 <ui:Button name="BtnCamRight" text="Right" class="segmented-item" tooltip="Right flank view" />
                 <ui:Button name="BtnCamTop" text="Up" class="segmented-item" tooltip="Overhead / Up view" />
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- Bottom-Right: Driving Modes -->
+        <!-- Box 2 (Right): Rover Drive Controls & Live Speed -->
         <ui:VisualElement name="ShellBottomRight" class="shell-bottom-right" picking-mode="Position">
-            <ui:Label name="LblDriveGroup" text="Driving mode" class="pill-label" />
+            <ui:VisualElement class="box-header-row">
+                <ui:Label text="DRIVE CONTROLS" class="box-title" />
+                <ui:Label name="ValLinearSpeed" text="0.00 m/s" class="box-live-speed" />
+            </ui:VisualElement>
             <ui:VisualElement name="GroupDriveModes" class="segmented-bar bottom-segmented-bar">
                 <ui:Button name="BtnModeStop" text="Stop" class="segmented-item" tooltip="Full stop / handbrake" />
                 <ui:Button name="BtnModeCruise" text="Cruise" class="segmented-item mode-pill-active segmented-active" tooltip="Standard cruise speed" />
                 <ui:Button name="BtnModeExplore" text="Explore" class="segmented-item" tooltip="Fast exploration speed" />
                 <ui:Button name="BtnModePrecision" text="Precision" class="segmented-item" tooltip="Fine-tuned rock crawling" />
             </ui:VisualElement>
+            <ui:Label text="WASD: Drive · RMB: Fly Cam · [C]: Input Focus" class="box-footer-hint" />
         </ui:VisualElement>
 
     </ui:VisualElement>

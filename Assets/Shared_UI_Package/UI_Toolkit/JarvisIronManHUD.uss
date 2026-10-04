@@ -515,3 +515,73 @@
     -unity-font-style: bold;
     letter-spacing: 1px;
 }
+
+/* -------------------------------------------------------------------------
+   Dual Dedicated Interactive Boxes (Camera Box & Drive Box)
+   ------------------------------------------------------------------------- */
+.shell-bottom-left {
+    position: absolute;
+    bottom: 22px;
+    left: 28px;
+    padding: 8px 12px;
+    background-color: rgba(4, 18, 34, 0.75);
+    border-radius: var(--r-panel);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    border-top-width: 2px;
+    border-top-color: #00E5FF;
+    pointer-events: auto;
+    gap: 6px;
+}
+
+.shell-bottom-right {
+    position: absolute;
+    bottom: 22px;
+    right: 28px;
+    padding: 8px 12px;
+    background-color: rgba(4, 18, 34, 0.75);
+    border-radius: var(--r-panel);
+    border-width: 1px;
+    border-color: rgba(0, 229, 255, 0.45);
+    border-top-width: 2px;
+    border-top-color: #00E5FF;
+    pointer-events: auto;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.box-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.box-title {
+    color: #00E5FF;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.box-subtitle {
+    color: #80DEEA;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+}
+
+.box-live-speed {
+    color: #00FF88;
+    font-size: 13px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.box-footer-hint {
+    color: #80DEEA;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+

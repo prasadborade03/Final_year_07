@@ -12,21 +12,11 @@ namespace ProjectName.VR
     /// <summary>
     /// Jarvis Camera Flight & Free-Look Controller.
     /// 
-    /// Solves the camera vs rover input conflict:
-    /// - Rover Input Focus (Default): WASD / Arrows drive the active Rover.
-    ///   Camera smoothly follows the rover in the selected perspective (Rear, Left, Front, Right, Top).
-    ///   Pressing WASD will NEVER break camera follow.
-    /// - Quick Camera Flight (Hold RMB):
-    ///   Holding Right Mouse Button temporarily gives WASD + Mouse to the Camera for 360° look and flight,
-    ///   while simultaneously muting rover drive. Releasing RMB instantly restores rover driving.
-    /// - Dedicated Toggle [C]:
-    ///   Press [C] to lock keyboard WASD onto Camera Flight or Rover Drive without holding RMB.
-    /// - Perspective Presets [V]:
-    ///   Press [V] or click HUD buttons to cycle views (Rear -> Left -> Front -> Right -> Top -> FreeFly).
-    /// - Focus Rover [F]:
-    ///   Press [F] to immediately snap camera to active rover and set focus to Rover Drive.
-    /// - VR Auto-Handoff:
-    ///   Yields 6DOF tracking to Meta Quest 2 / OpenXR headset when VR device is active.
+    /// Solves camera sticking and follow issues:
+    /// - Starts right behind the real GeneratedHusky rover on the terrain (ground-level).
+    /// - Follows the rover in LateUpdate() as the rover drives across the terrain.
+    /// - Smoothly orbits around the rover for Back, Front, Left, Right, and Up perspectives.
+    /// - Clean input separation: WASD drives rover, holding RMB flies camera freely, [C] toggles focus.
     /// </summary>
     [DisallowMultipleComponent]
     public class JarvisCameraFlightController : MonoBehaviour
@@ -53,10 +43,6 @@ namespace ProjectName.VR
         [Tooltip("Active target of keyboard WASD/Arrow inputs.")]
         public InputFocus activeInputFocus = InputFocus.Rover;
 
-        /// <summary>
-        /// True if camera is currently consuming flight inputs (muting rover driving).
-        /// Queried by DesktopFreeFlyCamera.IsFreeFlyGrabActive to block Rover controllers.
-        /// </summary>
         public static bool IsCameraFlyingActive
         {
             get
@@ -69,37 +55,23 @@ namespace ProjectName.VR
         public static event Action<InputFocus> OnInputFocusChanged;
 
         [Header("Flight Dynamics")]
-        [Tooltip("Normal flight speed in meters per second.")]
         public float moveSpeed = 14f;
-
-        [Tooltip("Boost multiplier when holding Shift.")]
         public float boostMultiplier = 2.5f;
-
-        [Tooltip("Vertical climb / descend speed.")]
         public float climbSpeed = 8f;
-
-        [Tooltip("Acceleration responsiveness.")]
         public float acceleration = 12f;
 
         [Header("Mouse Look")]
-        [Tooltip("Mouse rotation sensitivity.")]
         public float mouseSensitivity = 2.5f;
-
-        [Tooltip("Smooth look interpolation.")]
         public bool smoothLook = true;
         public float lookSmoothFactor = 20f;
 
         [Header("Rover Follow & Perspectives")]
         public PerspectiveMode activePerspective = PerspectiveMode.Rear;
-        [Tooltip("Distance from rover for orbit perspectives.")]
         public float roverFollowDistance = 4.8f;
-        [Tooltip("Elevation height above rover.")]
-        public float roverFollowHeight = 2.0f;
-        [Tooltip("Smooth follow damping for perspectives.")]
-        public float followSmoothSpeed = 8.0f;
+        public float roverFollowHeight = 1.8f;
+        public float followSmoothSpeed = 12.0f;
 
         [Header("VR Detection")]
-        [Tooltip("Automatically disable desktop mouse/WASD when VR headset tracking is active.")]
         public bool autoDetectVR = true;
 
         private float currentYaw = 0f;
@@ -131,6 +103,15 @@ namespace ProjectName.VR
 
         private void Start()
         {
+            // Position camera behind active rover on the ground
+            var rover = GetActiveRoverTransform();
+            if (rover != null)
+            {
+                Vector3 targetPos = CalculatePerspectiveTargetPos(rover, activePerspective);
+                transform.position = targetPos;
+                transform.LookAt(rover.position + Vector3.up * 0.5f);
+            }
+
             Vector3 angles = transform.eulerAngles;
             currentPitch = angles.x;
             currentYaw = angles.y;
@@ -142,7 +123,6 @@ namespace ProjectName.VR
         {
             bool vrActive = IsVRHeadsetActive();
 
-            // When in VR, let TrackedPoseDriver handle 6DOF tracking natively
             if (vrActive && autoDetectVR)
             {
                 if (trackedPoseDriver != null && !trackedPoseDriver.enabled)
@@ -152,7 +132,6 @@ namespace ProjectName.VR
                 return;
             }
 
-            // On Desktop, disable TrackedPoseDriver so it doesn't fight mouse rotation
             if (trackedPoseDriver != null && trackedPoseDriver.enabled)
             {
                 trackedPoseDriver.enabled = false;
@@ -161,20 +140,19 @@ namespace ProjectName.VR
             HandleHotkeys();
             HandleMouseLook();
 
-            // Flight movement is only handled if the camera is actively being flown:
-            // 1. User toggled activeInputFocus to Camera, OR
-            // 2. User is holding RMB (quick look & fly)
             if (IsCameraFlyingActive)
             {
                 HandleFlightMovement();
             }
             else
             {
-                // Decelerate flight velocity smoothly to zero
                 currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, Time.unscaledDeltaTime * acceleration);
             }
+        }
 
-            // If in an orbit perspective preset and not holding RMB to break out, follow the rover!
+        private void LateUpdate()
+        {
+            // Follow rover smoothly after physics update
             if (activePerspective != PerspectiveMode.FreeFly && !isQuickRMBFlying)
             {
                 UpdateRoverPerspectiveFollow();
@@ -199,20 +177,18 @@ namespace ProjectName.VR
             if (!vPressed && Input.GetKeyDown(KeyCode.V)) vPressed = true;
             if (!fPressed && Input.GetKeyDown(KeyCode.F)) fPressed = true;
 
-            // [C] Toggle Input Focus between Rover and Camera
             if (cPressed)
             {
                 ToggleInputFocus();
             }
 
-            // [F] Focus active rover
             if (fPressed)
             {
                 FocusRover();
             }
-            // [V] Cycle perspective presets
             else if (vPressed)
             {
+                // Cycle: Rear -> Front -> Left -> Right -> Top -> FreeFly
                 int next = ((int)activePerspective + 1) % 6;
                 SetPerspective((PerspectiveMode)next);
             }
@@ -324,7 +300,6 @@ namespace ProjectName.VR
             Vector3 forward = transform.forward;
             Vector3 right = transform.right;
 
-            // Keyboard input
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
@@ -348,7 +323,6 @@ namespace ProjectName.VR
                 if (Input.GetKey(KeyCode.Q)) inputDir -= Vector3.up;
             }
 
-            // Boost
             bool isBoosted = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
@@ -357,7 +331,6 @@ namespace ProjectName.VR
             }
 #endif
 
-            // Scroll wheel speed adjust
             float scroll = 0f;
 #if ENABLE_INPUT_SYSTEM
             if (Mouse.current != null)
@@ -392,7 +365,7 @@ namespace ProjectName.VR
             {
                 Vector3 targetPos = CalculatePerspectiveTargetPos(rover, mode);
                 transform.position = targetPos;
-                transform.LookAt(rover.position + Vector3.up * 0.6f);
+                transform.LookAt(rover.position + Vector3.up * 0.5f);
 
                 Vector3 angles = transform.eulerAngles;
                 currentPitch = angles.x;
@@ -408,12 +381,18 @@ namespace ProjectName.VR
             if (rover == null) return;
 
             Vector3 targetPos = CalculatePerspectiveTargetPos(rover, activePerspective);
-            Vector3 lookTarget = rover.position + Vector3.up * 0.6f;
+            Vector3 lookTarget = rover.position + Vector3.up * 0.5f;
 
+            // Smooth position follow
             transform.position = Vector3.Lerp(transform.position, targetPos, Time.unscaledDeltaTime * followSmoothSpeed);
 
-            Quaternion targetRot = Quaternion.LookRotation((lookTarget - transform.position).normalized, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.unscaledDeltaTime * followSmoothSpeed);
+            // Smooth rotation look-at
+            Vector3 lookDir = (lookTarget - transform.position).normalized;
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(lookDir, Vector3.up);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.unscaledDeltaTime * followSmoothSpeed);
+            }
 
             Vector3 angles = transform.eulerAngles;
             currentPitch = angles.x;
@@ -424,6 +403,7 @@ namespace ProjectName.VR
 
         private Vector3 CalculatePerspectiveTargetPos(Transform rover, PerspectiveMode mode)
         {
+            // Project rover forward vector onto horizontal plane
             Vector3 forward = Vector3.ProjectOnPlane(rover.forward, Vector3.up).normalized;
             if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
@@ -439,7 +419,7 @@ namespace ProjectName.VR
                 case PerspectiveMode.Right:
                     return roverPos + (right * roverFollowDistance) + (Vector3.up * roverFollowHeight);
                 case PerspectiveMode.Top:
-                    return roverPos - (forward * 1.5f) + (Vector3.up * (roverFollowDistance * 1.6f));
+                    return roverPos - (forward * 0.8f) + (Vector3.up * (roverFollowDistance * 1.5f));
                 case PerspectiveMode.Rear:
                 default:
                     return roverPos - (forward * roverFollowDistance) + (Vector3.up * roverFollowHeight);
@@ -462,19 +442,31 @@ namespace ProjectName.VR
 
         public Transform GetActiveRoverTransform()
         {
+            // 1. Check ActiveRoverContext
             if (ActiveRoverContext.HasActiveRover && ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject != null)
             {
                 return ActiveRoverContext.Current.rootGameObject.transform;
             }
 
-            var husky = UnityEngine.Object.FindAnyObjectByType<RoverController_husky>();
+            // 2. Direct search for pre-spawned GeneratedHusky or rover gameobjects
+            var husky = GameObject.Find("GeneratedHusky");
             if (husky != null) return husky.transform;
 
-            var m20 = UnityEngine.Object.FindAnyObjectByType<RoverController_m20>();
+            var m20 = GameObject.Find("GeneratedM20");
             if (m20 != null) return m20.transform;
 
-            var m2020 = UnityEngine.Object.FindAnyObjectByType<RoverController_m2020>();
+            var m2020 = GameObject.Find("GeneratedM2020");
             if (m2020 != null) return m2020.transform;
+
+            // 3. Search for root ArticulationBody sitting on the terrain
+            var bodies = UnityEngine.Object.FindObjectsByType<ArticulationBody>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (var b in bodies)
+            {
+                if (b.isRoot && b.name.IndexOf("origin", StringComparison.OrdinalIgnoreCase) < 0 && b.transform.position.y < 200f)
+                {
+                    return b.transform;
+                }
+            }
 
             return null;
         }
