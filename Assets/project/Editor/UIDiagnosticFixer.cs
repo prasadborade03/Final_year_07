@@ -77,8 +77,8 @@ namespace ProjectName.Editor
                 if (positioner != null)
                 {
                     positioner.isHUDVisible = true;
-                    positioner.forwardDistance = 1.40f;
-                    positioner.heightOffset = -0.05f;
+                    positioner.forwardDistance = 1.10f;
+                    positioner.heightOffset = -0.08f;
                     if (currentScene.name.IndexOf("jarvis", StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         positioner.stickyMode = VRUIPositioner.StickyMode.WorldAnchor;
@@ -162,8 +162,15 @@ namespace ProjectName.Editor
         {
             if (ps == null) return;
 
-            // 1. Remove textSettings if it causes FontAsset null material crash
-            ps.textSettings = null;
+            // 1. Assign proper TextCore SDF PanelTextSettings for razor-sharp VR text
+            if (ps.textSettings == null)
+            {
+                var pts = AssetDatabase.LoadAssetAtPath<PanelTextSettings>("Assets/project/UI/WorkbenchPanelTextSettings.asset");
+                if (pts != null)
+                {
+                    ps.textSettings = pts;
+                }
+            }
 
             // 2. Configure WorldSpace
             ps.renderMode = PanelRenderMode.WorldSpace;

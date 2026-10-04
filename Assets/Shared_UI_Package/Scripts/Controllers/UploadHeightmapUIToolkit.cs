@@ -812,6 +812,11 @@ namespace ProjectName.Terrain
                 colCenter.style.display = hudMode ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
+            if (studioMainGrid != null)
+            {
+                studioMainGrid.style.display = hudMode ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
             if (studioRoot != null)
             {
                 if (hudMode)
@@ -1063,6 +1068,7 @@ namespace ProjectName.Terrain
             RebuildWheelUI(handle);
             ConfigureDriveBarForRover(handle.profile);
             UpdateLiveTelemetryUI();
+            SetDrivingHudMode(true);
         }
 
         private void HandleRoverDestroyed()

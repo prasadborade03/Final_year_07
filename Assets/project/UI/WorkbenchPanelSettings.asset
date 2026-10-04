@@ -49,4 +49,4 @@ MonoBehaviour:
   m_SpriteShader: {fileID: 19012, guid: 0000000000000000f000000000000000, type: 0}
   m_ICUDataAsset: {fileID: 20204, guid: 0000000000000000f000000000000000, type: 0}
   forceGammaRendering: 0
-  textSettings: {fileID: 0}
+  textSettings: {fileID: 11400000, guid: 25d1539c2d96abf46a8eb7d6b987c4c3, type: 2}

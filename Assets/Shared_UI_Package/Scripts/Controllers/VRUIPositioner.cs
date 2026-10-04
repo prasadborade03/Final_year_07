@@ -38,11 +38,11 @@ namespace ProjectName.UI
         [Tooltip("Sticky mode: WorldAnchor = Stationary in world space (non-sticky).")]
         public StickyMode stickyMode = StickyMode.WorldAnchor;
 
-        [Tooltip("Forward distance in meters from camera to UI panel. Sweet spot for Quest 2: 1.40m.")]
-        public float forwardDistance = 1.40f;
+        [Tooltip("Forward distance in meters from camera to UI panel. Optical sweet spot for Quest 2: 1.10m.")]
+        public float forwardDistance = 1.10f;
 
         [Tooltip("Vertical offset relative to camera eye height (negative = slightly below eye level for comfortable reading).")]
-        public float heightOffset = -0.05f;
+        public float heightOffset = -0.08f;
 
         [Tooltip("Follow responsiveness when in SmoothFollow mode.")]
         public float smoothFollowSpeed = 6.0f;
