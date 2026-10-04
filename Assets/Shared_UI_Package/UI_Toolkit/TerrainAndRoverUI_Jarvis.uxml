@@ -26,8 +26,8 @@
             </ui:Button>
         </ui:VisualElement>
 
-        <!-- 2. Floating Top Row Shell (Hidden to leave 3D view unobstructed) -->
-        <ui:VisualElement name="ShellTopRow" class="shell-top-row" picking-mode="Ignore" style="display: none;">
+        <!-- 2. Floating Top Row Shell -->
+        <ui:VisualElement name="ShellTopRow" class="shell-top-row" picking-mode="Ignore">
             <!-- Mode Switch Pill (Driving HUD vs Full Studio) -->
             <ui:VisualElement class="segmented-bar mode-toggle-bar hud-interactive" picking-mode="Position">
                 <ui:Button name="BtnModeDriving" class="segmented-item mode-toggle-item" tooltip="Unobstructed 3D view for driving [Tab]">
@@ -53,61 +53,7 @@
         </ui:VisualElement>
 
         <!-- 3. Side Columns Main Grid -->
-        
-        <!-- Jarvis Iron Man Visor Central Framing (picking-mode="Ignore" ensures 100% click-through to game) -->
-        <ui:VisualElement name="JarvisVisorContainer" class="jarvis-visor-container" picking-mode="Ignore">
-            <!-- Top Visor Diagnostic Banner -->
-            <ui:VisualElement class="jarvis-top-banner" picking-mode="Ignore">
-                <ui:VisualElement class="jarvis-banner-dot" />
-                <ui:Label text="J.A.R.V.I.S. // MARK-LXXXV" class="jarvis-banner-text" />
-                <ui:Label name="LblJarvisBannerSubtext" text="SUIT HUD ONLINE · 6DOF ACTIVE" class="jarvis-banner-subtext" />
-                <ui:Label name="LblJarvisPerspectiveBadge" text="[REAR ORBIT]" class="jarvis-perspective-pill" />
-            </ui:VisualElement>
-
-            <!-- Side Wing Telemetry (Left): Altitude & Speed -->
-            <ui:VisualElement name="JarvisWingLeft" class="jarvis-wing-left" picking-mode="Ignore">
-                <ui:VisualElement class="jarvis-wing-metric" picking-mode="Ignore">
-                    <ui:Label text="ALTITUDE" class="jarvis-wing-lbl" />
-                    <ui:Label name="LblJarvisAltitude" text="76.5 m" class="jarvis-wing-val" />
-                </ui:VisualElement>
-                <ui:VisualElement class="jarvis-wing-metric" picking-mode="Ignore">
-                    <ui:Label text="AIRSPEED" class="jarvis-wing-lbl" />
-                    <ui:Label name="LblJarvisSpeed" text="0.0 m/s" class="jarvis-wing-val" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-
-            <!-- Side Wing Telemetry (Right): Compass Heading & Rover Distance -->
-            <ui:VisualElement name="JarvisWingRight" class="jarvis-wing-right" picking-mode="Ignore">
-                <ui:VisualElement class="jarvis-wing-metric" picking-mode="Ignore">
-                    <ui:Label text="HEADING" class="jarvis-wing-lbl" />
-                    <ui:Label name="LblJarvisHeading" text="042° NE" class="jarvis-wing-val" />
-                </ui:VisualElement>
-                <ui:VisualElement class="jarvis-wing-metric" picking-mode="Ignore">
-                    <ui:Label text="ROVER RNG" class="jarvis-wing-lbl" />
-                    <ui:Label name="LblJarvisTargetRange" text="4.8 m" class="jarvis-wing-val" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-
-            <!-- Center Targeting & Horizon Reticle (Transparent Center for Game View) -->
-            <ui:VisualElement class="jarvis-reticle-box" picking-mode="Ignore">
-                <ui:VisualElement class="jarvis-reticle-bracket-left" />
-                <ui:VisualElement class="jarvis-reticle-bracket-right" />
-                <ui:VisualElement class="jarvis-horizon-line-left" />
-                <ui:VisualElement class="jarvis-horizon-line-right" />
-                <ui:VisualElement class="jarvis-reticle-ring">
-                    <ui:VisualElement class="jarvis-reticle-crosshair" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-
-            <!-- Bottom Visor Telemetry Footer -->
-            <ui:VisualElement class="jarvis-bottom-status" picking-mode="Ignore">
-                <ui:Label name="LblJarvisControlsTip" text="[RMB+Drag] 360° Look · [WASD] Fly · [Shift] Boost · [V] Cycle Cam · [F] Focus Rover · [H] HUD" class="jarvis-status-item" />
-                <ui:Label name="LblJarvisVRStatus" text="VR: READY" class="jarvis-status-item jarvis-status-val" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-
-        <!-- 3. Side Columns Main Grid (Hidden: removes unnecessary sliders and clutter) -->
-        <ui:VisualElement name="StudioMainGrid" class="studio-main-grid" picking-mode="Ignore" style="display: none;">
+        <ui:VisualElement name="StudioMainGrid" class="studio-main-grid" picking-mode="Ignore">
 
             <!-- =============================================================
                  LEFT COLUMN (316px)
