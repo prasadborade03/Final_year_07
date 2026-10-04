@@ -1821,7 +1821,13 @@ namespace ProjectName.Terrain
                 var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
                 if (curTerrain != null && curTerrain.terrainData != null)
                 {
+                    int hRes = currentHeights.GetLength(0);
+                    if (curTerrain.terrainData.heightmapResolution != hRes)
+                    {
+                        curTerrain.terrainData.heightmapResolution = hRes;
+                    }
                     curTerrain.terrainData.SetHeights(0, 0, currentHeights);
+                    curTerrain.terrainData.SyncHeightmap();
                 }
             }
         }

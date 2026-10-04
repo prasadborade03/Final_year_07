@@ -131,6 +131,9 @@ namespace ProjectName.Editor
                     }
                 }
 
+                // 4. Ensure Strictly Single Terrain in Scene (Purge any overlapping/duplicate terrains)
+                FixTerrainDuplicates(currentScene);
+
                 // Save scene if dirty
                 if (currentScene.isDirty)
                 {
@@ -145,6 +148,46 @@ namespace ProjectName.Editor
 
             AssetDatabase.SaveAssets();
             Debug.Log("<color=#00FF88><b>[UIDiagnosticFixer] Diagnosis & Repair complete!</b></color>");
+        }
+
+        private static void FixTerrainDuplicates(UnityEngine.SceneManagement.Scene currentScene)
+        {
+            var terrains = UnityEngine.Object.FindObjectsByType<UnityEngine.Terrain>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (terrains.Length <= 1) return;
+
+            Debug.LogWarning($"[UIDiagnosticFixer] Found {terrains.Length} terrains in scene '{currentScene.name}'. Purging duplicates to prevent overlapping heightmaps...");
+
+            // Find primary terrain (prefer one with rock scatterer or teleportation area or children)
+            UnityEngine.Terrain primary = terrains[0];
+            for (int i = 0; i < terrains.Length; i++)
+            {
+                var t = terrains[i];
+                if (t.GetComponent<ProjectName.Terrain.PlanetRockScatterer>() != null ||
+                    t.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>() != null ||
+                    t.transform.childCount > 0)
+                {
+                    primary = t;
+                    break;
+                }
+            }
+
+            int purged = 0;
+            for (int i = 0; i < terrains.Length; i++)
+            {
+                var t = terrains[i];
+                if (t != primary && t != null && t.gameObject != null)
+                {
+                    Debug.Log($"[UIDiagnosticFixer] Purging duplicate terrain GameObject '{t.gameObject.name}'.");
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
+                    purged++;
+                }
+            }
+
+            if (purged > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(currentScene);
+                Debug.Log($"[UIDiagnosticFixer] Successfully purged {purged} duplicate terrain(s). Strictly 1 terrain remains.");
+            }
         }
 
         private static void FixPanelSettingsAsset(string assetPath)
