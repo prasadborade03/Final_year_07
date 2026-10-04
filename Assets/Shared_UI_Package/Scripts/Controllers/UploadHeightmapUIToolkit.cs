@@ -1707,6 +1707,31 @@ namespace ProjectName.Terrain
             {
                 RoverCameraRig.Instance.SetPerspective(view);
             }
+
+            if (ProjectName.VR.JarvisCameraFlightController.Instance != null)
+            {
+                switch (view)
+                {
+                    case RoverCameraRig.Perspective.Front:
+                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Front);
+                        break;
+                    case RoverCameraRig.Perspective.Rear:
+                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Rear);
+                        break;
+                    case RoverCameraRig.Perspective.Left:
+                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Left);
+                        break;
+                    case RoverCameraRig.Perspective.Right:
+                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Right);
+                        break;
+                    case RoverCameraRig.Perspective.Top:
+                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Top);
+                        break;
+                    case RoverCameraRig.Perspective.Free:
+                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.FreeFly);
+                        break;
+                }
+            }
         }
 
         public void SetCameraPerspective(FreeFlyCamera.CameraPerspective view)
@@ -1739,10 +1764,10 @@ namespace ProjectName.Terrain
             SetBtnClass(btnCamTop, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
 
             if (btnCamFront != null) btnCamFront.text = "Front";
-            if (btnCamRear != null) btnCamRear.text = "Rear";
+            if (btnCamRear != null) btnCamRear.text = "Back";
             if (btnCamLeft != null) btnCamLeft.text = "Left";
             if (btnCamRight != null) btnCamRight.text = "Right";
-            if (btnCamTop != null) btnCamTop.text = "Free";
+            if (btnCamTop != null) btnCamTop.text = "Up";
         }
 
         // -------------------------------------------------------------

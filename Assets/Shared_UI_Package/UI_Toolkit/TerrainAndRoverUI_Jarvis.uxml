@@ -117,6 +117,21 @@
                 <!-- ========================================================-
                      MODE A (DRIVING HUD): Kinematics, Attitude, Position
                      ========================================================- -->
+                <!-- Card: Rover Camera Perspectives (Driving HUD) -->
+                <ui:VisualElement name="CardDriverCamera" class="panel-card driving-only">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="CAMERA PERSPECTIVES" class="panel-title" />
+                        <ui:Label text="[V] CYCLE · [F] FOCUS" class="panel-status-tag" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="segmented-bar bottom-segmented-bar mt-2" style="width: 100%; height: 32px;">
+                        <ui:Button name="BtnDriverCamRear" text="Back" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view (Back)" />
+                        <ui:Button name="BtnDriverCamFront" text="Front" class="segmented-item" tooltip="Front chase view" />
+                        <ui:Button name="BtnDriverCamLeft" text="Left" class="segmented-item" tooltip="Left flank view" />
+                        <ui:Button name="BtnDriverCamRight" text="Right" class="segmented-item" tooltip="Right flank view" />
+                        <ui:Button name="BtnDriverCamTop" text="Up" class="segmented-item" tooltip="Overhead / Up view" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
                 <!-- Card 1: Kinematics / Speed -->
                 <ui:VisualElement name="CardKinematics" class="panel-card driving-only">
                     <ui:VisualElement class="panel-header-row">
@@ -584,13 +599,13 @@
         <!-- 4. Floating Bottom Shell Controls -->
         <!-- Bottom-Left: Camera Perspectives -->
         <ui:VisualElement name="ShellBottomLeft" class="shell-bottom-left" picking-mode="Position">
-            <ui:Label text="Camera" class="pill-label" />
+            <ui:Label text="Rover Camera Angle" class="pill-label" />
             <ui:VisualElement class="segmented-bar bottom-segmented-bar">
+                <ui:Button name="BtnCamRear" text="Back" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view (Back)" />
                 <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front rover chase view" />
-                <ui:Button name="BtnCamRear" text="Rear" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view" />
                 <ui:Button name="BtnCamLeft" text="Left" class="segmented-item" tooltip="Left flank view" />
                 <ui:Button name="BtnCamRight" text="Right" class="segmented-item" tooltip="Right flank view" />
-                <ui:Button name="BtnCamTop" text="Free" class="segmented-item" tooltip="Top-down satellite view" />
+                <ui:Button name="BtnCamTop" text="Up" class="segmented-item" tooltip="Overhead / Up view" />
             </ui:VisualElement>
         </ui:VisualElement>
 
