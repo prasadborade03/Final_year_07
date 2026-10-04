@@ -153,7 +153,7 @@ namespace ProjectName.VR
         private void LateUpdate()
         {
             // Follow rover smoothly after physics update
-            if (activePerspective != PerspectiveMode.FreeFly && !isQuickRMBFlying)
+            if (activePerspective != PerspectiveMode.FreeFly && !isQuickRMBFlying && activeInputFocus != InputFocus.Camera)
             {
                 UpdateRoverPerspectiveFollow();
             }
@@ -360,8 +360,15 @@ namespace ProjectName.VR
             activePerspective = mode;
             Debug.Log($"[JarvisCameraFlightController] Perspective set to: <b><color=#00E5FF>{mode}</color></b>");
 
+            if (mode == PerspectiveMode.FreeFly)
+            {
+                activeInputFocus = InputFocus.Camera;
+                return;
+            }
+
+            activeInputFocus = InputFocus.Rover;
             var rover = GetActiveRoverTransform();
-            if (rover != null && mode != PerspectiveMode.FreeFly)
+            if (rover != null)
             {
                 Vector3 targetPos = CalculatePerspectiveTargetPos(rover, mode);
                 transform.position = targetPos;
@@ -372,6 +379,27 @@ namespace ProjectName.VR
                 currentYaw = angles.y;
                 targetPitch = currentPitch;
                 targetYaw = currentYaw;
+                currentVelocity = Vector3.zero;
+            }
+        }
+
+        public void SnapToRover(Transform rover = null)
+        {
+            if (rover == null) rover = GetActiveRoverTransform();
+            if (rover != null)
+            {
+                activePerspective = PerspectiveMode.Rear;
+                activeInputFocus = InputFocus.Rover;
+                Vector3 targetPos = CalculatePerspectiveTargetPos(rover, PerspectiveMode.Rear);
+                transform.position = targetPos;
+                transform.LookAt(rover.position + Vector3.up * 0.5f);
+
+                Vector3 angles = transform.eulerAngles;
+                currentPitch = angles.x;
+                currentYaw = angles.y;
+                targetPitch = currentPitch;
+                targetYaw = currentYaw;
+                currentVelocity = Vector3.zero;
             }
         }
 
@@ -401,7 +429,7 @@ namespace ProjectName.VR
             targetYaw = currentYaw;
         }
 
-        private Vector3 CalculatePerspectiveTargetPos(Transform rover, PerspectiveMode mode)
+        public Vector3 CalculatePerspectiveTargetPos(Transform rover, PerspectiveMode mode)
         {
             // Project rover forward vector onto horizontal plane
             Vector3 forward = Vector3.ProjectOnPlane(rover.forward, Vector3.up).normalized;
@@ -409,21 +437,58 @@ namespace ProjectName.VR
             Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
 
             Vector3 roverPos = rover.position;
+            Vector3 rawPos;
 
             switch (mode)
             {
                 case PerspectiveMode.Front:
-                    return roverPos + (forward * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    rawPos = roverPos + (forward * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    break;
                 case PerspectiveMode.Left:
-                    return roverPos - (right * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    rawPos = roverPos - (right * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    break;
                 case PerspectiveMode.Right:
-                    return roverPos + (right * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    rawPos = roverPos + (right * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    break;
                 case PerspectiveMode.Top:
-                    return roverPos - (forward * 0.8f) + (Vector3.up * (roverFollowDistance * 1.5f));
+                    rawPos = roverPos - (forward * 0.8f) + (Vector3.up * (roverFollowDistance * 1.5f));
+                    break;
                 case PerspectiveMode.Rear:
                 default:
-                    return roverPos - (forward * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    rawPos = roverPos - (forward * roverFollowDistance) + (Vector3.up * roverFollowHeight);
+                    break;
             }
+
+            // CRITICAL: Ensure camera NEVER clips inside terrain or goes underground!
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            if (terrain != null)
+            {
+                float terrainElevation = terrain.SampleHeight(rawPos) + terrain.transform.position.y;
+                float minSafeY = terrainElevation + 1.2f;
+                if (rawPos.y < minSafeY)
+                {
+                    rawPos.y = minSafeY;
+                }
+            }
+
+            // Raycast line-of-sight from rover to camera to prevent terrain occluding/burying camera
+            Vector3 roverPivot = roverPos + Vector3.up * 0.6f;
+            Vector3 toCam = rawPos - roverPivot;
+            float dist = toCam.magnitude;
+            if (dist > 0.1f && Physics.Raycast(roverPivot, toCam.normalized, out RaycastHit hit, dist, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.collider is TerrainCollider || hit.collider.CompareTag("Terrain"))
+                {
+                    rawPos = hit.point + hit.normal * 0.5f;
+                    if (terrain != null)
+                    {
+                        float h = terrain.SampleHeight(rawPos) + terrain.transform.position.y;
+                        if (rawPos.y < h + 0.8f) rawPos.y = h + 0.8f;
+                    }
+                }
+            }
+
+            return rawPos;
         }
 
         private void HandleRigPerspectiveChanged(RoverCameraRig.Perspective p)
@@ -445,18 +510,36 @@ namespace ProjectName.VR
             // 1. Check ActiveRoverContext
             if (ActiveRoverContext.HasActiveRover && ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject != null)
             {
-                return ActiveRoverContext.Current.rootGameObject.transform;
+                var go = ActiveRoverContext.Current.rootGameObject;
+                var rootBody = GetRootBodyTransform(go);
+                if (rootBody != null) return rootBody;
+                return go.transform;
             }
 
             // 2. Direct search for pre-spawned GeneratedHusky or rover gameobjects
             var husky = GameObject.Find("GeneratedHusky");
-            if (husky != null) return husky.transform;
+            if (husky != null)
+            {
+                var rootBody = GetRootBodyTransform(husky);
+                if (rootBody != null) return rootBody;
+                return husky.transform;
+            }
 
             var m20 = GameObject.Find("GeneratedM20");
-            if (m20 != null) return m20.transform;
+            if (m20 != null)
+            {
+                var rootBody = GetRootBodyTransform(m20);
+                if (rootBody != null) return rootBody;
+                return m20.transform;
+            }
 
             var m2020 = GameObject.Find("GeneratedM2020");
-            if (m2020 != null) return m2020.transform;
+            if (m2020 != null)
+            {
+                var rootBody = GetRootBodyTransform(m2020);
+                if (rootBody != null) return rootBody;
+                return m2020.transform;
+            }
 
             // 3. Search for root ArticulationBody sitting on the terrain
             var bodies = UnityEngine.Object.FindObjectsByType<ArticulationBody>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
@@ -468,6 +551,17 @@ namespace ProjectName.VR
                 }
             }
 
+            return null;
+        }
+
+        private static Transform GetRootBodyTransform(GameObject go)
+        {
+            if (go == null) return null;
+            var bodies = go.GetComponentsInChildren<ArticulationBody>(true);
+            foreach (var b in bodies)
+            {
+                if (b.isRoot) return b.transform;
+            }
             return null;
         }
 

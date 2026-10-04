@@ -126,7 +126,7 @@ namespace ProjectName.Terrain
         private Label lblDriveGroup;
         private Label lblHelperHint;
         private Button btnModeStop, btnModeCruise, btnModeExplore, btnModePrecision;
-        private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop;
+        private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop, btnCamFree;
         private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Rear;
 
         // Placement Mode Banner & Controls
@@ -455,12 +455,14 @@ namespace ProjectName.Terrain
             btnCamLeft = root.Q<Button>("BtnCamLeft");
             btnCamRight = root.Q<Button>("BtnCamRight");
             btnCamTop = root.Q<Button>("BtnCamTop");
+            btnCamFree = root.Q<Button>("BtnCamFree");
 
             if (btnCamFront != null) btnCamFront.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Front);
             if (btnCamRear != null) btnCamRear.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Rear);
             if (btnCamLeft != null) btnCamLeft.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Left);
             if (btnCamRight != null) btnCamRight.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Right);
             if (btnCamTop != null) btnCamTop.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Top);
+            if (btnCamFree != null) btnCamFree.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Free);
 
             // ---------------------------------------------------------
             // Terrain Lab: Tab Selector & Workbench Bindings
@@ -1756,18 +1758,21 @@ namespace ProjectName.Terrain
             SetBtnClass(btnCamLeft, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
             SetBtnClass(btnCamRight, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
+            SetBtnClass(btnCamFree, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Free);
 
             SetBtnClass(btnCamFront, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Front);
             SetBtnClass(btnCamRear, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Rear);
             SetBtnClass(btnCamLeft, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
             SetBtnClass(btnCamRight, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
+            SetBtnClass(btnCamFree, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Free);
 
             if (btnCamFront != null) btnCamFront.text = "Front";
             if (btnCamRear != null) btnCamRear.text = "Back";
             if (btnCamLeft != null) btnCamLeft.text = "Left";
             if (btnCamRight != null) btnCamRight.text = "Right";
             if (btnCamTop != null) btnCamTop.text = "Up";
+            if (btnCamFree != null) btnCamFree.text = "Free";
         }
 
         // -------------------------------------------------------------
@@ -2519,9 +2524,15 @@ namespace ProjectName.Terrain
 
         private void OnRelocateRoverClicked()
         {
-            SetDrivingHudMode(true);
-            if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
-            if (flowController != null) flowController.ToggleRelocateMode();
+            string roverId = ActiveRoverContext.HasActiveRover ? ActiveRoverContext.Current.roverId : "husky";
+            if (RoverPlacementController.Instance != null)
+            {
+                RoverPlacementController.Instance.StartPlacement(roverId);
+            }
+            else if (flowController != null)
+            {
+                flowController.ToggleRelocateMode();
+            }
         }
 
         private void OnCenterRoverClicked()
