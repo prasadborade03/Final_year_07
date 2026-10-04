@@ -38,11 +38,11 @@ namespace ProjectName.UI
         [Tooltip("Sticky mode: WorldAnchor = Stationary in world space (non-sticky).")]
         public StickyMode stickyMode = StickyMode.WorldAnchor;
 
-        [Tooltip("Forward distance in meters from camera to UI panel. Optical sweet spot for Quest 2: 1.10m.")]
-        public float forwardDistance = 1.10f;
+        [Tooltip("Forward distance in meters from camera to UI panel. Sweet spot for Quest 2: 1.15m.")]
+        public float forwardDistance = 1.15f;
 
         [Tooltip("Vertical offset relative to camera eye height (negative = slightly below eye level for comfortable reading).")]
-        public float heightOffset = -0.08f;
+        public float heightOffset = -0.10f;
 
         [Tooltip("Follow responsiveness when in SmoothFollow mode.")]
         public float smoothFollowSpeed = 6.0f;
@@ -351,14 +351,15 @@ namespace ProjectName.UI
 
         private void UpdateHeadLocked()
         {
-            if (isParented) DetachFromCamera();
+            if (transform.parent != targetCamera.transform)
+            {
+                transform.SetParent(targetCamera.transform, false);
+                isParented = true;
+            }
 
-            Vector3 camPos = targetCamera.transform.position;
-            Vector3 camForward = targetCamera.transform.forward;
-            Vector3 camUp = targetCamera.transform.up;
-
-            transform.position = camPos + (camForward * forwardDistance) + (camUp * heightOffset);
-            transform.rotation = Quaternion.LookRotation(camForward, camUp);
+            // Keep local position locked in front of camera
+            transform.localPosition = new Vector3(0f, heightOffset, forwardDistance);
+            transform.localRotation = Quaternion.identity;
         }
 
         private void UpdateSmoothFollow()
@@ -372,9 +373,8 @@ namespace ProjectName.UI
             Vector3 desiredPos = camPos + (camForward * forwardDistance) + (camUp * heightOffset);
             Quaternion desiredRot = Quaternion.LookRotation(camForward, camUp);
 
-            float t = 1f - Mathf.Exp(-smoothFollowSpeed * Time.unscaledDeltaTime);
-            transform.position = Vector3.Lerp(transform.position, desiredPos, t);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, t);
+            transform.position = Vector3.Lerp(transform.position, desiredPos, Time.deltaTime * smoothFollowSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, Time.deltaTime * smoothFollowSpeed);
         }
 
         public void Recenter()

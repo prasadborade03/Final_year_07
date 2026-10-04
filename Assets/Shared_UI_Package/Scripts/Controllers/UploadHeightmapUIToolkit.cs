@@ -126,7 +126,7 @@ namespace ProjectName.Terrain
         private Label lblDriveGroup;
         private Label lblHelperHint;
         private Button btnModeStop, btnModeCruise, btnModeExplore, btnModePrecision;
-        private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop, btnCamFree;
+        private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop;
         private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Rear;
 
         // Placement Mode Banner & Controls
@@ -455,14 +455,12 @@ namespace ProjectName.Terrain
             btnCamLeft = root.Q<Button>("BtnCamLeft");
             btnCamRight = root.Q<Button>("BtnCamRight");
             btnCamTop = root.Q<Button>("BtnCamTop");
-            btnCamFree = root.Q<Button>("BtnCamFree");
 
             if (btnCamFront != null) btnCamFront.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Front);
             if (btnCamRear != null) btnCamRear.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Rear);
             if (btnCamLeft != null) btnCamLeft.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Left);
             if (btnCamRight != null) btnCamRight.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Right);
             if (btnCamTop != null) btnCamTop.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Top);
-            if (btnCamFree != null) btnCamFree.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Free);
 
             // ---------------------------------------------------------
             // Terrain Lab: Tab Selector & Workbench Bindings
@@ -812,11 +810,6 @@ namespace ProjectName.Terrain
                 colCenter.style.display = hudMode ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
-            if (studioMainGrid != null)
-            {
-                studioMainGrid.style.display = DisplayStyle.Flex;
-            }
-
             if (studioRoot != null)
             {
                 if (hudMode)
@@ -1068,7 +1061,6 @@ namespace ProjectName.Terrain
             RebuildWheelUI(handle);
             ConfigureDriveBarForRover(handle.profile);
             UpdateLiveTelemetryUI();
-            SetDrivingHudMode(true);
         }
 
         private void HandleRoverDestroyed()
@@ -1715,31 +1707,6 @@ namespace ProjectName.Terrain
             {
                 RoverCameraRig.Instance.SetPerspective(view);
             }
-
-            if (ProjectName.VR.JarvisCameraFlightController.Instance != null)
-            {
-                switch (view)
-                {
-                    case RoverCameraRig.Perspective.Front:
-                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Front);
-                        break;
-                    case RoverCameraRig.Perspective.Rear:
-                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Rear);
-                        break;
-                    case RoverCameraRig.Perspective.Left:
-                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Left);
-                        break;
-                    case RoverCameraRig.Perspective.Right:
-                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Right);
-                        break;
-                    case RoverCameraRig.Perspective.Top:
-                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.Top);
-                        break;
-                    case RoverCameraRig.Perspective.Free:
-                        ProjectName.VR.JarvisCameraFlightController.Instance.SetPerspective(ProjectName.VR.JarvisCameraFlightController.PerspectiveMode.FreeFly);
-                        break;
-                }
-            }
         }
 
         public void SetCameraPerspective(FreeFlyCamera.CameraPerspective view)
@@ -1764,21 +1731,18 @@ namespace ProjectName.Terrain
             SetBtnClass(btnCamLeft, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
             SetBtnClass(btnCamRight, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
-            SetBtnClass(btnCamFree, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Free);
 
             SetBtnClass(btnCamFront, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Front);
             SetBtnClass(btnCamRear, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Rear);
             SetBtnClass(btnCamLeft, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
             SetBtnClass(btnCamRight, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
-            SetBtnClass(btnCamFree, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Free);
 
             if (btnCamFront != null) btnCamFront.text = "Front";
-            if (btnCamRear != null) btnCamRear.text = "Back";
+            if (btnCamRear != null) btnCamRear.text = "Rear";
             if (btnCamLeft != null) btnCamLeft.text = "Left";
             if (btnCamRight != null) btnCamRight.text = "Right";
-            if (btnCamTop != null) btnCamTop.text = "Up";
-            if (btnCamFree != null) btnCamFree.text = "Free";
+            if (btnCamTop != null) btnCamTop.text = "Free";
         }
 
         // -------------------------------------------------------------
@@ -1821,13 +1785,7 @@ namespace ProjectName.Terrain
                 var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
                 if (curTerrain != null && curTerrain.terrainData != null)
                 {
-                    int hRes = currentHeights.GetLength(0);
-                    if (curTerrain.terrainData.heightmapResolution != hRes)
-                    {
-                        curTerrain.terrainData.heightmapResolution = hRes;
-                    }
                     curTerrain.terrainData.SetHeights(0, 0, currentHeights);
-                    curTerrain.terrainData.SyncHeightmap();
                 }
             }
         }
@@ -2536,15 +2494,9 @@ namespace ProjectName.Terrain
 
         private void OnRelocateRoverClicked()
         {
-            string roverId = ActiveRoverContext.HasActiveRover ? ActiveRoverContext.Current.roverId : "husky";
-            if (RoverPlacementController.Instance != null)
-            {
-                RoverPlacementController.Instance.StartPlacement(roverId);
-            }
-            else if (flowController != null)
-            {
-                flowController.ToggleRelocateMode();
-            }
+            SetDrivingHudMode(true);
+            if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
+            if (flowController != null) flowController.ToggleRelocateMode();
         }
 
         private void OnCenterRoverClicked()

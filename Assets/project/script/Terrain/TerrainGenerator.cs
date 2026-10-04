@@ -33,65 +33,6 @@ namespace ProjectName.Terrain
                     materialManager = gameObject.AddComponent<TerrainMaterialManager>();
                 }
             }
-
-            // Auto-detect and register any existing terrain in the scene
-            FindAndRegisterExistingTerrain();
-        }
-
-        private void Start()
-        {
-            // Safeguard: Ensure single terrain registered on Start
-            FindAndRegisterExistingTerrain();
-        }
-
-        /// <summary>
-        /// Finds the active terrain in the scene, sets currentTerrainObject, and purges any stray duplicates.
-        /// Intelligently prefers configured terrain (with scatterer, teleport area, or children).
-        /// </summary>
-        public UnityEngine.Terrain FindAndRegisterExistingTerrain()
-        {
-            var allTerrains = UnityEngine.Object.FindObjectsByType<UnityEngine.Terrain>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
-            if (allTerrains.Length > 0)
-            {
-                // Select the primary terrain: prefer configured ones
-                UnityEngine.Terrain primary = allTerrains[0];
-                for (int i = 0; i < allTerrains.Length; i++)
-                {
-                    var t = allTerrains[i];
-                    if (t.GetComponent<PlanetRockScatterer>() != null ||
-                        t.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>() != null ||
-                        t.transform.childCount > 0)
-                    {
-                        primary = t;
-                        break;
-                    }
-                }
-
-                currentTerrainObject = primary.gameObject;
-                currentTerrainObject.SetActive(true);
-
-                // Purge any redundant duplicate terrains to prevent overlapping heightmaps
-                for (int i = 0; i < allTerrains.Length; i++)
-                {
-                    var t = allTerrains[i];
-                    if (t != primary && t != null && t.gameObject != null)
-                    {
-                        Debug.LogWarning($"[TerrainGenerator] Purging redundant duplicate terrain '{t.gameObject.name}' to prevent overlapping.");
-                        t.gameObject.SetActive(false);
-                        if (Application.isPlaying) Destroy(t.gameObject); else DestroyImmediate(t.gameObject);
-                    }
-                }
-                return primary;
-            }
-
-            var stray = GameObject.Find("GeneratedPlanetaryTerrain");
-            if (stray != null)
-            {
-                currentTerrainObject = stray;
-                return stray.GetComponent<UnityEngine.Terrain>();
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -136,8 +77,7 @@ namespace ProjectName.Terrain
         }
 
         /// <summary>
-        /// Generates or updates a live 3D terrain directly from a 2D float array (used by presets & canvas painter).
-        /// Re-uses the existing Terrain in-place to completely prevent overlapping heightmaps.
+        /// Generates a live 3D terrain GameObject directly from a 2D float array (used by presets & canvas painter).
         /// </summary>
         public UnityEngine.Terrain GenerateTerrain(float[,] heights, TerrainTuningConfig config)
         {
@@ -147,82 +87,25 @@ namespace ProjectName.Terrain
                 return null;
             }
 
-            // 1. Check for existing terrain to update in-place (ZERO overlap, ZERO stacking!)
-            UnityEngine.Terrain existingTerrain = FindAndRegisterExistingTerrain();
-
-            if (existingTerrain != null && existingTerrain.terrainData != null)
+            // Remove any existing terrain to prevent stacking
+            if (currentTerrainObject != null)
             {
-                TerrainData td = existingTerrain.terrainData;
-                int hRes = heights.GetLength(0);
-                if (td.heightmapResolution != hRes)
-                {
-                    td.heightmapResolution = hRes;
-                }
-                td.size = new Vector3(config.terrainWidth, config.maxHeight, config.terrainLength);
-                td.SetHeights(0, 0, heights);
-                td.SyncHeightmap();
-
-                existingTerrain.gameObject.transform.position = new Vector3(
-                    -config.terrainWidth * 0.5f,
-                    config.baseOffset,
-                    -config.terrainLength * 0.5f
-                );
-
-                // Ensure collider is synced
-                TerrainCollider tCollider = existingTerrain.GetComponent<TerrainCollider>();
-                if (tCollider == null) tCollider = existingTerrain.gameObject.AddComponent<TerrainCollider>();
-                tCollider.terrainData = null;
-                tCollider.terrainData = td;
-
-                // Ensure teleportation area for VR
-                var teleArea = existingTerrain.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
-                if (teleArea == null) existingTerrain.gameObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
-
-                // Re-apply material
-                if (materialManager != null)
-                {
-                    materialManager.ApplyMaterial(existingTerrain, config.materialType);
-                }
-
-                // Scatter rocks
-                var rockScatterer = existingTerrain.GetComponent<PlanetRockScatterer>();
-                if (rockScatterer == null) rockScatterer = existingTerrain.gameObject.AddComponent<PlanetRockScatterer>();
-                rockScatterer.ClearRocks();
-                var envController = ProjectName.Planetary.PlanetEnvironmentController.Instance;
-                if (envController != null && envController.currentProfile != null)
-                {
-                    rockScatterer.ScatterRocks(existingTerrain, envController.currentProfile);
-                }
-
-                currentTerrainObject = existingTerrain.gameObject;
-                Debug.Log($"[TerrainGenerator] Successfully updated 3D planetary terrain in-place: {config.terrainWidth}x{config.terrainLength}m, MaxHeight: {config.maxHeight}m, Offset: {config.baseOffset}m, Material: {config.materialType}");
-                return existingTerrain;
+                Destroy(currentTerrainObject);
             }
 
-            // 2. Fallback: Clean up ALL old terrains before creating a new one
-            var strayTerrains = UnityEngine.Object.FindObjectsByType<UnityEngine.Terrain>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
-            foreach (var stray in strayTerrains)
+            int res = config.resolution;
+            TerrainData terrainData = new TerrainData
             {
-                if (stray != null && stray.gameObject != null)
-                {
-                    stray.gameObject.SetActive(false);
-                    if (Application.isPlaying) Destroy(stray.gameObject); else DestroyImmediate(stray.gameObject);
-                }
-            }
-            currentTerrainObject = null;
-
-            int targetRes = heights.GetLength(0);
-            TerrainData newTerrainData = new TerrainData
-            {
-                heightmapResolution = targetRes,
+                heightmapResolution = res,
                 size = new Vector3(config.terrainWidth, config.maxHeight, config.terrainLength)
             };
 
-            newTerrainData.SetHeights(0, 0, heights);
+            terrainData.SetHeights(0, 0, heights);
 
-            GameObject terrainObject = UnityEngine.Terrain.CreateTerrainGameObject(newTerrainData);
+            GameObject terrainObject = UnityEngine.Terrain.CreateTerrainGameObject(terrainData);
             terrainObject.name = "GeneratedPlanetaryTerrain";
 
+            // Safely assign Tag without breaking execution if tag is missing
             try
             {
                 terrainObject.tag = "Terrain";
@@ -232,20 +115,21 @@ namespace ProjectName.Terrain
                 Debug.LogWarning($"[TerrainGenerator] Could not set tag 'Terrain' ({ex.Message}). Ensure 'Terrain' tag is added in Tags and Layers.");
             }
 
+            // Apply base elevation baseline shift via world position
             terrainObject.transform.position = new Vector3(
                 -config.terrainWidth * 0.5f,
                 config.baseOffset,
                 -config.terrainLength * 0.5f
             );
 
-            UnityEngine.Terrain newTerrain = terrainObject.GetComponent<UnityEngine.Terrain>();
-            newTerrain.drawHeightmap = true;
-            newTerrain.drawTreesAndFoliage = false;
-            newTerrain.allowAutoConnect = true;
-            newTerrain.drawInstanced = true;
-            newTerrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-            newTerrain.basemapDistance = 3000f;
-            newTerrain.heightmapPixelError = 5f;
+            UnityEngine.Terrain terrain = terrainObject.GetComponent<UnityEngine.Terrain>();
+            terrain.drawHeightmap = true;
+            terrain.drawTreesAndFoliage = false;
+            terrain.allowAutoConnect = true;
+            terrain.drawInstanced = true;
+            terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            terrain.basemapDistance = 3000f;
+            terrain.heightmapPixelError = 5f;
 
             var cam = Camera.main;
             if (cam != null && cam.farClipPlane < 3500f)
@@ -253,36 +137,40 @@ namespace ProjectName.Terrain
                 cam.farClipPlane = 3500f;
             }
 
-            TerrainCollider newCollider = terrainObject.GetComponent<TerrainCollider>();
-            if (newCollider == null)
+            // Ensure TerrainCollider is present and linked to terrainData
+            TerrainCollider tCollider = terrainObject.GetComponent<TerrainCollider>();
+            if (tCollider == null)
             {
-                newCollider = terrainObject.AddComponent<TerrainCollider>();
+                tCollider = terrainObject.AddComponent<TerrainCollider>();
             }
-            newCollider.terrainData = newTerrainData;
+            tCollider.terrainData = terrainData;
 
-            var newTeleArea = terrainObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
-            if (newTeleArea == null)
+            // Ensure TeleportationArea is present for VR grounded locomotion (§5)
+            var teleArea = terrainObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
+            if (teleArea == null)
             {
                 terrainObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationArea>();
             }
 
+            // Apply planetary surface material (PBR layers or shader template)
             if (materialManager != null)
             {
-                materialManager.ApplyMaterial(newTerrain, config.materialType);
+                materialManager.ApplyMaterial(terrain, config.materialType);
             }
 
-            var newScatterer = terrainObject.GetComponent<PlanetRockScatterer>();
-            if (newScatterer == null) newScatterer = terrainObject.AddComponent<PlanetRockScatterer>();
-            var env = ProjectName.Planetary.PlanetEnvironmentController.Instance;
-            if (env != null && env.currentProfile != null)
+            // Scatter planetary surface rocks & boulders (Phase 5B)
+            var rockScatterer = terrainObject.GetComponent<PlanetRockScatterer>();
+            if (rockScatterer == null) rockScatterer = terrainObject.AddComponent<PlanetRockScatterer>();
+            var envController = ProjectName.Planetary.PlanetEnvironmentController.Instance;
+            if (envController != null && envController.currentProfile != null)
             {
-                newScatterer.ScatterRocks(newTerrain, env.currentProfile);
+                rockScatterer.ScatterRocks(terrain, envController.currentProfile);
             }
 
             currentTerrainObject = terrainObject;
-            Debug.Log($"[TerrainGenerator] Successfully built new 3D planetary terrain: {config.terrainWidth}x{config.terrainLength}m, MaxHeight: {config.maxHeight}m, Offset: {config.baseOffset}m, Material: {config.materialType}");
+            Debug.Log($"[TerrainGenerator] Successfully built 3D planetary terrain: {config.terrainWidth}x{config.terrainLength}m, MaxHeight: {config.maxHeight}m, Offset: {config.baseOffset}m, Material: {config.materialType}");
 
-            return newTerrain;
+            return terrain;
         }
 
         /// <summary>
@@ -290,8 +178,7 @@ namespace ProjectName.Terrain
         /// </summary>
         public UnityEngine.Terrain GetCurrentTerrain()
         {
-            if (currentTerrainObject == null) FindAndRegisterExistingTerrain();
-            return currentTerrainObject != null ? currentTerrainObject.GetComponent<UnityEngine.Terrain>() : UnityEngine.Terrain.activeTerrain;
+            return currentTerrainObject != null ? currentTerrainObject.GetComponent<UnityEngine.Terrain>() : null;
         }
     }
 }
