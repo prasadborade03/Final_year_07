@@ -75,7 +75,7 @@
     --h-control-sm: 30px;
     --h-tile: 30px;
 
-    --side-col-width: 316px;
+    --side-col-width: 356px;
 
     /* -------------------------------------------------------------
        Typography Fonts

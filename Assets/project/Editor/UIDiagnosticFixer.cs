@@ -77,12 +77,14 @@ namespace ProjectName.Editor
                 if (positioner != null)
                 {
                     positioner.isHUDVisible = true;
+                    positioner.forwardDistance = 1.40f;
+                    positioner.heightOffset = -0.05f;
                     if (currentScene.name.IndexOf("jarvis", StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         positioner.stickyMode = VRUIPositioner.StickyMode.WorldAnchor;
                     }
                     EditorUtility.SetDirty(positioner);
-                    Debug.Log($"[UIDiagnosticFixer] VRUIPositioner checked: isHUDVisible=true, stickyMode={positioner.stickyMode}.");
+                    Debug.Log($"[UIDiagnosticFixer] VRUIPositioner checked: isHUDVisible=true, forwardDistance={positioner.forwardDistance}, stickyMode={positioner.stickyMode}.");
                 }
 
                 // Ensure BoxCollider for VR raycasting
@@ -177,11 +179,11 @@ namespace ProjectName.Editor
             if (gammaProp != null) gammaProp.boolValue = false;
             so.ApplyModifiedProperties();
 
-            // 4. Dynamic atlas settings
+            // 4. Dynamic atlas settings (High resolution for VR readability)
             var atlas = ps.dynamicAtlasSettings;
-            atlas.minAtlasSize = 512;
+            atlas.minAtlasSize = 1024;
             atlas.maxAtlasSize = 4096;
-            atlas.maxSubTextureSize = 1024;
+            atlas.maxSubTextureSize = 2048;
             ps.dynamicAtlasSettings = atlas;
         }
     }

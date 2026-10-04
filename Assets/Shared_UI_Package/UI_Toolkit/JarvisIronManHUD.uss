@@ -9,65 +9,65 @@
 
 :root {
     /* -------------------------------------------------------------
-       Jarvis Holographic Cyber-Glass Tokens
+       Jarvis High-Contrast Cyber-Glass Tokens for VR & Desktop
        ------------------------------------------------------------- */
-    /* Semi-transparent deep cyber-glass: enables seeing the 3D game view through panels */
-    --surface: rgba(4, 18, 34, 0.45);
-    --surface-2: rgba(8, 28, 52, 0.52);
-    --surface-3: rgba(12, 38, 68, 0.62);
-    --scrim: rgba(2, 10, 20, 0.35);
+    /* Deep cyber-glass with 0.90+ opacity: ensures crystal-clear readability against any terrain */
+    --surface: rgba(4, 14, 28, 0.90);
+    --surface-2: rgba(7, 22, 42, 0.94);
+    --surface-3: rgba(12, 34, 62, 0.96);
+    --scrim: rgba(2, 8, 16, 0.85);
 
     /* Luminous Arc Cyan Wireframes */
-    --border: rgba(0, 229, 255, 0.38);
-    --border-hi: rgba(0, 245, 255, 0.85);
+    --border: rgba(0, 229, 255, 0.48);
+    --border-hi: rgba(0, 245, 255, 0.95);
 
     /* Jarvis Arc Reactor Cyan Accent */
     --accent: #00E5FF;
     --accent-hover: #38E1FF;
-    --accent-glow: rgba(0, 229, 255, 0.32);
-    --accent-dim: rgba(0, 229, 255, 0.16);
+    --accent-glow: rgba(0, 229, 255, 0.40);
+    --accent-dim: rgba(0, 229, 255, 0.22);
 
-    /* Semantic Buttons (Holographic Glass Fills) */
-    --primary-bg: rgba(0, 229, 255, 0.22);
+    /* Semantic Buttons */
+    --primary-bg: rgba(0, 229, 255, 0.32);
     --primary-border: #00E5FF;
     --primary-text: #FFFFFF;
 
-    --secondary-bg: rgba(6, 26, 48, 0.48);
-    --secondary-border: rgba(0, 229, 255, 0.40);
+    --secondary-bg: rgba(8, 28, 54, 0.85);
+    --secondary-border: rgba(0, 229, 255, 0.55);
     --secondary-text: #E0F7FA;
 
-    --confirm-bg: rgba(0, 230, 118, 0.22);
-    --confirm-border: #00E676;
-    --confirm-text: #B9F6CA;
+    --confirm-bg: rgba(0, 230, 118, 0.30);
+    --confirm-border: #00FF88;
+    --confirm-text: #E8F5E9;
 
-    --cancel-bg: rgba(255, 23, 68, 0.22);
-    --cancel-border: #FF1744;
-    --cancel-text: #FF8A80;
+    --cancel-bg: rgba(255, 23, 68, 0.30);
+    --cancel-border: #FF3366;
+    --cancel-text: #FFEBEE;
 
-    --danger-bg: rgba(255, 23, 68, 0.28);
+    --danger-bg: rgba(255, 23, 68, 0.35);
     --danger-border: #FF1744;
-    --danger-text: #FF8A80;
+    --danger-text: #FFFFFF;
 
-    --disabled-bg: rgba(6, 16, 26, 0.35);
-    --disabled-border: rgba(0, 229, 255, 0.15);
-    --disabled-text: rgba(128, 222, 234, 0.45);
+    --disabled-bg: rgba(6, 16, 26, 0.65);
+    --disabled-border: rgba(0, 229, 255, 0.25);
+    --disabled-text: rgba(128, 222, 234, 0.50);
 
     /* Status Indicators */
-    --good: #00E676;
-    --fair: #FFB300;
-    --poor: #FF1744;
+    --good: #00FF88;
+    --fair: #FFD600;
+    --poor: #FF3366;
 
     /* Typography: High-Contrast Luminous White & Cyan */
     --text-1: #FFFFFF;
-    --text-2: #80DEEA;
-    --text-3: #4DD0E1;
+    --text-2: #E0F7FA;
+    --text-3: #80DEEA;
 
     /* High-Tech Rectangular Geometry */
-    --r-panel: 6px;
-    --r-inner: 4px;
-    --r-btn: 4px;
-    --r-pill: 4px;
-    --r-sm: 3px;
+    --r-panel: 8px;
+    --r-inner: 6px;
+    --r-btn: 6px;
+    --r-pill: 6px;
+    --r-sm: 4px;
 }
 
 /* -------------------------------------------------------------------------
@@ -76,62 +76,96 @@
 .panel-card {
     background-color: var(--surface);
     border-radius: var(--r-panel);
-    padding: 8px 10px;
-    border-width: 1px;
+    padding: 10px 14px;
+    border-width: 1.5px;
     border-color: var(--border);
     border-top-color: var(--border-hi);
-    border-top-width: 2px;
-    border-left-color: rgba(0, 229, 255, 0.65);
-    border-left-width: 2px;
+    border-top-width: 2.5px;
+    border-left-color: rgba(0, 229, 255, 0.80);
+    border-left-width: 2.5px;
     width: 100%;
     flex-shrink: 0;
-    margin-bottom: var(--panel-gap);
+    margin-bottom: 8px;
     transition: opacity 180ms ease-out, translate 180ms ease-out, border-color 150ms ease-out;
 }
 
 .panel-card:hover {
-    border-color: rgba(0, 229, 255, 0.65);
+    border-color: rgba(0, 229, 255, 0.85);
     border-top-color: #38E1FF;
 }
 
 .panel-title {
     color: #00E5FF;
+    font-size: 15px;
     letter-spacing: 1.5px;
+    -unity-font-style: bold;
+}
+
+.panel-status-tag {
+    font-size: 12px;
+    color: #80DEEA;
+    letter-spacing: 0.5px;
     -unity-font-style: bold;
 }
 
 /* -------------------------------------------------------------------------
    2. Metric Values & Readouts
    ------------------------------------------------------------------------- */
-.metric-value {
-    color: #FFFFFF;
+.metric-label {
+    color: #80DEEA;
+    font-size: 13px;
+    letter-spacing: 1px;
     -unity-font-style: bold;
+    text-transform: uppercase;
+    margin-bottom: 2px;
 }
 
-.metric-label {
-    color: #4DD0E1;
-    letter-spacing: 1px;
+.metric-value {
+    color: #FFFFFF;
+    font-size: 24px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
 }
 
 .metric-unit {
-    color: #80DEEA;
+    color: #00E5FF;
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin-left: 5px;
 }
 
 .stat-coords-val {
     color: #00E5FF;
+    font-size: 13px;
+    -unity-font-style: bold;
     background-color: var(--surface-2);
     border-color: var(--border);
     border-left-color: #00E5FF;
-    border-left-width: 2px;
+    border-left-width: 3px;
+    padding: 6px 10px;
+    margin-top: 3px;
+    margin-bottom: 4px;
 }
 
 /* -------------------------------------------------------------------------
    3. Buttons & Interactive Controls
    ------------------------------------------------------------------------- */
 .btn {
+    height: 38px;
     border-radius: var(--r-btn);
-    border-width: 1px;
+    border-width: 1.5px;
+    padding: 0 14px;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
     transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.btn-text {
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
 }
 
 .btn-primary {
@@ -141,7 +175,7 @@
 }
 
 .btn-primary:hover {
-    background-color: rgba(0, 229, 255, 0.38);
+    background-color: rgba(0, 229, 255, 0.45);
     border-color: #38E1FF;
 }
 
@@ -152,7 +186,7 @@
 }
 
 .btn-secondary:hover {
-    background-color: rgba(12, 42, 72, 0.65);
+    background-color: rgba(12, 42, 72, 0.90);
     border-color: var(--accent);
     color: #FFFFFF;
 }
@@ -162,10 +196,27 @@
 .bottom-segmented-bar,
 .curve-segmented-bar,
 .brush-segmented-bar {
+    height: 42px;
     background-color: var(--surface);
     border-color: var(--border);
-    border-top-color: rgba(0, 229, 255, 0.70);
-    border-top-width: 1px;
+    border-top-color: rgba(0, 229, 255, 0.85);
+    border-top-width: 2px;
+    padding: 3px;
+    border-radius: var(--r-panel);
+}
+
+.segmented-item {
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    padding: 0 12px;
+    height: 34px;
+}
+
+.segmented-text {
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
 }
 
 .segmented-item.segmented-active,
@@ -173,35 +224,39 @@
 .segmented-item.mode-pill-active,
 .segmented-item.brush-btn-active,
 .segmented-item.curve-btn-active {
-    background-color: rgba(0, 229, 255, 0.28);
+    background-color: rgba(0, 229, 255, 0.35);
     border-color: var(--accent);
     color: #FFFFFF;
     -unity-font-style: bold;
 }
 
 .segmented-item:hover {
-    background-color: rgba(0, 229, 255, 0.15);
+    background-color: rgba(0, 229, 255, 0.22);
     color: #FFFFFF;
 }
 
 /* Rover Selection Rows */
 .rover-row {
+    height: 44px;
     background-color: var(--surface-2);
     border-color: var(--border);
-    border-left-color: rgba(0, 229, 255, 0.30);
-    border-left-width: 2px;
+    border-left-color: rgba(0, 229, 255, 0.50);
+    border-left-width: 3px;
+    padding: 0 12px;
+    margin-bottom: 5px;
+    border-radius: var(--r-inner);
 }
 
 .rover-row:hover {
-    background-color: rgba(10, 36, 62, 0.60);
-    border-color: rgba(0, 229, 255, 0.60);
+    background-color: rgba(10, 36, 62, 0.90);
+    border-color: rgba(0, 229, 255, 0.80);
 }
 
 .rover-row-active {
-    background-color: rgba(0, 229, 255, 0.22);
+    background-color: rgba(0, 229, 255, 0.28);
     border-color: var(--accent);
     border-left-color: #00E5FF;
-    border-left-width: 3px;
+    border-left-width: 4px;
 }
 
 .rover-row-active .rover-row-title {
@@ -209,70 +264,119 @@
     -unity-font-style: bold;
 }
 
+.rover-row-title {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+    letter-spacing: 0.5px;
+}
+
 /* Status Badges */
 .status-badge {
-    background-color: rgba(6, 26, 48, 0.50);
+    background-color: rgba(6, 26, 48, 0.80);
     border-color: var(--border);
     color: #80DEEA;
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
 }
 
 .status-badge-active {
-    background-color: rgba(0, 230, 118, 0.20);
-    border-color: #00E676;
-    color: #00E676;
+    background-color: rgba(0, 230, 118, 0.30);
+    border-color: #00FF88;
+    color: #00FF88;
     -unity-font-style: bold;
 }
 
 /* Wheel Actuator Tiles */
 .wheel-cell,
 .wheel-tile {
+    height: 38px;
     background-color: var(--surface-2);
     border-color: var(--border);
-    border-left-color: rgba(0, 229, 255, 0.40);
-    border-left-width: 2px;
+    border-left-color: rgba(0, 229, 255, 0.60);
+    border-left-width: 3px;
+    padding: 0 10px;
+    border-radius: var(--r-inner);
 }
 
-.wheel-tile-name {
+.wheel-tile-name,
+.wheel-name {
     color: #00E5FF;
+    font-size: 14px;
     -unity-font-style: bold;
 }
 
-.wheel-status-text {
-    color: #00E676;
+.wheel-status-text,
+.wheel-status {
+    color: #00FF88;
+    font-size: 13px;
+    -unity-font-style: bold;
 }
 
-.wheel-segment.seg-active {
-    background-color: #00E5FF;
+.wheel-segment,
+.wheel-seg {
+    width: 8px;
+    height: 14px;
+    border-radius: 2px;
+}
+
+.wheel-segment.seg-active,
+.wheel-seg.seg-active {
+    background-color: #00FF88;
 }
 
 /* Sliders */
 .custom-slider .unity-base-slider__tracker {
-    background-color: rgba(6, 26, 48, 0.70);
+    background-color: rgba(6, 26, 48, 0.85);
     border-color: var(--border);
     border-width: 1px;
+    height: 8px;
 }
 
 .custom-slider .unity-base-slider__dragger {
     background-color: #00E5FF;
-    border-radius: 2px;
+    border-radius: 3px;
+    width: 16px;
+    height: 16px;
 }
 
 .slider-label {
     color: #80DEEA;
+    font-size: 13px;
+    -unity-font-style: bold;
 }
 
 .slider-val-label {
     color: #FFFFFF;
+    font-size: 14px;
     -unity-font-style: bold;
 }
 
 /* Top Shell Pills */
 .planet-pill,
 .minimize-pill {
+    height: 38px;
     background-color: var(--surface);
     border-color: var(--border);
     border-top-color: var(--accent);
-    border-top-width: 1px;
+    border-top-width: 2px;
+    padding: 0 14px;
+    border-radius: var(--r-btn);
+}
+
+.planet-pill:hover,
+.minimize-pill:hover {
+    background-color: rgba(0, 229, 255, 0.30);
+    border-color: #00E5FF;
+}
+
+.planet-name-text {
+    color: #00E5FF;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
 }
 
 .planet-pill:hover,
@@ -519,34 +623,37 @@
 /* -------------------------------------------------------------------------
    Dual Dedicated Interactive Boxes (Camera Box & Drive Box)
    ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+   Dual Dedicated Interactive Boxes (Camera Box & Drive Box)
+   ------------------------------------------------------------------------- */
 .shell-bottom-left {
     position: absolute;
-    bottom: 22px;
-    left: 28px;
-    padding: 8px 12px;
-    background-color: rgba(4, 18, 34, 0.75);
+    bottom: 28px;
+    left: 48px;
+    padding: 10px 14px;
+    background-color: rgba(4, 14, 28, 0.94);
     border-radius: var(--r-panel);
-    border-width: 1px;
-    border-color: rgba(0, 229, 255, 0.45);
-    border-top-width: 2px;
+    border-width: 1.5px;
+    border-color: rgba(0, 229, 255, 0.60);
+    border-top-width: 2.5px;
     border-top-color: #00E5FF;
     pointer-events: auto;
-    gap: 6px;
+    gap: 8px;
 }
 
 .shell-bottom-right {
     position: absolute;
-    bottom: 22px;
-    right: 28px;
-    padding: 8px 12px;
-    background-color: rgba(4, 18, 34, 0.75);
+    bottom: 28px;
+    right: 48px;
+    padding: 10px 14px;
+    background-color: rgba(4, 14, 28, 0.94);
     border-radius: var(--r-panel);
-    border-width: 1px;
-    border-color: rgba(0, 229, 255, 0.45);
-    border-top-width: 2px;
+    border-width: 1.5px;
+    border-color: rgba(0, 229, 255, 0.60);
+    border-top-width: 2.5px;
     border-top-color: #00E5FF;
     pointer-events: auto;
-    gap: 6px;
+    gap: 8px;
     align-items: flex-end;
 }
 
@@ -555,33 +662,53 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
 }
 
 .box-title {
     color: #00E5FF;
-    font-size: 11px;
+    font-size: 15px;
     -unity-font-style: bold;
     letter-spacing: 1px;
 }
 
 .box-subtitle {
     color: #80DEEA;
-    font-size: 9px;
+    font-size: 13px;
     letter-spacing: 0.5px;
+    -unity-font-style: bold;
 }
 
 .box-live-speed {
     color: #00FF88;
-    font-size: 13px;
+    font-size: 18px;
     -unity-font-style: bold;
     letter-spacing: 1px;
 }
 
 .box-footer-hint {
     color: #80DEEA;
-    font-size: 9px;
+    font-size: 13px;
     letter-spacing: 0.5px;
-    margin-top: 2px;
+    margin-top: 4px;
+    -unity-font-style: bold;
+}
+
+/* -------------------------------------------------------------------------
+   Ergonomic Spatial Positioning (Centralized for VR Sweet Spot)
+   ------------------------------------------------------------------------- */
+.col-left {
+    margin-left: 48px;
+    width: 356px;
+}
+
+.col-right {
+    margin-right: 48px;
+    width: 356px;
+}
+
+.shell-top-row {
+    top: 24px;
+    padding: 0 48px;
 }
 
