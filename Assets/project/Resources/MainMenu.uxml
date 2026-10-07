@@ -1,0 +1,111 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="MainMenu.uss" />
+
+    <ui:VisualElement name="MenuRoot" class="menu-root">
+        <!-- Main Center Surface Window -->
+        <ui:VisualElement class="menu-window">
+            
+            <!-- 1. Top Research Identifier & Header -->
+            <ui:VisualElement class="menu-header">
+                <ui:Label text="NASA / ISRO RESEARCH TESTBED • AUTONOMOUS ROBOTICS LAB" class="header-pre-title" />
+                <ui:Label text="VR PLANETARY ROVER" class="header-title" />
+                <ui:Label text="DIGITAL TWIN SIMULATION STUDIO" class="header-subtitle" />
+                <ui:Label text="Autonomous multi-mission rover simulator for Mars, Moon, and Titan terrain exploration." class="header-desc" />
+            </ui:VisualElement>
+
+            <!-- Subtle Divider -->
+            <ui:VisualElement class="menu-divider" />
+
+            <!-- 2. Primary Decision: Mode Selection Section -->
+            <ui:VisualElement class="mode-section">
+                <ui:VisualElement class="section-title-row">
+                    <ui:Label text="SELECT RUNTIME MODE" class="section-title" />
+                    <ui:Label text="Select target hardware environment and input scheme for this simulation session." class="section-caption" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="mode-cards-container">
+                    <!-- VR Option Card -->
+                    <ui:VisualElement name="CardVR" class="mode-card mode-card-active" focusable="true">
+                        <ui:VisualElement class="mode-card-header">
+                            <ui:VisualElement class="mode-indicator">
+                                <ui:VisualElement class="mode-radio-dot" />
+                            </ui:VisualElement>
+                            <ui:Label text="VR HEADSET MODE" class="mode-card-title" />
+                            <ui:VisualElement class="spacer" />
+                            <ui:Label text="OpenXR" class="tag-runtime" />
+                            <ui:Label text="RECOMMENDED" class="tag-recommended" />
+                        </ui:VisualElement>
+                        <ui:Label text="Meta Quest 2 / OpenXR 6-DoF tracking. Immersive 1:1 planetary scale, curved laser pointer UI, and left thumbstick analog rover control." class="mode-card-body" />
+                        <ui:VisualElement class="mode-card-footer">
+                            <ui:Label text="Hardware: Meta Quest / OpenXR • Target Scene: Simulation_VR" class="mode-meta" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Desktop Flat Option Card -->
+                    <ui:VisualElement name="CardFlat" class="mode-card" focusable="true">
+                        <ui:VisualElement class="mode-card-header">
+                            <ui:VisualElement class="mode-indicator">
+                                <ui:VisualElement class="mode-radio-dot" />
+                            </ui:VisualElement>
+                            <ui:Label text="DESKTOP FLAT MODE" class="mode-card-title" />
+                            <ui:VisualElement class="spacer" />
+                            <ui:Label text="Keyboard + Mouse" class="tag-runtime" />
+                            <ui:Label text="STANDARD" class="tag-standard" />
+                        </ui:VisualElement>
+                        <ui:Label text="Standard PC monitor display. High-resolution screen-space UI overlay, keyboard WASD virtual joystick rover driving, and free-fly orbit camera." class="mode-card-body" />
+                        <ui:VisualElement class="mode-card-footer">
+                            <ui:Label text="Hardware: PC Display &amp; Mouse • Target Scene: Simulation_Flat" class="mode-meta" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Clean Runtime Setting / Toggle Row -->
+                <ui:VisualElement class="runtime-setting-row">
+                    <ui:Toggle name="ToggleVR" label="Launch in Virtual Reality" class="runtime-toggle" value="true" />
+                    <ui:VisualElement class="spacer" />
+                    <ui:VisualElement class="status-pill">
+                        <ui:Label text="RUNTIME TARGET:" class="status-caption" />
+                        <ui:Label name="LblActiveModeStatus" text="VR HEADSET (Simulation_VR)" class="status-value" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Subtle Divider -->
+            <ui:VisualElement class="menu-divider" />
+
+            <!-- 6. Supporting Information: Simulation Overview -->
+            <ui:VisualElement class="overview-section">
+                <ui:Label text="SIMULATION SPECIFICATIONS &amp; CONTROLS" class="section-title" />
+                <ui:VisualElement class="overview-grid">
+                    
+                    <ui:VisualElement class="overview-col">
+                        <ui:Label text="DIGITAL TWIN FRAMEWORK" class="col-title" />
+                        <ui:Label text="• 3 Digital Twin Rovers: Clearpath Husky A200, Deep Robotics M20, NASA Perseverance M2020" class="col-item" />
+                        <ui:Label text="• Real Planetary Data: Gale Crater, Olympus Mons, Shackleton Crater, Valles Marineris" class="col-item" />
+                        <ui:Label text="• Physics Engine: ArticulationBody kinematics, low gravity, wheel slippage &amp; ground traction" class="col-item" />
+                    </ui:VisualElement>
+
+                    <ui:VisualElement class="overview-col">
+                        <ui:Label text="OPERATOR CONTROLS QUICK REFERENCE" class="col-title" />
+                        <ui:Label text="• Drive Rover: Left Thumbstick (VR) / Keyboard WASD Joystick (Desktop)" class="col-item" />
+                        <ui:Label text="• Precision Placement: Controller Laser + Trigger (VR) / Mouse Click (Desktop)" class="col-item" />
+                        <ui:Label text="• Heading Yaw &amp; View: Stick Rotate / Q-E Keys • [B] Button / [Tab] for Driving HUD" class="col-item" />
+                    </ui:VisualElement>
+
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- 7. Bottom Action Footer -->
+            <ui:VisualElement class="menu-footer">
+                <ui:Button name="BtnStartSimulation" class="btn-primary-launch" tooltip="Launch the Digital Twin Simulation Studio">
+                    <ui:Label name="LblBtnLaunchText" text="START SIMULATION" class="btn-primary-text" />
+                </ui:Button>
+
+                <ui:Button name="BtnQuit" class="btn-secondary-exit" tooltip="Exit Application">
+                    <ui:Label text="Exit" class="btn-secondary-text" />
+                </ui:Button>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

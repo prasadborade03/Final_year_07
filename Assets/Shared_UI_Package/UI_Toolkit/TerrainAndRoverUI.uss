@@ -145,9 +145,8 @@
 
 .planet-name-text {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 12px;
+    font-size: 18px;
     -unity-font-style: bold;
     letter-spacing: 1.5px;
     color: var(--text-1);
@@ -223,24 +222,23 @@
 
 .pill-label {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 10px;
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-2);
     background-color: var(--surface);
     border-radius: var(--r-sm);
     border-width: 1px;
     border-color: var(--border);
-    padding: 2px 8px;
-    margin-bottom: 2px;
+    padding: 3px 10px;
+    margin-bottom: 3px;
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .bottom-segmented-bar {
-    width: 278px;
-    height: 36px;
+    width: 310px;
+    height: 42px;
     border-radius: var(--r-btn);
     background-color: var(--surface);
     border-width: 1px;
@@ -250,7 +248,7 @@
 
 .bottom-segmented-bar .segmented-item {
     border-radius: var(--r-sm);
-    font-size: 11px;
+    font-size: 16px;
 }
 
 .bottom-segmented-bar .segmented-item.mode-pill-active,
@@ -353,7 +351,7 @@
    4. Rover Deploy Card (Shared Component)
    ------------------------------------------------------------------------- */
 .rover-row {
-    height: 26px;
+    height: 36px;
     border-radius: var(--r-inner);
     background-color: var(--surface-2);
     border-width: 1px;
@@ -361,8 +359,8 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 0 8px;
-    margin-bottom: 3px;
+    padding: 0 10px;
+    margin-bottom: 4px;
     transition: background-color 100ms ease-out, border-color 100ms ease-out;
 }
 
@@ -378,22 +376,20 @@
 
 .rover-row-title {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    font-size: 16px;
     -unity-font-style: bold;
     color: var(--text-1);
-    margin-left: 6px;
+    margin-left: 8px;
     flex-grow: 1;
 }
 
 .status-badge {
     border-radius: var(--r-sm);
-    padding: 1px 6px;
-    -unity-font: var(--font-heading);
+    padding: 2px 8px;
     -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-3);
     background-color: var(--surface-2);
@@ -412,18 +408,17 @@
    ------------------------------------------------------------------------- */
 .stat-coords-val {
     -unity-font: var(--font-body);
-    -unity-font: var(--font-body);
     /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    font-size: 16px;
     -unity-font-style: bold;
     color: var(--accent);
     background-color: var(--surface-2);
     border-radius: var(--r-inner);
     border-width: 1px;
     border-color: var(--border);
-    padding: 4px 8px;
-    margin-top: 3px;
-    margin-bottom: 4px;
+    padding: 6px 10px;
+    margin-top: 4px;
+    margin-bottom: 5px;
     -unity-text-align: middle-center;
 }
 
@@ -436,7 +431,7 @@
 }
 
 .wheel-cell {
-    height: 30px;
+    height: 36px;
     background-color: var(--surface-2);
     border-radius: var(--r-inner);
     border-width: 1px;
@@ -446,7 +441,7 @@
     justify-content: space-between;
     padding: 0 8px;
     width: 48%;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .wheel-info-col {
@@ -457,18 +452,16 @@
 
 .wheel-name {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    font-size: 16px;
     -unity-font-style: bold;
     color: var(--text-2);
 }
 
 .wheel-status {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    font-size: 14px;
     -unity-font-style: bold;
 }
 
@@ -483,9 +476,9 @@
 }
 
 .wheel-seg {
-    width: 5px;
-    height: 10px;
-    border-radius: 1px;
+    width: 6px;
+    height: 14px;
+    border-radius: 2px;
     background-color: var(--good);
 }
 
@@ -571,31 +564,29 @@
     border-radius: var(--r-sm);
     border-width: 1px;
     border-color: var(--border);
-    padding: 1px 5px;
-    -unity-font: var(--font-heading);
+    padding: 2px 6px;
     -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 8px;
+    font-size: 14px;
     color: var(--text-3);
     pointer-events: none;
 }
 
 /* Preset Chips (Rectangular 6px with 1px Border) */
 .preset-chip-btn {
-    height: 22px;
+    height: 30px;
     border-radius: var(--r-btn);
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-2);
     align-items: center;
     justify-content: center;
-    padding: 0 4px;
+    padding: 0 8px;
     transition: background-color 100ms ease-out, border-color 100ms ease-out;
 }
 
@@ -620,8 +611,8 @@
 }
 
 #FieldSeed {
-    width: 120px;
-    height: 24px;
+    width: 130px;
+    height: 30px;
     background-color: var(--surface-2);
     border-radius: var(--r-inner);
     border-width: 1px;
@@ -636,11 +627,11 @@
     background-color: transparent;
     border-width: 0;
     color: var(--text-1);
-    padding: 0 6px;
+    padding: 0 8px;
     margin: 0;
     -unity-text-align: middle-left;
     /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    font-size: 15px;
 }
 
 #FieldSeed:hover {
@@ -653,18 +644,18 @@
 
 /* 2D Painter Brushes (Rectangular 6px) */
 .brush-segmented-bar {
-    height: 26px;
-    margin-bottom: 4px;
+    height: 32px;
+    margin-bottom: 5px;
     border-radius: var(--r-btn);
 }
 
 .brush-segmented-item {
-    padding: 0 4px;
+    padding: 0 6px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    font-size: 10px;
+    gap: 4px;
+    font-size: 15px;
     border-radius: var(--r-sm);
 }
 
@@ -688,11 +679,10 @@
 
 .history-tag {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    font-size: 14px;
     color: var(--text-3);
-    padding: 0 4px;
+    padding: 0 6px;
 }
 
 /* Slider Row & Labels */
@@ -700,51 +690,50 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    height: 20px;
-    margin-bottom: 2px;
+    height: 26px;
+    margin-bottom: 3px;
 }
 
 .custom-slider {
     flex-grow: 1;
-    margin: 0 4px;
+    margin: 0 6px;
     padding: 0;
-    height: 14px;
+    height: 18px;
 }
 
 .unity-slider.custom-slider > .unity-slider__input {
     margin: 0;
     padding: 0;
-    height: 14px;
+    height: 18px;
 }
 
 .unity-slider.custom-slider .unity-slider__drag-container {
-    height: 14px;
+    height: 18px;
     justify-content: center;
 }
 
 .unity-slider.custom-slider .unity-slider__dragger {
-    width: 8px;
-    height: 12px;
+    width: 10px;
+    height: 16px;
     border-radius: 2px;
-    margin-top: -4px;
+    margin-top: -5px;
 }
 
 .slider-header-row {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0px;
+    margin-bottom: 1px;
 }
 
 .slider-label {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    font-size: 14px;
     -unity-font-style: bold;
     color: var(--text-2);
     text-transform: uppercase;
-    width: 76px;
+    width: 90px;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -753,12 +742,11 @@
 
 .slider-val-label {
     -unity-font: var(--font-body);
-    -unity-font: var(--font-body);
     /* -unity-font-definition disabled for TTF */
-    font-size: 10px;
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-1);
-    width: 42px;
+    width: 50px;
     -unity-text-align: middle-right;
     margin: 0;
     padding: 0;
@@ -766,14 +754,14 @@
 
 /* Material Chips */
 .material-chip-btn {
-    height: 22px;
+    height: 30px;
     border-radius: var(--r-btn);
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
     flex-direction: row;
     align-items: center;
-    padding: 0 6px;
+    padding: 0 8px;
     margin: 0;
     transition: background-color 100ms ease-out, border-color 100ms ease-out;
 }
@@ -790,9 +778,8 @@
 
 .material-chip-label {
     -unity-font: var(--font-heading);
-    -unity-font: var(--font-heading);
     /* -unity-font-definition disabled for TTF */
-    font-size: 9px;
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-2);
     overflow: hidden;
@@ -805,7 +792,7 @@
 
 /* Curve Bar */
 .curve-segmented-bar {
-    height: 22px;
+    height: 30px;
     margin-top: 0;
     border-radius: var(--r-btn);
 }
@@ -825,12 +812,12 @@
     position: absolute;
     top: 16px;
     align-self: center;
-    height: 40px;
+    height: 48px;
     border-radius: var(--r-panel);
     background-color: #0E0E0E;
     border-width: 1px;
     border-color: var(--accent);
-    padding: 0 14px;
+    padding: 0 16px;
     flex-direction: row;
     align-items: center;
     gap: 12px;
@@ -840,16 +827,15 @@
 
 .placement-banner-text {
     -unity-font: var(--font-body);
-    -unity-font: var(--font-body);
     /* -unity-font-definition disabled for TTF */
-    font-size: 11px;
+    font-size: 18px;
     color: var(--text-1);
     -unity-font-style: bold;
 }
 
 .placement-banner-btn {
-    height: 26px;
-    padding: 0 10px;
+    height: 34px;
+    padding: 0 12px;
     border-radius: var(--r-btn);
 }
 
@@ -858,37 +844,37 @@
    ------------------------------------------------------------------------- */
 .compact-view .shell-top-row {
     top: 8px;
-    height: 32px;
+    height: 38px;
 }
 .compact-view .mode-toggle-bar,
 .compact-view .planet-pill,
 .compact-view .minimize-pill {
-    height: 32px;
+    height: 38px;
 }
 .compact-view .col-left,
 .compact-view .col-right {
-    top: 48px;
-    bottom: 48px;
-    width: 280px;
+    top: 52px;
+    bottom: 52px;
+    width: 330px;
 }
 .compact-view .panel-card {
-    padding: 6px 8px;
-    margin-bottom: 4px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
 }
 .compact-view .metric-value {
-    font-size: 16px;
+    font-size: 22px;
 }
 .compact-view .canvas-frame {
-    width: 136px;
-    height: 136px;
+    width: 144px;
+    height: 144px;
 }
 .compact-view .shell-bottom-left,
 .compact-view .shell-bottom-right {
     bottom: 8px;
 }
 .compact-view .bottom-segmented-bar {
-    height: 32px;
-    width: 240px;
+    height: 38px;
+    width: 280px;
 }
 
 /* -------------------------------------------------------------------------
@@ -908,3 +894,110 @@
 .mb-4 { margin-bottom: 4px; }
 .mb-6 { margin-bottom: 6px; }
 .mb-8 { margin-bottom: 8px; }
+
+/* -------------------------------------------------------------------------
+   10. 7-Step Guided Workflow Banner & Main Menu Button Styles
+   ------------------------------------------------------------------------- */
+.main-menu-pill {
+    height: 38px;
+    padding: 0 14px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    border-radius: var(--r-btn);
+    background-color: var(--surface);
+    border-width: 1px;
+    border-color: var(--border);
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+}
+
+.main-menu-pill:hover {
+    background-color: #1E1E1E;
+    border-color: var(--accent);
+}
+
+.workflow-step-banner {
+    position: absolute;
+    top: 56px;
+    align-self: center;
+    width: auto;
+    min-width: 760px;
+    max-width: 95%;
+    background-color: rgba(14, 18, 28, 0.94);
+    border-width: 1px;
+    border-color: #1F2D44;
+    border-radius: 8px;
+    padding: 8px 16px;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 90;
+    pointer-events: auto;
+}
+
+.workflow-step-pills {
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-pill {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #64748B;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 0.5px;
+}
+
+.step-pill.step-pill-done {
+    color: #34D399;
+    border-color: rgba(52, 211, 153, 0.35);
+    background-color: rgba(52, 211, 153, 0.12);
+}
+
+.step-pill.step-pill-active {
+    color: #00D4FF;
+    border-color: #00D4FF;
+    background-color: rgba(0, 212, 255, 0.20);
+    -unity-font-style: bold;
+}
+
+.workflow-guide-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 16px;
+}
+
+.workflow-guide-text {
+    font-size: 12px;
+    color: #E2E8F0;
+    -unity-font-style: bold;
+    flex: 1;
+}
+
+.workflow-actions-row {
+    flex-direction: row;
+    gap: 8px;
+}
+
+.workflow-action-btn {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    background-color: #1E293B;
+    border-color: #334155;
+    border-width: 1px;
+}
+
+.workflow-action-btn:hover {
+    background-color: #334155;
+    border-color: #00D4FF;
+}

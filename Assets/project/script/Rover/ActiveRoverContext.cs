@@ -69,6 +69,21 @@ namespace ProjectName.Rover
         }
 
         /// <summary>
+        /// Destroys the active rover GameObject and unregisters from the context.
+        /// </summary>
+        public static void DestroyActiveRover()
+        {
+            if (current != null)
+            {
+                if (current.rootGameObject != null)
+                {
+                    UnityEngine.Object.Destroy(current.rootGameObject);
+                }
+                Unregister();
+            }
+        }
+
+        /// <summary>
         /// Updates the frozen / parked state of the rover.
         /// Master Brief Rule 4: Frozen state is tracked here so environment gravity updates skip it.
         /// </summary>

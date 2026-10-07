@@ -38,11 +38,11 @@ namespace ProjectName.UI
         [Tooltip("Sticky mode: WorldAnchor = Stationary in world space (non-sticky).")]
         public StickyMode stickyMode = StickyMode.WorldAnchor;
 
-        [Tooltip("Forward distance in meters from camera to UI panel. Sweet spot for Quest 2: 1.15m.")]
-        public float forwardDistance = 1.15f;
+        [Tooltip("Forward distance in meters from camera to UI panel. Sweet spot for Quest 2 at Z=-1.84: 1.66m.")]
+        public float forwardDistance = 1.66f;
 
         [Tooltip("Vertical offset relative to camera eye height (negative = slightly below eye level for comfortable reading).")]
-        public float heightOffset = -0.10f;
+        public float heightOffset = -0.05f;
 
         [Tooltip("Follow responsiveness when in SmoothFollow mode.")]
         public float smoothFollowSpeed = 6.0f;
@@ -93,6 +93,11 @@ namespace ProjectName.UI
 
         private void Start()
         {
+            if (!ProjectName.Core.SceneLoader.IsVREnabled || (uiDocument != null && uiDocument.panelSettings != null && uiDocument.panelSettings.renderMode == PanelRenderMode.ScreenSpaceOverlay))
+            {
+                enabled = false;
+                return;
+            }
             EnsureWorldSpaceSettings();
             FindActiveCamera();
             ApplyStickyMode();
@@ -101,6 +106,11 @@ namespace ProjectName.UI
 
         private void OnEnable()
         {
+            if (!ProjectName.Core.SceneLoader.IsVREnabled || (uiDocument != null && uiDocument.panelSettings != null && uiDocument.panelSettings.renderMode == PanelRenderMode.ScreenSpaceOverlay))
+            {
+                enabled = false;
+                return;
+            }
             EnsureWorldSpaceSettings();
             FindActiveCamera();
             ApplyStickyMode();
@@ -150,7 +160,7 @@ namespace ProjectName.UI
             // Check if FloatingUIRecallController is active in the scene.
             // If present, let it exclusively handle the B-button / Secondary button to prevent dual-trigger conflicts.
             bool hasRecallController = ProjectName.VR.FloatingUIRecallController.Instance != null ||
-                                       FindFirstObjectByType<ProjectName.VR.FloatingUIRecallController>() != null;
+                                       FindAnyObjectByType<ProjectName.VR.FloatingUIRecallController>() != null;
 
             if (!hasRecallController)
             {
@@ -405,7 +415,7 @@ namespace ProjectName.UI
 
             if (targetCamera == null || !targetCamera.gameObject.activeInHierarchy)
             {
-                var cams = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+                var cams = FindObjectsByType<Camera>();
                 foreach (var c in cams)
                 {
                     if (c.enabled && c.gameObject.activeInHierarchy)
@@ -431,7 +441,11 @@ namespace ProjectName.UI
                 cachedCollider = gameObject.AddComponent<BoxCollider>();
                 cachedCollider.isTrigger = true;
                 cachedCollider.center = Vector3.zero;
-                cachedCollider.size = new Vector3(1.92f, 1.08f, 0.05f);
+                cachedCollider.size = new Vector3(4.42f, 2.49f, 0.05f);
+            }
+            else
+            {
+                cachedCollider.size = new Vector3(4.42f, 2.49f, 0.05f);
             }
         }
 

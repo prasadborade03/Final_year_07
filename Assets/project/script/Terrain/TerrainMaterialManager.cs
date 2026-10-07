@@ -276,7 +276,7 @@ namespace ProjectName.Terrain
                 Light sun = RenderSettings.sun;
                 if (sun == null)
                 {
-                    Light[] lights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+                    Light[] lights = UnityEngine.Object.FindObjectsByType<Light>();
                     for (int i = 0; i < lights.Length; i++)
                     {
                         if (lights[i].type == LightType.Directional)
@@ -319,7 +319,7 @@ namespace ProjectName.Terrain
             if (targetTerrain == null) targetTerrain = UnityEngine.Terrain.activeTerrain;
             if (targetTerrain == null)
             {
-                targetTerrain = FindFirstObjectByType<UnityEngine.Terrain>();
+                targetTerrain = FindAnyObjectByType<UnityEngine.Terrain>();
             }
             if (targetTerrain == null) return;
 
@@ -397,7 +397,6 @@ namespace ProjectName.Terrain
                     if (builtInMat.HasProperty("_Color")) builtInMat.color = config.primaryColor;
                     targetTerrain.materialTemplate = builtInMat;
                 }
-                targetTerrain.materialType = UnityEngine.Terrain.MaterialType.BuiltInStandard;
             }
 
             targetTerrain.drawInstanced = true;
@@ -953,7 +952,7 @@ namespace ProjectName.Terrain
         {
             if (profile == null) return;
             if (targetTerrain == null) targetTerrain = UnityEngine.Terrain.activeTerrain;
-            if (targetTerrain == null) targetTerrain = FindFirstObjectByType<UnityEngine.Terrain>();
+            if (targetTerrain == null) targetTerrain = FindAnyObjectByType<UnityEngine.Terrain>();
 
             SurfaceMaterialType surface = MapPlanetaryToSurface(profile.defaultMaterialPreset);
             ApplySurfaceMaterial(surface);

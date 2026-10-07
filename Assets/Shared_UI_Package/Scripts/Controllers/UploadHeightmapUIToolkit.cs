@@ -7,6 +7,7 @@ using SFB;
 using ProjectName.Rover;
 using ProjectName.Planetary;
 using ProjectName.UI;
+using ProjectName.Core;
 
 namespace ProjectName.Terrain
 {
@@ -39,7 +40,6 @@ namespace ProjectName.Terrain
         public bool isDrivingHudMode = false;
         private string activeRoverId = "husky";
         private string currentDriveMode = "CRUISE";
-        private FreeFlyCamera.CameraPerspective currentCamView = FreeFlyCamera.CameraPerspective.Front;
 
         // UI Element References: Roots & Layouts
         private VisualElement studioRoot;
@@ -60,6 +60,15 @@ namespace ProjectName.Terrain
         private Label badgeStatus;
         private Button btnPlanetBadge;
         private Label badgeDriveMode;
+
+        // 7-Step Guided Workflow & Main Menu
+        private VisualElement workflowStepBanner;
+        private readonly Label[] stepPills = new Label[7];
+        private Label lblWorkflowGuide;
+        private Button btnResetRoverKeepTerrain;
+        private Button btnNewTerrain;
+        private Button btnMainMenu;
+        public int currentWorkflowStep = 1;
 
         // Col 1: Kinematics, Attitude, Position
         private Label valLinearSpeed;
@@ -201,9 +210,25 @@ namespace ProjectName.Terrain
             if (terrainGenerator == null) terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
             if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
 
-            if (GetComponent<VRUIPositioner>() == null)
+            if (!SceneLoader.IsVREnabled)
             {
-                gameObject.AddComponent<VRUIPositioner>();
+                var flatSettings = Resources.Load<PanelSettings>("FlatPanelSettings");
+                if (flatSettings != null && uiDocument != null)
+                {
+                    uiDocument.panelSettings = flatSettings;
+                }
+                var boxCol = GetComponent<BoxCollider>();
+                if (boxCol != null) boxCol.enabled = false;
+
+                var vrPos = GetComponent<VRUIPositioner>();
+                if (vrPos != null) vrPos.enabled = false;
+            }
+            else
+            {
+                if (GetComponent<VRUIPositioner>() == null)
+                {
+                    gameObject.AddComponent<VRUIPositioner>();
+                }
             }
 
             currentHeights = HeightmapLoader.GeneratePresetHeights(
@@ -252,6 +277,16 @@ namespace ProjectName.Terrain
             {
                 SetTelemetryStandbyState();
                 ConfigureDriveBarForStandby();
+            }
+
+            var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+            if (curTerrain != null && curTerrain.terrainData != null)
+            {
+                SetWorkflowStep(ActiveRoverContext.HasActiveRover ? 6 : 3);
+            }
+            else
+            {
+                SetWorkflowStep(1);
             }
         }
 
@@ -308,6 +343,35 @@ namespace ProjectName.Terrain
                         PlanetSelectionUI.Instance.ToggleModal();
                     }
                 };
+            }
+
+            btnMainMenu = root.Q<Button>("BtnMainMenu");
+            if (btnMainMenu != null)
+            {
+                btnMainMenu.clicked += () =>
+                {
+                    ProjectName.Core.SceneLoader.LoadMainMenu();
+                };
+            }
+
+            // 7-Step Guided Workflow Banner Elements
+            workflowStepBanner = root.Q<VisualElement>("WorkflowStepBanner");
+            for (int i = 0; i < 7; i++)
+            {
+                stepPills[i] = root.Q<Label>($"StepPill{i + 1}");
+            }
+            lblWorkflowGuide = root.Q<Label>("LblWorkflowGuide");
+            btnResetRoverKeepTerrain = root.Q<Button>("BtnResetRoverKeepTerrain");
+            btnNewTerrain = root.Q<Button>("BtnNewTerrain");
+
+            if (btnResetRoverKeepTerrain != null)
+            {
+                btnResetRoverKeepTerrain.clicked += OnResetRoverKeepTerrainClicked;
+            }
+
+            if (btnNewTerrain != null)
+            {
+                btnNewTerrain.clicked += OnNewTerrainClicked;
             }
 
             // Col 1: Kinematics, Attitude, Position
@@ -977,6 +1041,16 @@ namespace ProjectName.Terrain
                     studioRoot.pickingMode = PickingMode.Position;
                 }
             }
+
+            if (active)
+            {
+                SetWorkflowStep(4);
+            }
+            else
+            {
+                var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                SetWorkflowStep(ActiveRoverContext.HasActiveRover ? 6 : (curTerrain != null ? 3 : 1));
+            }
         }
 
         public void ShowNotification(string message)
@@ -1061,6 +1135,7 @@ namespace ProjectName.Terrain
             RebuildWheelUI(handle);
             ConfigureDriveBarForRover(handle.profile);
             UpdateLiveTelemetryUI();
+            SetWorkflowStep(6);
         }
 
         private void HandleRoverDestroyed()
@@ -1070,6 +1145,8 @@ namespace ProjectName.Terrain
             ClearBreadcrumbs();
             SetTelemetryStandbyState();
             ConfigureDriveBarForStandby();
+            var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+            SetWorkflowStep(curTerrain != null ? 3 : 1);
         }
 
         private void SetTelemetryStandbyState()
@@ -2348,6 +2425,7 @@ namespace ProjectName.Terrain
 
             try
             {
+                SetWorkflowStep(2);
                 ClearBreadcrumbs();
 
                 if (currentHeights == null)
@@ -2395,6 +2473,7 @@ namespace ProjectName.Terrain
 
                 RefreshPreview();
                 ShowNotification("Terrain generated & collider synced.");
+                SetWorkflowStep(ActiveRoverContext.HasActiveRover ? 6 : 3);
                 Debug.Log("[Studio] New planetary terrain generated successfully. Old terrain removed.");
             }
             catch (System.Exception ex)
@@ -2447,8 +2526,11 @@ namespace ProjectName.Terrain
             if (terrain == null)
             {
                 ShowNotification("Generate planetary terrain first before deploying rovers.");
+                SetWorkflowStep(1);
                 return;
             }
+
+            SetWorkflowStep(4);
 
             if (RoverPlacementController.Instance != null)
             {
@@ -2503,6 +2585,100 @@ namespace ProjectName.Terrain
         {
             if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
             if (flowController != null) flowController.CenterActiveRoverOnTerrain();
+        }
+
+        // -------------------------------------------------------------
+        // 7-Step Guided Workflow Methods & Actions
+        // -------------------------------------------------------------
+        public void SetWorkflowStep(int step, string customGuide = null)
+        {
+            currentWorkflowStep = Mathf.Clamp(step, 1, 7);
+
+            for (int i = 0; i < 7; i++)
+            {
+                if (stepPills[i] == null) continue;
+                int pillStep = i + 1;
+                stepPills[i].RemoveFromClassList("step-pill-active");
+                stepPills[i].RemoveFromClassList("step-pill-done");
+
+                if (pillStep < currentWorkflowStep)
+                {
+                    stepPills[i].AddToClassList("step-pill-done");
+                }
+                else if (pillStep == currentWorkflowStep)
+                {
+                    stepPills[i].AddToClassList("step-pill-active");
+                }
+            }
+
+            if (lblWorkflowGuide != null)
+            {
+                if (!string.IsNullOrEmpty(customGuide))
+                {
+                    lblWorkflowGuide.text = customGuide;
+                }
+                else
+                {
+                    bool isVR = ProjectName.Core.SceneLoader.IsVREnabled;
+                    switch (currentWorkflowStep)
+                    {
+                        case 1:
+                            lblWorkflowGuide.text = "STEP 1: Select a heightmap preset or upload PNG, then click Generate Terrain.";
+                            break;
+                        case 2:
+                            lblWorkflowGuide.text = "STEP 2: Generating planetary mesh & syncing physics colliders...";
+                            break;
+                        case 3:
+                            lblWorkflowGuide.text = "STEP 3: Terrain ready! Select a digital twin rover (Husky, M20, or Perseverance) to deploy.";
+                            break;
+                        case 4:
+                            lblWorkflowGuide.text = isVR
+                                ? "STEP 4: Aim laser pointer at terrain & pull Trigger to place. Thumbstick to rotate heading."
+                                : "STEP 4: Move mouse over terrain & Left-Click to place. [Q,E] or Scroll to rotate heading.";
+                            break;
+                        case 5:
+                            lblWorkflowGuide.text = "STEP 5: Configure planetary body & gravity (Click planet badge at top), or begin driving.";
+                            break;
+                        case 6:
+                            lblWorkflowGuide.text = isVR
+                                ? "STEP 6: Driving active! [Left Stick] to drive • [A/X] for speeds • [B] / Recall to toggle HUD."
+                                : "STEP 6: Driving active! [W,A,S,D] to drive • [1,2,3,4] for speeds • [Tab] for Driving HUD.";
+                            break;
+                        case 7:
+                            lblWorkflowGuide.text = "STEP 7: Reset options active. Click 'RESET ROVER' to respawn, or 'NEW TERRAIN' to start over.";
+                            break;
+                    }
+                }
+            }
+        }
+
+        private void OnResetRoverKeepTerrainClicked()
+        {
+            if (RoverPlacementController.Instance != null && ActiveRoverContext.HasActiveRover)
+            {
+                RoverPlacementController.Instance.RespawnAtLastPlacementPose();
+            }
+            else if (flowController != null)
+            {
+                flowController.RespawnActiveRover();
+            }
+            SetWorkflowStep(6, "Rover respawned on terrain. Telemetry and mission odometer reset. Ready to drive!");
+            ShowNotification("Rover respawned! Terrain preserved.");
+        }
+
+        private void OnNewTerrainClicked()
+        {
+            if (flowController != null)
+            {
+                flowController.DisableAllRovers();
+            }
+            if (ActiveRoverContext.HasActiveRover)
+            {
+                ActiveRoverContext.DestroyActiveRover();
+            }
+            SetDrivingHudMode(false);
+            SetWorkflowStep(1, "STEP 1: Pick a heightmap preset or upload PNG, then click Generate Terrain.");
+            ShowNotification("Ready for new terrain. Select preset and generate.");
         }
 
         private void OnRootGeometryChanged(GeometryChangedEvent evt)

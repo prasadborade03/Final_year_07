@@ -52,7 +52,7 @@
 | **Button <kbd>A</kbd> or <kbd>X</kbd>** | Right (<kbd>A</kbd>) / Left (<kbd>X</kbd>) | **Cycle Speed Regime**: Cycles STOP (0%) ➔ PRECISION (25%) ➔ EXPLORE (60%) ➔ CRUISE (100%) ➔ STOP. | **Active** (`RoverInputProvider`) |
 | **Near-Far Curved Ray** | Left & Right Hand | Curved bezier pointer with line visual for pointing at UI Toolkit elements and 3D terrain. Live ghost marker projects to ray hit point on terrain. | **Active** (XRI 3.5.1 Near-Far Interactor, $100$m range) |
 | **Index Trigger (Click / Select)** | Right & Left Hand | **UI + Placement Only**: Confirm rover placement on terrain; click UI buttons and sliders. *Does NOT control throttle.* | **Active** (`XRI Left/Right Interaction/Select`) |
-| **Secondary Button (<kbd>B</kbd>)** | Right Controller | **Toggle Studio UI**: Hides UI or recalls it directly in front of current gaze ($1.35$m forward, stationary world-anchored). Cancels placement mode if active. | **Active** (`FloatingUIRecallController`) |
+| **Secondary Button (<kbd>B</kbd>)** | Right Controller | **Toggle Studio UI**: Hides UI or recalls it directly in front of current gaze ($1.66$m forward at $Z = -1.84$, stationary world-anchored). Cancels placement mode if active. | **Active** (`FloatingUIRecallController`) |
 | **Keyboard Fallbacks (<kbd>B</kbd> / <kbd>U</kbd>)** | Desktop / Simulator | Triggers the same B-button Studio UI toggle/recall during editor testing. | **Active** |
 | **Head Tracking (6DOF)** | Headset (HMD) | Natural 1:1 head rotation and position in Floor tracking space (zero stickiness, no camera fighting). | **Active** (`TrackedPoseDriver: Head`) |
 | **Controller Pose Tracking** | Left & Right Hand | Ergonomic resting pose in front of user (`±0.25m` X, `1.10m` Y, `0.35m` Z). Tracks 1:1 with real hands. | **Active** (`TrackedPoseDriver: Left/Right`) |
@@ -60,54 +60,92 @@
 
 ---
 
-## 2. Interactive Workflow (Phase-by-Phase)
+---
 
-The simulation follows a 3-phase lifecycle. Here is how controls work during each phase:
+## 2. Dual-Scene Architecture & Startup Flow
+
+The project implements a decoupled **Two-Part User Flow**:
 
 ```
-┌─────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
-│         PHASE 1         │      │         PHASE 2         │      │         PHASE 3         │
-│  Planetary Environment  │ ───► │     Rover Selection     │ ───► │     Active Driving &    │
-│    & Terrain Studio     │      │   & Surface Placement   │      │    Scientific Survey    │
-└─────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
+                              ┌──────────────┐
+                              │  Launch App  │
+                              └──────┬───────┘
+                                     │
+                             ┌───────▼────────┐
+                             │  Start Screen  │
+                             │ (MainMenu.unity│
+                             │   VR Toggle)   │
+                             └───────┬────────┘
+                                     │
+                             ┌───────▼────────┐
+                             │  Start Pressed │
+                             │ Read VR Toggle │
+                             └───┬────────┬───┘
+                     Toggle ON   │        │   Toggle OFF
+            ┌────────────────────┘        └────────────────────┐
+            ▼                                                  ▼
+┌─────────────────────────┐                        ┌─────────────────────────┐
+│      Simulation_VR      │                        │     Simulation_Flat     │
+│  (Meta Quest 2/OpenXR)  │                        │    (Desktop Display)    │
+│  • XR Rig 6-DoF HMD     │                        │  • Desktop Camera Rig   │
+│  • Dual Laser Pointer   │                        │  • Mouse Cursor Click   │
+│  • World-Space UI (-1.84m)                      │  • Screen Overlay UI    │
+│  • Left Stick Drive     │                        │  • Keyboard WASD Drive  │
+└───────────┬─────────────┘                        └───────────┬─────────────┘
+            │                                                  │
+            └────────────────────┬─────────────────────────────┘
+                                 ▼
+                   ┌───────────────────────────┐
+                   │   Shared Simulation Flow  │
+                   │   (Exact Same 7 Steps)    │
+                   └───────────────────────────┘
 ```
+
+1. **`MainMenu.unity` (Start Screen)**:
+   - Dedicated start menu scene containing project information, hardware toggle, and controls summary.
+   - **VR Toggle**:
+     - **Toggle ON (VR Mode)**: Saves `PlayerPrefs.SetInt("VR_Enabled", 1)`. Loads `Simulation_VR` (or `VR_Module`).
+     - **Toggle OFF (Desktop Mode)**: Saves `PlayerPrefs.SetInt("VR_Enabled", 0)`. Loads `Simulation_Flat`.
+   - **Persistence**: Managed by `SceneLoader.cs` and `MainMenuController.cs`.
+   - **Back to Menu**: Both simulation scenes include a **MAIN MENU** header button that smoothly returns to `MainMenu.unity`.
 
 ---
 
-### Phase 1: Planetary Environment & Terrain Setup
+## 3. The 7-Step Shared Simulation Flow & UI States Guide
 
-**Objective**: Choose your celestial world, configure the terrain geometry, and generate the 3D surface mesh.
+Both `Simulation_VR` and `Simulation_Flat` share the identical underlying logic, physics, and telemetry. Only the interaction hardware differs (Laser Ray vs Mouse Cursor, Thumbstick vs WASD).
 
-1. **Select Celestial Planet / Environment**:
-   - Press <kbd>P</kbd> on your keyboard (or click the **Planet Badge** button in the top header).
-   - The **Planetary Selection Modal** appears.
-   - Click to choose from:
-     - 🔴 **Mars** (0.38g gravity, 610 Pa atmosphere, reddish Martian dust)
-     - ⚪ **Moon** (0.16g gravity, 0 Pa vacuum, high contrast lunar lighting)
-     - 🔵 **Earth** (1.00g gravity, 101.3 kPa atmosphere)
-     - 🟠 **Titan** (0.14g gravity, dense 146.7 kPa atmosphere, haze)
-     - 🟡 **Venus** (0.90g gravity, extreme 9.2 MPa atmosphere, caustic heat)
-   - Click **Apply Environment** or press <kbd>Esc</kbd> to close the modal.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       7-STEP SIMULATION LIFECYCLE                           │
+│                                                                             │
+│   [1. Heightmap] ──► [2. Terrain] ──► [3. Rover] ──► [4. Place]            │
+│          ▲                                                 │                │
+│          │                                                 ▼                │
+│   Loop: New Terrain                                  [5. Environment]       │
+│          │                                                 │                │
+│          │                                                 ▼                │
+│   [7. Reset Simulation] ◄─────────────────────────── [6. Drive Rover]       │
+│          │                                                                  │
+│          └──► Loop: Reset Rover / Keep Terrain ──► (Back to Step 5/6)       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-2. **Load or Sculpt Terrain**:
-   - **Quick Presets**: In Column 2 (Center) of the Studio, click any preset button:
-     - **Gale Crater** (Central peak and alluvial basin)
-     - **Olympus Mons** (Massive volcanic caldera shield)
-     - **Shackleton Crater** (Deep lunar impact crater)
-     - **Valles Marineris** (Gigantic rift canyon system)
-     - **Fractal** (Procedurally randomized multi-octave Perlin noise)
-   - **Custom Heightmap Image**: Click **Browse File** to select any 16-bit or 8-bit grayscale PNG heightmap from your PC.
-   - **Terrain Lab (Advanced Sculpting)**: Click the **Terrain Lab** tab to open the 2D canvas painter:
-     - Select a brush: **Raise**, **Lower**, **Smooth**, **Flatten**, or **Noise**.
-     - Adjust sliders: **Radius**, **Strength**, **Hardness**, or **Flatten Height**.
-     - Click and drag on the 2D heightmap canvas to paint topological features.
-     - Press <kbd>Ctrl</kbd> + <kbd>Z</kbd> to Undo or <kbd>Ctrl</kbd> + <kbd>Y</kbd> to Redo.
-     - Choose surface material presets (**Martian**, **Lunar**, **Basalt**, **Wireframe**, etc.).
+### Detailed UI Visibility & Step Progression:
 
-3. **Generate Terrain**:
-   - Click the green **Generate Terrain** button.
-   - The 3D terrain mesh instantly spawns in the scene with real physics colliders, elevation scaling, and PBR textures.
-   - The system automatically transitions to **Phase 2 (Rover Selection)**.
+| Step # | Stage Name | What Is SHOWN (Active & Interactive) | What Is NOT SHOWN (Standby / Hidden) | Contextual Guide Text |
+|:---:|:---|:---|:---|:---|
+| **1** | **Load Heightmap** | • Heightmap Presets (Gale, Olympus, Shackleton, Valles, Fractal, Plains)<br>• 2D Heightmap Preview Minimap<br>• PNG File Upload Button<br>• Glowing "Generate Terrain" Button | • Rover Deploy Buttons (Disabled until terrain exists)<br>• Driving Telemetry Pods (Standby mode)<br>• Relocate / Centering Controls (Inactive) | *"STEP 1: Select a heightmap preset or upload your grayscale PNG, then click Generate Terrain."* |
+| **2** | **Generate Terrain** | • "Generating..." progress state on button<br>• Active heightmap resampler and procedural generator<br>• Dynamic mesh elevation builder and physics collider sync | • Placement ghost marker (Hidden until rover chosen)<br>• Rover spawning (Deferred until terrain collider is bound) | *"STEP 2: Generating 3D planetary mesh & syncing physics colliders..."* |
+| **3** | **Choose Rover** | • Digital Twin Rover Cards (Husky A200, M20 Quadruped, Perseverance M2020) highlighted and pulsating<br>• Rover specification summaries (Drive type, wheel radius, payload) | • Placement Mode Banner (Hidden until card clicked)<br>• Active driving telemetry (Standby until rover placed) | *"STEP 3: Terrain ready! Select a digital twin rover (Husky, M20, or Perseverance) to deploy."* |
+| **4** | **Place Rover** | • Top **Placement Mode Banner** with "CENTRE SPAWN" and "CANCEL" buttons<br>• Interactive 3D **Ghost Marker** (Ring + Heading Arrow + Slope Degree Readout) projecting to ray/cursor on terrain<br>• Heading Yaw Rotation (Thumbstick in VR, Q/E or Mouse Scroll in Desktop) | • Studio 3-column side panels auto-hidden for unobstructed view<br>• Rover wheel physics frozen (ArticulationBodies immovable to avoid falling through terrain during positioning) | **VR**: *"STEP 4: Aim laser pointer at terrain & pull Trigger to place. Thumbstick to rotate heading."*<br>**Desktop**: *"STEP 4: Move mouse over terrain & Left-Click to place. [Q,E] or Scroll to rotate heading."* |
+| **5** | **Configure Environment** | • Glowing **Planet Badge** at top header (Mars, Moon, Earth, Titan, Venus)<br>• Planetary Selection Modal with gravity slider, atmospheric pressure, and surface temperature<br>• Environment Telemetry Card showing surface gravity and dust storm alerts | • Placement Banner automatically hidden<br>• Standby badges converted to active | *"STEP 5: Configure planetary body & gravity (Click planet badge at top), or begin driving."* |
+| **6** | **Drive Rover** | • Full Telemetry HUD: Linear speed (m/s), ground speed (km/h), G-Force, pitch, roll, heading compass, coordinate tracking, odometer, mission timer<br>• Real-time Wheel Traction & Slip status cells (GOOD, FAIR, SLIP, AIR)<br>• View Mode Switch (<kbd>Tab</kbd> toggles between Full Studio and transparent Driving HUD)<br>• Camera perspective controls (Rear, Front, Left, Right, Free-Fly) | • Rover selection buttons locked to active rover<br>• Placement ghost marker completely hidden | **VR**: *"STEP 6: Driving active! [Left Stick] to drive • [A/X] for speeds • [B] / Recall to toggle HUD."*<br>**Desktop**: *"STEP 6: Driving active! [W,A,S,D] to drive • [1,2,3,4] for speeds • [Tab] for Driving HUD."* |
+| **7** | **Reset Simulation** | • **RESET ROVER (Keep Terrain)** Button (Loops to Step 5/6: Respawns rover at center/last pose, resets timer & odometer)<br>• **NEW TERRAIN** Button (Loops to Step 1: Destroys rover, re-opens heightmap presets)<br>• **MAIN MENU** Button (Exits simulation, returns to `MainMenu.unity`) | • Driving controls temporarily paused if resetting<br>• Stale telemetry numbers wiped clean | *"STEP 7: Reset options active. Click 'RESET ROVER' to respawn, or 'NEW TERRAIN' to start over."* |
+
+---
+
+## 4. Hardware Input Breakdown (VR vs Desktop)
 
 ---
 
@@ -157,7 +195,7 @@ The simulation follows a 3-phase lifecycle. Here is how controls work during eac
    - Press <kbd>Tab</kbd> to switch from **Full Studio Mode** to **Driving HUD Mode**.
    - **Full Studio Mode**: Best for analyzing systems, topography, radar minimap, and motor temperatures.
    - **Driving HUD Mode**: Leaves the middle 100% transparent for clear driving visibility while keeping critical speedometer, attitude, and wheel cards on the edges.
-   - In VR, press <kbd>B</kbd> on the Right Controller to toggle the Studio UI or recall it comfortably in front of your gaze ($1.35$m).
+   - In VR, press <kbd>B</kbd> on the Right Controller to toggle the Studio UI or recall it comfortably in front of your gaze ($1.66$m at $Z = -1.84$).
 
 2. **Drive the Rover (Unified Desktop & VR)**:
    - **Virtual Reality (Meta Quest / OpenXR)**:
@@ -348,7 +386,7 @@ The `VR_Module.unity` scene features an official **Unity XR Interaction Toolkit 
 |---|---|---|---|
 | **Left Thumbstick** | **Left Hand** | `RoverInputProvider` (`<XRController>{LeftHand}/thumbstick` + `CommonUsages.primary2DAxis`) | **Primary Rover Drive Stick**: Y-axis controls throttle ($-1$ reverse to $+1$ forward); X-axis controls steering ($-1$ left to $+1$ right). Automatically gated: acts as ghost marker yaw rotation during Phase 2, and drive stick during Phase 3. Configured with $0.15$ deadzone. |
 | **Face Button <kbd>A</kbd> or <kbd>X</kbd>** | **Right (<kbd>A</kbd>) / Left (<kbd>X</kbd>)** | `RoverInputProvider` (`<XRController>/primaryButton` + `CommonUsages.primaryButton`) | **Cycle Speed Regime**: Cycles STOP (0%) ➔ PRECISION (25%) ➔ EXPLORE (60%) ➔ CRUISE (100%) ➔ STOP. Synchronizes across all three rover types. |
-| **Secondary Button (<kbd>B</kbd>)** | **Right Hand** | `FloatingUIRecallController` (`<XRController>{RightHand}/secondaryButton`) | **Toggles Studio UI**: If visible, hides the panel (`SetActive(false)`). If hidden, recalls the panel to eye level $1.35$m directly in front of the player's current gaze and locks it in world space. In Placement Mode, cancels placement. |
+| **Secondary Button (<kbd>B</kbd>)** | **Right Hand** | `FloatingUIRecallController` (`<XRController>{RightHand}/secondaryButton`) | **Toggles Studio UI**: If visible, hides the panel (`SetActive(false)`). If hidden, recalls the panel to eye level $1.66$m directly in front of the player's current gaze (at $Z = -1.84$) and locks it in world space. In Placement Mode, cancels placement. |
 | **Index Trigger** | **Both Hands** | `NearFarInteractor` (`XRI Left/Right Interaction/Select`) | **UI + Placement Only**: Interacts with UI buttons, sliders, dropdowns, and confirms rover placement on terrain. *Does not control throttle.* |
 | **Curved Ray Laser** | **Both Hands** | `CurveInteractionCaster` + `LineVisual` | Emits a graceful curved bezier ray with real-time collision detection. Highlights hovered UI elements and casts $100$m onto planetary terrain. |
 | **Headset 6DOF Tracking** | **HMD** | `TrackedPoseDriver` (`XRI Head`) | Natural 1:1 orientation and translation in **Floor** tracking mode. No sticky HUD, no mouse override, no camera fighting. |
@@ -384,9 +422,9 @@ XR Origin                                       [XROrigin in Floor Mode @ (0, 76
 In earlier iterations, the UI was parented to the headset camera in `HeadLocked` mode ("Iron Man Visor"), which caused the entire dashboard to drag across the viewport whenever the player turned their head, creating severe visual stickiness and motion discomfort.
 
 In `VR_Module.unity`:
-1. **World-Anchored by Default**: The `UIManager` (UI Toolkit UIDocument) is situated at `(0.00, 77.30, -1.80)`, standing comfortably in 3D world space like a physical mission console.
+1. **World-Anchored by Default**: The `UIManager` (UI Toolkit UIDocument) is situated at `(0.00, 77.35, -1.84)`, standing comfortably in 3D world space at the user's preferred distance ($1.66$m in front of the headset).
 2. **Zero Camera Fighting**: No scripts parent the UI to the camera or modify the camera's local rotation.
-3. **Dynamic Gaze Recall**: When the player presses the **B Button** to bring back the UI, `FloatingUIRecallController` calculates the user's flat horizontal forward vector (ignoring pitch tilt so the panel does not plant on the ground) and places the UI $1.35$m in front of them, facing them. Once placed, it stays completely stationary in world space.
+3. **Dynamic Gaze Recall**: When the player presses the **B Button** to bring back the UI, `FloatingUIRecallController` calculates the user's flat horizontal forward vector (ignoring pitch tilt so the panel does not plant on the ground) and places the UI $1.66$m in front of them (landing at $Z = -1.84$), facing them. Once placed, it stays completely stationary in world space.
 
 ---
 

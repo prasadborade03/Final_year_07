@@ -41,6 +41,10 @@
 
             <!-- Planet Badge Pill & Minimize Pill -->
             <ui:VisualElement class="top-right-group hud-interactive" picking-mode="Position">
+                <ui:Button name="BtnMainMenu" class="btn btn-secondary main-menu-pill" tooltip="Exit Simulation &amp; Return to Start Menu">
+                    <ui:VisualElement class="icon-14 icon-restore tint-accent" />
+                    <ui:Label text="MAIN MENU" class="btn-text" />
+                </ui:Button>
                 <ui:Button name="BtnPlanetBadge" class="btn btn-secondary planet-pill" tooltip="Select Planet Environment [P]">
                     <ui:VisualElement class="icon-16 icon-planet tint-accent" />
                     <ui:Label name="LblPlanetName" text="MARS" class="btn-text planet-name-text" />
@@ -48,6 +52,32 @@
                 <ui:Button name="BtnMinimizeStudio" class="btn btn-secondary minimize-pill" tooltip="Minimize Studio [U]">
                     <ui:VisualElement class="icon-14 icon-minus tint-text-2" />
                 </ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 2b. 7-Step Guided Workflow Banner -->
+        <ui:VisualElement name="WorkflowStepBanner" class="workflow-step-banner hud-interactive" picking-mode="Position">
+            <ui:VisualElement name="WorkflowStepPills" class="workflow-step-pills">
+                <ui:Label name="StepPill1" text="1. HEIGHTMAP" class="step-pill step-pill-active" />
+                <ui:Label name="StepPill2" text="2. TERRAIN" class="step-pill" />
+                <ui:Label name="StepPill3" text="3. ROVER" class="step-pill" />
+                <ui:Label name="StepPill4" text="4. PLACE" class="step-pill" />
+                <ui:Label name="StepPill5" text="5. ENVIRONMENT" class="step-pill" />
+                <ui:Label name="StepPill6" text="6. DRIVE" class="step-pill" />
+                <ui:Label name="StepPill7" text="7. RESET" class="step-pill" />
+            </ui:VisualElement>
+            <ui:VisualElement name="WorkflowGuideRow" class="workflow-guide-row">
+                <ui:Label name="LblWorkflowGuide" text="STEP 1: Pick a heightmap preset or upload PNG, then click Generate Terrain." class="workflow-guide-text" />
+                <ui:VisualElement name="WorkflowActionsRow" class="workflow-actions-row">
+                    <ui:Button name="BtnResetRoverKeepTerrain" class="btn btn-secondary workflow-action-btn" tooltip="Respawn active rover &amp; reset telemetry, keeping terrain (Loop to Step 5)">
+                        <ui:VisualElement class="btn-icon-leading icon-refresh" />
+                        <ui:Label text="RESET ROVER" class="btn-text" />
+                    </ui:Button>
+                    <ui:Button name="BtnNewTerrain" class="btn btn-secondary workflow-action-btn" tooltip="Start over with a new heightmap and terrain (Loop to Step 1)">
+                        <ui:VisualElement class="btn-icon-leading icon-mountains" />
+                        <ui:Label text="NEW TERRAIN" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 

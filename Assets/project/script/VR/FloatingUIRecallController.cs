@@ -39,12 +39,12 @@ namespace ProjectName.VR
         public Camera xrCamera;
 
         [Header("Spatial Recall Parameters (§4.2)")]
-        [Tooltip("Distance in meters from the headset where the UI reappears (recommended 1.2 - 1.5m).")]
-        [Range(0.8f, 3.0f)]
-        public float recallDistance = 1.35f;
+        [Tooltip("Distance in meters from the headset where the UI reappears (1.66m places UI at Z=-1.84).")]
+        [Range(0.6f, 3.0f)]
+        public float recallDistance = 1.66f;
 
         [Tooltip("Vertical drop below eye level in meters for comfortable reading.")]
-        public float verticalOffset = -0.1f;
+        public float verticalOffset = -0.05f;
 
         [Header("Input Bindings")]
 #if ENABLE_INPUT_SYSTEM
@@ -101,6 +101,12 @@ namespace ProjectName.VR
 
         private void Start()
         {
+            if (!ProjectName.Core.SceneLoader.IsVREnabled)
+            {
+                enabled = false;
+                return;
+            }
+
             if (xrCamera == null)
             {
                 ResolveXRCamera();

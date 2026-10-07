@@ -262,7 +262,7 @@ namespace ProjectName.Rover
                 if (rGo != null) rightInteractor = rGo.GetComponentInChildren<NearFarInteractor>(true);
                 if (rightInteractor == null)
                 {
-                    var all = FindObjectsByType<NearFarInteractor>(FindObjectsSortMode.None);
+                    var all = FindObjectsByType<NearFarInteractor>();
                     foreach (var nf in all)
                     {
                         if (nf.gameObject.name.ToLowerInvariant().Contains("right") || 
@@ -281,7 +281,7 @@ namespace ProjectName.Rover
                 if (lGo != null) leftInteractor = lGo.GetComponentInChildren<NearFarInteractor>(true);
                 if (leftInteractor == null)
                 {
-                    var all = FindObjectsByType<NearFarInteractor>(FindObjectsSortMode.None);
+                    var all = FindObjectsByType<NearFarInteractor>();
                     foreach (var nf in all)
                     {
                         if (nf.gameObject.name.ToLowerInvariant().Contains("left") || 

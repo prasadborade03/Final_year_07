@@ -1,0 +1,355 @@
+/* =========================================================================
+   VR Planetary Rover Digital Twin Simulation Studio
+   Professional Main Menu Stylesheet
+   Design Philosophy: Calm, precise, scientific, human-designed aerospace UI
+   ========================================================================= */
+
+.menu-root {
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    background-color: #0A0E17;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+}
+
+/* Main Architectural Container Window */
+.menu-window {
+    width: 980px;
+    max-width: 96%;
+    background-color: #101622;
+    border-color: #1C2636;
+    border-width: 1px;
+    border-radius: 6px;
+    padding: 36px 44px;
+    flex-direction: column;
+}
+
+/* 1. Header Section */
+.menu-header {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.header-pre-title {
+    font-size: 11px;
+    font-style: bold;
+    color: #64748B;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+
+.header-title {
+    font-size: 30px;
+    font-style: bold;
+    color: #F8FAFC;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.header-subtitle {
+    font-size: 14px;
+    font-style: bold;
+    color: #00D4FF;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.header-desc {
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 18px;
+}
+
+/* Subtle Hairline Dividers */
+.menu-divider {
+    height: 1px;
+    background-color: #1A2433;
+    margin-top: 22px;
+    margin-bottom: 22px;
+}
+
+/* 2. Primary Decision: Mode Selection Section */
+.mode-section {
+    flex-direction: column;
+}
+
+.section-title-row {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.section-title {
+    font-size: 12px;
+    font-style: bold;
+    color: #E2E8F0;
+    letter-spacing: 1.5px;
+}
+
+.section-caption {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.mode-cards-container {
+    flex-direction: row;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+/* Native-feel Decision Cards */
+.mode-card {
+    flex: 1;
+    background-color: #131A26;
+    border-color: #1E2B3E;
+    border-width: 1.5px;
+    border-radius: 6px;
+    padding: 16px 20px;
+    flex-direction: column;
+    cursor: link;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.mode-card:hover {
+    background-color: #172130;
+    border-color: #2D3E56;
+}
+
+/* Selected state: Elevated contrast with refined cyan accent border */
+.mode-card-active {
+    background-color: #142336;
+    border-color: #00D4FF;
+}
+
+.mode-card-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* Radio Indicator Circle */
+.mode-indicator {
+    width: 14px;
+    height: 14px;
+    border-color: #475569;
+    border-width: 1.5px;
+    border-radius: 7px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.mode-card-active .mode-indicator {
+    border-color: #00D4FF;
+}
+
+.mode-radio-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: transparent;
+}
+
+.mode-card-active .mode-radio-dot {
+    background-color: #00D4FF;
+}
+
+.mode-card-title {
+    font-size: 14px;
+    font-style: bold;
+    color: #F8FAFC;
+    letter-spacing: 0.5px;
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+/* Subtle Badges */
+.tag-runtime {
+    font-size: 10px;
+    color: #94A3B8;
+    background-color: #1A2433;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+.tag-recommended {
+    font-size: 10px;
+    font-style: bold;
+    color: #00D4FF;
+    background-color: rgba(0, 212, 255, 0.10);
+    border-color: rgba(0, 212, 255, 0.35);
+    border-width: 1px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.tag-standard {
+    font-size: 10px;
+    font-style: bold;
+    color: #94A3B8;
+    background-color: rgba(148, 163, 184, 0.10);
+    border-color: rgba(148, 163, 184, 0.25);
+    border-width: 1px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.mode-card-body {
+    font-size: 12px;
+    color: #94A3B8;
+    line-height: 17px;
+    margin-bottom: 12px;
+}
+
+.mode-card-footer {
+    border-top-width: 1px;
+    border-color: #1C2738;
+    padding-top: 8px;
+}
+
+.mode-meta {
+    font-size: 11px;
+    color: #64748B;
+}
+
+/* 5. Setting Row below selector */
+.runtime-setting-row {
+    flex-direction: row;
+    align-items: center;
+    background-color: #0D131C;
+    border-color: #182230;
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 8px 14px;
+}
+
+.runtime-toggle {
+    font-size: 13px;
+    color: #CBD5E1;
+}
+
+.status-pill {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-caption {
+    font-size: 10px;
+    font-style: bold;
+    color: #64748B;
+    letter-spacing: 1px;
+}
+
+.status-value {
+    font-size: 11px;
+    font-style: bold;
+    color: #00D4FF;
+    letter-spacing: 0.5px;
+}
+
+/* 6. Supporting Information: Overview Grid */
+.overview-section {
+    flex-direction: column;
+}
+
+.overview-grid {
+    flex-direction: row;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.overview-col {
+    flex: 1;
+    background-color: #0D131C;
+    border-color: #182230;
+    border-width: 1px;
+    border-radius: 5px;
+    padding: 14px 16px;
+    flex-direction: column;
+}
+
+.col-title {
+    font-size: 11px;
+    font-style: bold;
+    color: #94A3B8;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.col-item {
+    font-size: 11.5px;
+    color: #CBD5E1;
+    line-height: 18px;
+    margin-bottom: 4px;
+}
+
+/* 7. Bottom Action Footer */
+.menu-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 24px;
+}
+
+/* Primary Action CTA Button: Most Obvious on Screen */
+.btn-primary-launch {
+    background-color: #00D4FF;
+    border-width: 0;
+    border-radius: 4px;
+    padding: 13px 44px;
+    cursor: link;
+    align-items: center;
+    justify-content: center;
+    transition-property: background-color;
+    transition-duration: 0.15s;
+}
+
+.btn-primary-launch:hover {
+    background-color: #33DDFF;
+}
+
+.btn-primary-launch:active {
+    background-color: #00B4D8;
+}
+
+.btn-primary-text {
+    color: #070B12;
+    font-size: 14px;
+    font-style: bold;
+    letter-spacing: 1.5px;
+}
+
+/* Secondary Action: Quiet and Restrained */
+.btn-secondary-exit {
+    background-color: transparent;
+    border-color: #222E40;
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 11px 22px;
+    cursor: link;
+    align-items: center;
+    justify-content: center;
+    transition-property: background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.btn-secondary-exit:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: #33435C;
+}
+
+.btn-secondary-text {
+    color: #8292A6;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}

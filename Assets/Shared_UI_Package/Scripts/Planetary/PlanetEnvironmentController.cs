@@ -148,7 +148,7 @@ namespace ProjectName.Planetary
         {
             if (profile == null) return;
             var matManager = TerrainMaterialManager.Instance;
-            if (matManager == null) matManager = FindFirstObjectByType<TerrainMaterialManager>();
+            if (matManager == null) matManager = FindAnyObjectByType<TerrainMaterialManager>();
             if (matManager != null)
             {
                 matManager.ApplyPlanetaryProfile(profile);

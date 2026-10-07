@@ -206,7 +206,7 @@ public class RoverController_m20 : MonoBehaviour
 
     private ArticulationBody FindBody(string linkName)
     {
-        var bodies = FindObjectsByType<ArticulationBody>(FindObjectsSortMode.None);
+        var bodies = FindObjectsByType<ArticulationBody>();
         foreach (var b in bodies)
         {
             if (b.name == linkName || b.gameObject.name == linkName)
