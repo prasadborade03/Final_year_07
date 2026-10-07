@@ -1,7 +1,8 @@
 # Comprehensive Controls & Interaction Guide
 
 **VR Planetary Rover Digital Twin Simulation Studio (`Final_year_07`)**  
-*Supports both Desktop (Keyboard & Mouse) and Virtual Reality (Meta Quest 2 / OpenXR).*
+*Supports both Desktop (Keyboard & Mouse) and Virtual Reality (Meta Quest 2 / OpenXR).*  
+**Architectural User Flow & UI State Machine**: See [USERFLOW.md](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/USERFLOW.md) for full 7-step lifecycle & scene routing specifications.
 
 ---
 
