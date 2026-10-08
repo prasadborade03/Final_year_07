@@ -48,7 +48,7 @@ public static class PlanetProfileSetupUtility
         p.hazardTitle = "DUST STORM";
         p.hazardValue = "No";
 
-        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Shared_UI_Package/Materials/Skies/Sky_Mars.mat");
+        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/project/materials/Sky_Planetary_Nebulae.mat");
         p.sunColor = new Color(1.0f, 0.88f, 0.76f, 1f);
         p.sunIntensity = 0.75f;
         p.sunElevationDeg = 35.0f;
@@ -142,7 +142,7 @@ public static class PlanetProfileSetupUtility
         p.hazardTitle = "VACUUM";
         p.hazardValue = "No weather";
 
-        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Shared_UI_Package/Materials/Skies/Sky_Moon.mat");
+        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/project/materials/Sky_Planetary_Nebulae.mat");
         p.sunColor = new Color(1.0f, 1.0f, 0.98f, 1f);
         p.sunIntensity = 1.30f;
         p.sunElevationDeg = 25.0f;
@@ -189,7 +189,7 @@ public static class PlanetProfileSetupUtility
         p.hazardTitle = "HAZE";
         p.hazardValue = "Methane drizzle";
 
-        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Shared_UI_Package/Materials/Skies/Sky_Titan.mat");
+        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/project/materials/Sky_Planetary_Nebulae.mat");
         p.sunColor = new Color(0.95f, 0.65f, 0.25f, 1f);
         p.sunIntensity = 0.20f;
         p.sunElevationDeg = 30.0f;
@@ -236,7 +236,7 @@ public static class PlanetProfileSetupUtility
         p.hazardTitle = "ATMOSPHERE";
         p.hazardValue = "Corrosive / 92 bar";
 
-        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Shared_UI_Package/Materials/Skies/Sky_Venus.mat");
+        p.skyboxMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/project/materials/Sky_Planetary_Nebulae.mat");
         p.sunColor = new Color(0.85f, 0.75f, 0.45f, 1f);
         p.sunIntensity = 0.25f;
         p.sunElevationDeg = 40.0f;

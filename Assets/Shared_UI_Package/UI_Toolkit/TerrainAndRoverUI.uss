@@ -597,9 +597,11 @@
 
 .preset-chip-btn.preset-active,
 .preset-chip-btn.preset-btn-lab-active {
-    background-color: #16242B;
-    border-color: var(--accent);
-    color: var(--accent);
+    background-color: #0E2A38;
+    border-color: #00E5FF;
+    border-width: 2px;
+    color: #FFFFFF;
+    -unity-font-style: bold;
 }
 
 /* Seed Input Row & Field */
@@ -772,8 +774,9 @@
 }
 
 .material-chip-btn.material-btn-active {
-    background-color: #16242B;
-    border-color: var(--accent);
+    background-color: #0E2A38;
+    border-color: #00E5FF;
+    border-width: 2px;
 }
 
 .material-chip-label {
@@ -875,6 +878,30 @@
 .compact-view .bottom-segmented-bar {
     height: 38px;
     width: 280px;
+}
+
+/* -------------------------------------------------------------------------
+   Desktop Flat Mode Responsive Overrides (Tight & Non-Obtrusive 3D View)
+   ------------------------------------------------------------------------- */
+.mode-flat .col-left,
+.mode-flat .col-right {
+    width: 290px;
+    top: 56px;
+    bottom: 56px;
+}
+
+.mode-flat .panel-card {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+}
+
+.mode-flat .metric-value {
+    font-size: 20px;
+}
+
+.mode-flat .guided-flow-container {
+    width: 680px;
+    top: 60px;
 }
 
 /* -------------------------------------------------------------------------
@@ -1061,10 +1088,10 @@
     font-size: 13px;
     -unity-font-style: bold;
     letter-spacing: 1px;
-    color: var(--accent);
-    background-color: var(--accent-dim);
+    color: #00D4FF;
+    background-color: rgba(0, 212, 255, 0.12);
     border-width: 1px;
-    border-color: var(--accent);
+    border-color: #00D4FF;
     border-radius: var(--r-sm);
     padding: 2px 8px;
 }
@@ -1082,12 +1109,15 @@
 
 .planet-grid {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 8px;
 }
 
 .planet-card {
-    flex: 1;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 120px;
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
@@ -1227,4 +1257,212 @@
 .modal-btn {
     min-width: 110px;
     height: 36px;
+}
+
+/* =========================================================================
+   Modern Planet Selection Modal (UI Toolkit)
+   ========================================================================= */
+.planet-modal-card {
+    width: 840px;
+    max-width: 95%;
+    background-color: #121214;
+    border-width: 1px;
+    border-color: #2E2E33;
+    border-top-color: var(--accent);
+    border-radius: var(--r-panel);
+    padding: 24px;
+    flex-direction: column;
+}
+
+.planet-modal-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border);
+    padding-bottom: 12px;
+}
+
+.planet-modal-header-left {
+    flex-direction: column;
+    flex: 1;
+}
+
+.planet-modal-subtitle {
+    -unity-font: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.planet-modal-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-btn);
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    color: var(--text-2);
+    font-size: 14px;
+    -unity-text-align: middle-center;
+    transition: background-color 100ms, color 100ms;
+}
+
+.planet-modal-close-btn:hover {
+    background-color: var(--surface-3);
+    color: var(--text-1);
+    border-color: var(--border-hi);
+}
+
+.planet-modal-body {
+    flex-direction: row;
+    gap: 16px;
+    min-height: 290px;
+}
+
+.planet-modal-left {
+    flex: 1.1;
+    flex-direction: column;
+}
+
+.planet-modal-right {
+    flex: 1.3;
+    flex-direction: column;
+}
+
+.planet-modal-scroll {
+    flex: 1;
+    max-height: 260px;
+}
+
+.planet-modal-grid {
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 6px;
+}
+
+.planet-select-card {
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    border-radius: var(--r-btn);
+    padding: 8px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.planet-select-card:hover {
+    background-color: var(--surface-3);
+    border-color: var(--border-hi);
+}
+
+.planet-select-card-active {
+    background-color: rgba(0, 229, 255, 0.08);
+    border-color: var(--accent);
+    border-width: 1px;
+}
+
+.planet-select-card-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.planet-badge-mini {
+    -unity-font: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    background-color: rgba(0, 229, 255, 0.12);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.planet-card-hdr-tag {
+    -unity-font: var(--font-mono);
+    font-size: 10px;
+    color: #A080FF;
+    margin-top: 3px;
+}
+
+.planet-card-hdr-tag-earth {
+    -unity-font: var(--font-mono);
+    font-size: 10px;
+    color: #4DEEEA;
+    margin-top: 3px;
+}
+
+.planet-inspector-card {
+    flex: 1;
+    background-color: var(--surface-1);
+    border-width: 1px;
+    border-color: var(--border);
+    border-radius: var(--r-card);
+    padding: 14px;
+    flex-direction: column;
+}
+
+.planet-inspector-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.planet-inspector-title {
+    -unity-font: var(--font-heading);
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    letter-spacing: 1px;
+}
+
+.planet-inspector-desc {
+    -unity-font: var(--font-body);
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 16px;
+    margin-bottom: 12px;
+    white-space: normal;
+}
+
+.planet-specs-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.spec-pod {
+    width: 48%;
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    border-radius: var(--r-btn);
+    padding: 6px 8px;
+    flex-direction: column;
+}
+
+.spec-pod-label {
+    -unity-font: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-3);
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.spec-pod-value {
+    -unity-font: var(--font-mono);
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+}
+
+.planet-modal-actions {
+    margin-top: 16px;
+    border-top-width: 1px;
+    border-top-color: var(--border);
+    padding-top: 12px;
 }

@@ -270,25 +270,24 @@ public class SimulationFlowController : MonoBehaviour
 
     /// <summary>
     /// Step 4: Called once a rover has been placed/spawned.
-    /// Freezes the rover in standby and transitions to SimulationReady.
+    /// Directly transitions to ActiveSimulation for seamless driving without redundant modal.
     /// </summary>
     public void OnRoverSpawned()
     {
-        // Freeze rover until mission starts
-        ActiveRoverContext.SetFrozen(true);
-        DisableRoverControllers();
+        // Direct transition from placement to active driving mission (No redundant modal)
+        ActiveRoverContext.SetFrozen(false);
+        EnableActiveRoverController();
 
-        SetSimulationState(ProjectName.Core.SimulationState.SimulationReady);
-        SetGuideText($"Simulation Ready: {ProjectName.Core.SimulationContext.SelectedRoverDisplayName} stationed on {ProjectName.Core.SimulationContext.SelectedPlanet}. Click Start Mission.");
-        Log("Rover spawned -> State.SimulationReady (Frozen standby)");
+        SetSimulationState(ProjectName.Core.SimulationState.ActiveSimulation);
+        SetGuideText($"Active Mission! Drive: WASD / Thumbstick. Telemetry streaming live.");
+        Log("Rover spawned -> Direct transition to State.ActiveSimulation (Driving)");
     }
 
     /// <summary>
-    /// Step 5: Starts active driving mission.
+    /// Starts or resumes active driving mission.
     /// </summary>
     public void StartMission()
     {
-        // Unfreeze active rover
         ActiveRoverContext.SetFrozen(false);
         EnableActiveRoverController();
 

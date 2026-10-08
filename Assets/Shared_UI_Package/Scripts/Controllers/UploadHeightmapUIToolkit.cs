@@ -213,10 +213,38 @@ namespace ProjectName.Terrain
         private VisualElement panelRoverSelection;
         private VisualElement panelSimulationReady;
 
-        // Flow Planet Selection
+        // Flow Planet Selection (State 1)
         private Button btnPlanetMars;
+        private Button btnPlanetEarth;
         private Button btnPlanetMoon;
         private Button btnPlanetTitan;
+        private Button btnPlanetVenus;
+
+        // Modern UI Toolkit Planet Selection Modal (Runtime & State 5)
+        private VisualElement planetSelectionModal;
+        private Button btnPlanetModalClose;
+        private Button btnModalPlanetMars;
+        private Button btnModalPlanetEarth;
+        private Button btnModalPlanetMoon;
+        private Button btnModalPlanetTitan;
+        private Button btnModalPlanetVenus;
+
+        private Label lblModalInspectorName;
+        private Label lblModalInspectorBadge;
+        private Label lblModalInspectorDesc;
+        private Label lblModalGravity;
+        private Label lblModalTemp;
+        private Label lblModalPress;
+        private Label lblModalSkybox;
+        private Label lblModalFriction;
+        private Label lblModalHazard;
+
+        private Button btnModalCancelPlanet;
+        private Button btnModalApplyPlanet;
+        private Button btnModalApplyAndRespawn;
+
+        public bool isPlanetModalOpen = false;
+        private string pendingModalPlanet = "Mars";
 
         // Flow Terrain Source
         private Button btnSourcePreset;
@@ -409,10 +437,7 @@ namespace ProjectName.Terrain
                 if (lbl != null) btnPlanetBadge.text = "";
                 btnPlanetBadge.clicked += () =>
                 {
-                    if (PlanetSelectionUI.Instance != null)
-                    {
-                        PlanetSelectionUI.Instance.ToggleModal();
-                    }
+                    TogglePlanetModal();
                 };
             }
 
@@ -878,14 +903,18 @@ namespace ProjectName.Terrain
             panelRoverSelection = root.Q<VisualElement>("PanelRoverSelection");
             panelSimulationReady = root.Q<VisualElement>("PanelSimulationReady");
 
-            // Flow Planet Selection
+            // Flow Planet Selection (State 1)
             btnPlanetMars = root.Q<Button>("BtnPlanetMars");
+            btnPlanetEarth = root.Q<Button>("BtnPlanetEarth");
             btnPlanetMoon = root.Q<Button>("BtnPlanetMoon");
             btnPlanetTitan = root.Q<Button>("BtnPlanetTitan");
+            btnPlanetVenus = root.Q<Button>("BtnPlanetVenus");
 
             if (btnPlanetMars != null) btnPlanetMars.clicked += () => SelectFlowPlanet("Mars");
+            if (btnPlanetEarth != null) btnPlanetEarth.clicked += () => SelectFlowPlanet("Earth");
             if (btnPlanetMoon != null) btnPlanetMoon.clicked += () => SelectFlowPlanet("Moon");
             if (btnPlanetTitan != null) btnPlanetTitan.clicked += () => SelectFlowPlanet("Titan");
+            if (btnPlanetVenus != null) btnPlanetVenus.clicked += () => SelectFlowPlanet("Venus");
 
             // Flow Terrain Source
             btnSourcePreset = root.Q<Button>("BtnSourcePreset");
@@ -1094,11 +1123,12 @@ namespace ProjectName.Terrain
             {
                 btnFlowCenterSpawn.clicked += () =>
                 {
-                    if (RoverPlacementController.Instance != null)
+                    if (flowController != null)
                     {
-                        RoverPlacementController.Instance.ConfirmPlacementAtPoint(
-                            Vector3.zero, 0f, flowSelectedRoverId
-                        );
+                        flowController.SpawnRoverAtCenter(flowSelectedRoverId);
+                    }
+                    else if (RoverPlacementController.Instance != null)
+                    {
                         RoverPlacementController.Instance.QuickSpawnTerrainCentre();
                     }
                 };
@@ -1110,43 +1140,6 @@ namespace ProjectName.Terrain
                 btnFlowBackToTerrain.clicked += () =>
                 {
                     if (flowController != null) flowController.SetSimulationState(ProjectName.Core.SimulationState.TerrainReady);
-                };
-            }
-
-            // Flow Simulation Ready
-            lblSimReadyPlanet = root.Q<Label>("LblSimReadyPlanet");
-            lblSimReadyTerrain = root.Q<Label>("LblSimReadyTerrain");
-            lblSimReadyMaterial = root.Q<Label>("LblSimReadyMaterial");
-            lblSimReadyRover = root.Q<Label>("LblSimReadyRover");
-            lblSimReadyGravity = root.Q<Label>("LblSimReadyGravity");
-
-            btnSimReadyBack = root.Q<Button>("BtnSimReadyBack");
-            if (btnSimReadyBack != null)
-            {
-                btnSimReadyBack.clicked += () =>
-                {
-                    if (flowController != null)
-                    {
-                        flowController.CleanActiveRover();
-                        flowController.ContinueToRoverSelection();
-                    }
-                };
-            }
-
-            btnSimReadyStart = root.Q<Button>("BtnSimReadyStart");
-            if (btnSimReadyStart != null)
-            {
-                btnSimReadyStart.clicked += () =>
-                {
-                    if (flowController != null)
-                    {
-                        flowController.StartMission();
-                    }
-                    else
-                    {
-                        ActiveRoverContext.SetFrozen(false);
-                        SetDrivingHudMode(true);
-                    }
                 };
             }
 
@@ -1167,6 +1160,41 @@ namespace ProjectName.Terrain
                     pendingModalConfirmAction = null;
                 };
             }
+
+            // Modern UI Toolkit Planet Selection Modal
+            planetSelectionModal = root.Q<VisualElement>("PlanetSelectionModal");
+            btnPlanetModalClose = root.Q<Button>("BtnPlanetModalClose");
+            btnModalPlanetMars = root.Q<Button>("BtnModalPlanetMars");
+            btnModalPlanetEarth = root.Q<Button>("BtnModalPlanetEarth");
+            btnModalPlanetMoon = root.Q<Button>("BtnModalPlanetMoon");
+            btnModalPlanetTitan = root.Q<Button>("BtnModalPlanetTitan");
+            btnModalPlanetVenus = root.Q<Button>("BtnModalPlanetVenus");
+
+            lblModalInspectorName = root.Q<Label>("LblModalInspectorName");
+            lblModalInspectorBadge = root.Q<Label>("LblModalInspectorBadge");
+            lblModalInspectorDesc = root.Q<Label>("LblModalInspectorDesc");
+            lblModalGravity = root.Q<Label>("LblModalGravity");
+            lblModalTemp = root.Q<Label>("LblModalTemp");
+            lblModalPress = root.Q<Label>("LblModalPress");
+            lblModalSkybox = root.Q<Label>("LblModalSkybox");
+            lblModalFriction = root.Q<Label>("LblModalFriction");
+            lblModalHazard = root.Q<Label>("LblModalHazard");
+
+            btnModalCancelPlanet = root.Q<Button>("BtnModalCancelPlanet");
+            btnModalApplyPlanet = root.Q<Button>("BtnModalApplyPlanet");
+            btnModalApplyAndRespawn = root.Q<Button>("BtnModalApplyAndRespawn");
+
+            if (btnPlanetModalClose != null) btnPlanetModalClose.clicked += () => SetPlanetModalVisible(false);
+            if (btnModalCancelPlanet != null) btnModalCancelPlanet.clicked += () => SetPlanetModalVisible(false);
+
+            if (btnModalPlanetMars != null) btnModalPlanetMars.clicked += () => SelectModalPlanet("Mars");
+            if (btnModalPlanetEarth != null) btnModalPlanetEarth.clicked += () => SelectModalPlanet("Earth");
+            if (btnModalPlanetMoon != null) btnModalPlanetMoon.clicked += () => SelectModalPlanet("Moon");
+            if (btnModalPlanetTitan != null) btnModalPlanetTitan.clicked += () => SelectModalPlanet("Titan");
+            if (btnModalPlanetVenus != null) btnModalPlanetVenus.clicked += () => SelectModalPlanet("Venus");
+
+            if (btnModalApplyPlanet != null) btnModalApplyPlanet.clicked += () => ApplyModalPlanet(false);
+            if (btnModalApplyAndRespawn != null) btnModalApplyAndRespawn.clicked += () => ApplyModalPlanet(true);
         }
 
         private void HandleSimulationStateChanged(ProjectName.Core.SimulationState state)
@@ -1177,13 +1205,17 @@ namespace ProjectName.Terrain
         private void UpdateGuidedFlowUI(ProjectName.Core.SimulationState state)
         {
             bool inFlow = state != ProjectName.Core.SimulationState.ActiveSimulation;
+            if (isPlanetModalOpen) SetPlanetModalVisible(false);
 
+            // 1. Guided Flow Container: Visible only during setup states (not placement or active driving)
             if (guidedFlowContainer != null)
                 guidedFlowContainer.style.display = (inFlow && state != ProjectName.Core.SimulationState.RoverSpawning) ? DisplayStyle.Flex : DisplayStyle.None;
 
+            // 2. State 1: Environment Setup
             if (panelEnvironmentSetup != null)
                 panelEnvironmentSetup.style.display = (state == ProjectName.Core.SimulationState.EnvironmentSetup || state == ProjectName.Core.SimulationState.TerrainGenerating) ? DisplayStyle.Flex : DisplayStyle.None;
 
+            // 3. State 2: Terrain Ready
             if (panelTerrainReady != null)
             {
                 panelTerrainReady.style.display = (state == ProjectName.Core.SimulationState.TerrainReady) ? DisplayStyle.Flex : DisplayStyle.None;
@@ -1198,23 +1230,23 @@ namespace ProjectName.Terrain
                 }
             }
 
+            // 4. State 3: Rover Selection
             if (panelRoverSelection != null)
                 panelRoverSelection.style.display = (state == ProjectName.Core.SimulationState.RoverSelection) ? DisplayStyle.Flex : DisplayStyle.None;
 
-            if (panelSimulationReady != null)
-            {
-                panelSimulationReady.style.display = (state == ProjectName.Core.SimulationState.SimulationReady) ? DisplayStyle.Flex : DisplayStyle.None;
-                if (state == ProjectName.Core.SimulationState.SimulationReady)
-                {
-                    if (lblSimReadyPlanet != null) lblSimReadyPlanet.text = ProjectName.Core.SimulationContext.SelectedPlanet.ToUpperInvariant();
-                    if (lblSimReadyTerrain != null) lblSimReadyTerrain.text = currentPreset.ToString().ToUpperInvariant();
-                    if (lblSimReadyMaterial != null) lblSimReadyMaterial.text = tuningConfig.materialType.ToString().ToUpperInvariant();
-                    if (lblSimReadyRover != null) lblSimReadyRover.text = ProjectName.Core.SimulationContext.SelectedRoverDisplayName.ToUpperInvariant();
-                    if (lblSimReadyGravity != null) lblSimReadyGravity.text = $"{ProjectName.Core.SimulationContext.SelectedGravity:F2} m/s²";
-                }
-            }
+            // 5. State 4 (Placement): Placement Banner takes over, all other panels hidden
+            if (placementBanner != null)
+                placementBanner.style.display = (state == ProjectName.Core.SimulationState.RoverSpawning) ? DisplayStyle.Flex : DisplayStyle.None;
 
-            // Hide Side Columns and Bottom Bars during guided setup
+            // 6. Deprecated confirmation modal permanently hidden
+            if (panelSimulationReady != null)
+                panelSimulationReady.style.display = DisplayStyle.None;
+
+            // 7. Legacy 7-step banner permanently hidden (Eliminate UI stacking)
+            if (workflowStepBanner != null)
+                workflowStepBanner.style.display = DisplayStyle.None;
+
+            // 8. Side columns & Bottom bars: Strictly hidden during setup, visible only during active driving / studio
             if (studioMainGrid != null)
             {
                 studioMainGrid.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
@@ -1226,33 +1258,19 @@ namespace ProjectName.Terrain
 
                 var shellBottomRight = uiDocument.rootVisualElement.Q<VisualElement>("ShellBottomRight");
                 if (shellBottomRight != null) shellBottomRight.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+
+                // Header controls: Hide mode switches and reset actions during setup, only keep Main Menu
+                var modeToggleBar = uiDocument.rootVisualElement.Q<VisualElement>("ModeToggleBar");
+                if (modeToggleBar != null) modeToggleBar.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+
+                if (btnResetRoverKeepTerrain != null) btnResetRoverKeepTerrain.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+                if (btnNewTerrain != null) btnNewTerrain.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+                if (btnMinimizeStudio != null) btnMinimizeStudio.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
-            // Update 7-step pills
-            switch (state)
+            if (state == ProjectName.Core.SimulationState.ActiveSimulation)
             {
-                case ProjectName.Core.SimulationState.EnvironmentSetup:
-                    SetWorkflowStep(1);
-                    break;
-                case ProjectName.Core.SimulationState.TerrainGenerating:
-                    SetWorkflowStep(2);
-                    break;
-                case ProjectName.Core.SimulationState.TerrainReady:
-                    SetWorkflowStep(3);
-                    break;
-                case ProjectName.Core.SimulationState.RoverSelection:
-                    SetWorkflowStep(3);
-                    break;
-                case ProjectName.Core.SimulationState.RoverSpawning:
-                    SetWorkflowStep(4);
-                    break;
-                case ProjectName.Core.SimulationState.SimulationReady:
-                    SetWorkflowStep(5);
-                    break;
-                case ProjectName.Core.SimulationState.ActiveSimulation:
-                    SetWorkflowStep(6);
-                    SetDrivingHudMode(true); // Driving HUD as primary simulation view
-                    break;
+                SetDrivingHudMode(true); // Driving HUD as primary simulation view
             }
         }
 
@@ -1261,8 +1279,10 @@ namespace ProjectName.Terrain
             ProjectName.Core.SimulationContext.SelectedPlanet = planetName;
 
             SetBtnClass(btnPlanetMars, "planet-card-active", planetName.Equals("Mars", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnPlanetEarth, "planet-card-active", planetName.Equals("Earth", StringComparison.OrdinalIgnoreCase));
             SetBtnClass(btnPlanetMoon, "planet-card-active", planetName.Equals("Moon", StringComparison.OrdinalIgnoreCase));
             SetBtnClass(btnPlanetTitan, "planet-card-active", planetName.Equals("Titan", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnPlanetVenus, "planet-card-active", planetName.Equals("Venus", StringComparison.OrdinalIgnoreCase));
 
             if (btnPlanetBadge != null)
             {
@@ -1298,6 +1318,11 @@ namespace ProjectName.Terrain
                 SetMaterial(PlanetaryMaterialType.MartianDust);
                 ProjectName.Core.SimulationContext.SelectedGravity = 3.72f;
             }
+            else if (planetName.Equals("Earth", StringComparison.OrdinalIgnoreCase))
+            {
+                SetMaterial(PlanetaryMaterialType.PolarIce);
+                ProjectName.Core.SimulationContext.SelectedGravity = 9.81f;
+            }
             else if (planetName.Equals("Moon", StringComparison.OrdinalIgnoreCase))
             {
                 SetMaterial(PlanetaryMaterialType.LunarRegolith);
@@ -1308,6 +1333,147 @@ namespace ProjectName.Terrain
                 SetMaterial(PlanetaryMaterialType.VolcanicBasalt);
                 ProjectName.Core.SimulationContext.SelectedGravity = 1.35f;
             }
+            else if (planetName.Equals("Venus", StringComparison.OrdinalIgnoreCase))
+            {
+                SetMaterial(PlanetaryMaterialType.VolcanicBasalt);
+                ProjectName.Core.SimulationContext.SelectedGravity = 8.87f;
+            }
+        }
+
+        public void TogglePlanetModal()
+        {
+            SetPlanetModalVisible(!isPlanetModalOpen);
+        }
+
+        public void SetPlanetModalVisible(bool visible)
+        {
+            isPlanetModalOpen = visible;
+            if (planetSelectionModal != null)
+            {
+                planetSelectionModal.style.display = isPlanetModalOpen ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (isPlanetModalOpen)
+            {
+                string activePlanet = ProjectName.Core.SimulationContext.SelectedPlanet;
+                if (string.IsNullOrEmpty(activePlanet)) activePlanet = "Mars";
+                SelectModalPlanet(activePlanet);
+            }
+        }
+
+        private void SelectModalPlanet(string planetName)
+        {
+            pendingModalPlanet = planetName;
+
+            SetBtnClass(btnModalPlanetMars, "planet-select-card-active", planetName.Equals("Mars", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnModalPlanetEarth, "planet-select-card-active", planetName.Equals("Earth", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnModalPlanetMoon, "planet-select-card-active", planetName.Equals("Moon", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnModalPlanetTitan, "planet-select-card-active", planetName.Equals("Titan", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnModalPlanetVenus, "planet-select-card-active", planetName.Equals("Venus", StringComparison.OrdinalIgnoreCase));
+
+            UpdateModalInspector(planetName);
+        }
+
+        private void UpdateModalInspector(string planetName)
+        {
+            string currentActive = ProjectName.Core.SimulationContext.SelectedPlanet;
+            bool isCurrent = planetName.Equals(currentActive, StringComparison.OrdinalIgnoreCase);
+
+            if (lblModalInspectorName != null) lblModalInspectorName.text = planetName.ToUpperInvariant();
+            if (lblModalInspectorBadge != null)
+            {
+                lblModalInspectorBadge.text = isCurrent ? "CURRENT ACTIVE" : "PENDING SELECTION";
+                lblModalInspectorBadge.style.display = DisplayStyle.Flex;
+            }
+
+            if (planetName.Equals("Mars", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblModalInspectorDesc != null) lblModalInspectorDesc.text = "The Red Planet: Low gravity, thin CO2 atmosphere, red iron oxide dust, cold desert conditions with high radiation.";
+                if (lblModalGravity != null) lblModalGravity.text = "3.72 m/s² (0.38g)";
+                if (lblModalTemp != null) lblModalTemp.text = "≈ −60 °C";
+                if (lblModalPress != null) lblModalPress.text = "0.64 kPa (0.006 atm)";
+                if (lblModalSkybox != null) { lblModalSkybox.text = "Deep Space Nebulae HDR"; lblModalSkybox.style.color = new Color(0.63f, 0.50f, 1.0f); }
+                if (lblModalFriction != null) lblModalFriction.text = "μ = 0.70 / 0.55";
+                if (lblModalHazard != null) lblModalHazard.text = "Dust Storm / Arid";
+            }
+            else if (planetName.Equals("Earth", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblModalInspectorDesc != null) lblModalInspectorDesc.text = "Earth: Standard terrestrial gravity, 1 atm nitrogen-oxygen atmosphere, blue Rayleigh sky, temperate baseline climate.";
+                if (lblModalGravity != null) lblModalGravity.text = "9.81 m/s² (1.00g)";
+                if (lblModalTemp != null) lblModalTemp.text = "≈ +15 °C";
+                if (lblModalPress != null) lblModalPress.text = "101.3 kPa (1.00 atm)";
+                if (lblModalSkybox != null) { lblModalSkybox.text = "Terrestrial Rayleigh Sky"; lblModalSkybox.style.color = new Color(0.30f, 0.93f, 0.92f); }
+                if (lblModalFriction != null) lblModalFriction.text = "μ = 0.80 / 0.60";
+                if (lblModalHazard != null) lblModalHazard.text = "Weather / Clear";
+            }
+            else if (planetName.Equals("Moon", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblModalInspectorDesc != null) lblModalInspectorDesc.text = "Earth's Moon: Hard vacuum, 1/6th Earth gravity, highly abrasive lunar regolith, high-contrast pitch black shadows.";
+                if (lblModalGravity != null) lblModalGravity.text = "1.62 m/s² (0.17g)";
+                if (lblModalTemp != null) lblModalTemp.text = "−170 °C / +100 °C";
+                if (lblModalPress != null) lblModalPress.text = "0.00 kPa (Hard Vacuum)";
+                if (lblModalSkybox != null) { lblModalSkybox.text = "Deep Space Nebulae HDR"; lblModalSkybox.style.color = new Color(0.63f, 0.50f, 1.0f); }
+                if (lblModalFriction != null) lblModalFriction.text = "μ = 0.90 / 0.75";
+                if (lblModalHazard != null) lblModalHazard.text = "Vacuum / Micro-meteoroids";
+            }
+            else if (planetName.Equals("Titan", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblModalInspectorDesc != null) lblModalInspectorDesc.text = "Titan: Saturn's largest moon with dense nitrogen atmosphere, hydrocarbon lakes, methane cycle, cryogenic temperatures.";
+                if (lblModalGravity != null) lblModalGravity.text = "1.35 m/s² (0.14g)";
+                if (lblModalTemp != null) lblModalTemp.text = "≈ −179 °C";
+                if (lblModalPress != null) lblModalPress.text = "146.7 kPa (1.45 atm)";
+                if (lblModalSkybox != null) { lblModalSkybox.text = "Deep Space Nebulae HDR"; lblModalSkybox.style.color = new Color(0.63f, 0.50f, 1.0f); }
+                if (lblModalFriction != null) lblModalFriction.text = "μ = 0.55 / 0.40";
+                if (lblModalHazard != null) lblModalHazard.text = "Methane Haze & Drizzle";
+            }
+            else if (planetName.Equals("Venus", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lblModalInspectorDesc != null) lblModalInspectorDesc.text = "Venus: Runaway greenhouse world, crushing 92 bar CO2 atmosphere, lead-melting surface heat, sulfuric acid smog.";
+                if (lblModalGravity != null) lblModalGravity.text = "8.87 m/s² (0.90g)";
+                if (lblModalTemp != null) lblModalTemp.text = "≈ +465 °C";
+                if (lblModalPress != null) lblModalPress.text = "9,200 kPa (90.8 atm)";
+                if (lblModalSkybox != null) { lblModalSkybox.text = "Deep Space Nebulae HDR"; lblModalSkybox.style.color = new Color(0.63f, 0.50f, 1.0f); }
+                if (lblModalFriction != null) lblModalFriction.text = "μ = 0.75 / 0.60";
+                if (lblModalHazard != null) lblModalHazard.text = "Corrosive Acid Smog (92 bar)";
+            }
+        }
+
+        private void ApplyModalPlanet(bool respawnRover)
+        {
+            string planetName = pendingModalPlanet;
+            SelectFlowPlanet(planetName);
+
+            // Also retrieve profile to apply
+            PlanetProfile profile = Resources.Load<PlanetProfile>($"Planets/{planetName}") ??
+                                    Resources.Load<PlanetProfile>(planetName);
+            if (profile == null)
+            {
+                var all = Resources.LoadAll<PlanetaryProfile>("Planets");
+                foreach (var p in all)
+                {
+                    if (p.planetName.Equals(planetName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        profile = p;
+                        break;
+                    }
+                }
+            }
+
+            if (profile != null && PlanetEnvironmentController.Instance != null)
+            {
+                if (respawnRover)
+                {
+                    PlanetEnvironmentController.Instance.ApplyAndRespawnRover(profile);
+                    ShowNotification($"{planetName.ToUpper()} applied · Rover respawned at surface.");
+                }
+                else
+                {
+                    PlanetEnvironmentController.Instance.ApplyProfile(profile);
+                    ShowNotification($"{planetName.ToUpper()} environment applied.");
+                }
+            }
+
+            SetPlanetModalVisible(false);
         }
 
         private void SelectFlowTerrainSource(string source)
@@ -1412,6 +1578,18 @@ namespace ProjectName.Terrain
             if (Input.GetKeyDown(KeyCode.H) && !isTypingInUI)
             {
                 ToggleHudVisibility();
+            }
+
+            // [P] toggles modern UI Toolkit Planet Selection Modal
+            if (Input.GetKeyDown(KeyCode.P) && !isTypingInUI)
+            {
+                TogglePlanetModal();
+            }
+
+            // [Escape] closes planet modal if open
+            if (Input.GetKeyDown(KeyCode.Escape) && isPlanetModalOpen)
+            {
+                SetPlanetModalVisible(false);
             }
 
             if (isStudioMinimized || isHudHidden) return;
@@ -2412,6 +2590,7 @@ namespace ProjectName.Terrain
         private void SelectPreset(HeightmapPreset preset)
         {
             currentPreset = preset;
+            ProjectName.Core.SimulationContext.SelectedTerrainPreset = preset.ToString();
             RegeneratePreset();
             UpdatePresetButtonsUI();
         }
@@ -2457,6 +2636,14 @@ namespace ProjectName.Terrain
             SetBtnClass(btnLabPresetValles, "preset-btn-lab-active", currentPreset == HeightmapPreset.VallesMarineris);
             SetBtnClass(btnLabPresetPlains, "preset-btn-lab-active", currentPreset == HeightmapPreset.Plains);
             SetBtnClass(btnLabPresetFractal, "preset-btn-lab-active", currentPreset == HeightmapPreset.ProceduralFractal);
+
+            // Flow Setup Presets
+            SetBtnClass(btnFlowPresetGale, "preset-btn-lab-active", currentPreset == HeightmapPreset.GaleCrater);
+            SetBtnClass(btnFlowPresetOlympus, "preset-btn-lab-active", currentPreset == HeightmapPreset.OlympusMons);
+            SetBtnClass(btnFlowPresetValles, "preset-btn-lab-active", currentPreset == HeightmapPreset.VallesMarineris);
+            SetBtnClass(btnFlowPresetShackleton, "preset-btn-lab-active", currentPreset == HeightmapPreset.ShackletonCrater);
+            SetBtnClass(btnFlowPresetPlains, "preset-btn-lab-active", currentPreset == HeightmapPreset.Plains);
+            SetBtnClass(btnFlowPresetFractal, "preset-btn-lab-active", currentPreset == HeightmapPreset.ProceduralFractal);
         }
 
         // -------------------------------------------------------------
@@ -2484,6 +2671,12 @@ namespace ProjectName.Terrain
         private void OnPainterPointerDown(PointerDownEvent evt)
         {
             if (isDrivingHudMode || currentHeights == null) return;
+            var targetImg = evt.currentTarget as VisualElement;
+            if (targetImg != null)
+            {
+                targetImg.CapturePointer(evt.pointerId);
+            }
+            evt.StopPropagation();
             isPainting = true;
             strokeTouchedCells.Clear();
             PaintAtPointerPosition(evt.localPosition);
@@ -2500,6 +2693,7 @@ namespace ProjectName.Terrain
             UpdateBrushCursor(evt.localPosition);
 
             if (!isPainting) return;
+            evt.StopPropagation();
             PaintAtPointerPosition(evt.localPosition);
         }
 
@@ -2522,6 +2716,12 @@ namespace ProjectName.Terrain
 
         private void OnPainterPointerUp(PointerUpEvent evt)
         {
+            var targetImg = evt.currentTarget as VisualElement;
+            if (targetImg != null && targetImg.HasPointerCapture(evt.pointerId))
+            {
+                targetImg.ReleasePointer(evt.pointerId);
+            }
+            evt.StopPropagation();
             EndStroke();
         }
 
@@ -2530,6 +2730,12 @@ namespace ProjectName.Terrain
             if (painterBrushCursor != null)
             {
                 painterBrushCursor.style.display = DisplayStyle.None;
+            }
+            if (!isPainting) return;
+            var targetImg = evt.currentTarget as VisualElement;
+            if (targetImg != null && targetImg.HasPointerCapture(evt.pointerId))
+            {
+                targetImg.ReleasePointer(evt.pointerId);
             }
             EndStroke();
         }
@@ -2819,6 +3025,7 @@ namespace ProjectName.Terrain
             }
 
             tuningConfig.materialType = mat;
+            ProjectName.Core.SimulationContext.SelectedMaterial = mat.ToString();
             UpdateMaterialButtonStyles();
             RefreshPreview();
 
@@ -2875,6 +3082,14 @@ namespace ProjectName.Terrain
             SetBtnClass(btnMatCanyon, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.RedCanyon);
             SetBtnClass(btnMatWireframe, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.TopographicWireframe);
             SetBtnClass(btnMatNormal, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.NormalInspector);
+
+            // Flow Setup Materials
+            SetBtnClass(btnFlowMatMartian, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.MartianDust);
+            SetBtnClass(btnFlowMatLunar, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.LunarRegolith);
+            SetBtnClass(btnFlowMatBasalt, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.VolcanicBasalt);
+            SetBtnClass(btnFlowMatIce, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.PolarIce);
+            SetBtnClass(btnFlowMatCanyon, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.RedCanyon);
+            SetBtnClass(btnFlowMatWireframe, "material-btn-active", tuningConfig.materialType == PlanetaryMaterialType.TopographicWireframe);
         }
 
         private void SyncTerrainDimensionsLive()
@@ -3280,6 +3495,13 @@ namespace ProjectName.Terrain
         private void OnRootGeometryChanged(GeometryChangedEvent evt)
         {
             if (studioRoot == null) return;
+
+            if (!ProjectName.Core.SceneLoader.IsVREnabled)
+            {
+                if (!studioRoot.ClassListContains("mode-flat"))
+                    studioRoot.AddToClassList("mode-flat");
+            }
+
             bool isCompact = evt.newRect.height < 820f || evt.newRect.width < 1400f;
             if (isCompact)
             {

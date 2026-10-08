@@ -3,12 +3,12 @@
        Pure Black Technical Design System Tokens
        ------------------------------------------------------------- */
     /* Primary panel background: #0A0A0A / #111111 */
-    --surface: rgba(10, 10, 10, 0.95);
+    --surface: #0A0A0AF2;
     /* Secondary / nested surfaces: #141414 / #161616 */
     --surface-2: #141414;
     /* Tertiary / active item surfaces: #202020 */
     --surface-3: #202020;
-    --scrim: rgba(0, 0, 0, 0.78);
+    --scrim: #000000C7;
 
     /* Neutral borders without blue tint */
     --border: #2A2A2A;
@@ -17,8 +17,8 @@
     /* Technical Accent Color: Pure Cyber Cyan/Teal (reserved for active states and actions) */
     --accent: #00D4FF;
     --accent-hover: #33DDFF;
-    --accent-glow: rgba(0, 212, 255, 0.20);
-    --accent-dim: rgba(0, 212, 255, 0.12);
+    --accent-glow: #00D4FF33;
+    --accent-dim: #00D4FF1F;
 
     /* Semantic Button Sets (Solid technical fills on black) */
     --primary-bg: #1A1A1A;

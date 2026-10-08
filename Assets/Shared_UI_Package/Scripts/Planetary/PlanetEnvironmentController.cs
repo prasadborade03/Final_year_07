@@ -30,6 +30,12 @@ namespace ProjectName.Planetary
         [Header("Active Environment")]
         public PlanetProfile currentProfile;
 
+        [Header("Master Skybox Configuration (Realism Rule)")]
+        [Tooltip("Skybox material with HDR_multi_nebulae_2.hdr applied to every celestial body except Earth")]
+        public Material nebulaeSkyboxMaterial;
+        [Tooltip("Terrestrial skybox material applied exclusively to Earth")]
+        public Material earthSkyboxMaterial;
+
         private static PlanetEnvironmentController _instance;
         public static PlanetEnvironmentController Instance
         {
@@ -255,10 +261,54 @@ namespace ProjectName.Planetary
 
         private void ApplyAtmosphereAndSky(PlanetProfile profile)
         {
-            // 1. Procedural Skybox
-            if (profile.skyboxMaterial != null)
+            // 1. Realistic Skybox Rule:
+            // Apply Assets/project/materials/HDR_multi_nebulae_2.hdr for EVERY planet EXCEPT Earth.
+            // Earth uses its realistic terrestrial Rayleigh skybox.
+            bool isEarth = string.Equals(profile.planetName, "Earth", StringComparison.OrdinalIgnoreCase);
+
+            if (!isEarth)
             {
-                RenderSettings.skybox = profile.skyboxMaterial;
+                if (nebulaeSkyboxMaterial == null)
+                {
+                    nebulaeSkyboxMaterial = Resources.Load<Material>("Sky_Planetary_Nebulae");
+#if UNITY_EDITOR
+                    if (nebulaeSkyboxMaterial == null)
+                    {
+                        nebulaeSkyboxMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/project/materials/Sky_Planetary_Nebulae.mat");
+                    }
+#endif
+                }
+
+                if (nebulaeSkyboxMaterial != null)
+                {
+                    RenderSettings.skybox = nebulaeSkyboxMaterial;
+                }
+                else if (profile.skyboxMaterial != null)
+                {
+                    RenderSettings.skybox = profile.skyboxMaterial;
+                }
+            }
+            else
+            {
+                if (earthSkyboxMaterial == null)
+                {
+                    earthSkyboxMaterial = Resources.Load<Material>("Sky_Earth");
+#if UNITY_EDITOR
+                    if (earthSkyboxMaterial == null)
+                    {
+                        earthSkyboxMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Shared_UI_Package/Materials/Skies/Sky_Earth.mat");
+                    }
+#endif
+                }
+
+                if (earthSkyboxMaterial != null)
+                {
+                    RenderSettings.skybox = earthSkyboxMaterial;
+                }
+                else if (profile.skyboxMaterial != null)
+                {
+                    RenderSettings.skybox = profile.skyboxMaterial;
+                }
             }
 
             // 2. Ambient Trilight Lighting

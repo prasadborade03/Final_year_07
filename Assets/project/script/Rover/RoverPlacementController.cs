@@ -203,13 +203,18 @@ namespace ProjectName.Rover
 
             if (ghostRoot != null) ghostRoot.SetActive(false);
 
-            // Restore HUD to previous state
+            // Restore HUD / flow to Rover Selection state
             if (uiToolkit != null)
             {
                 uiToolkit.SetPlacementBannerActive(false, "");
             }
 
-            Debug.Log("[RoverPlacement] Placement cancelled by user.");
+            if (flowController != null)
+            {
+                flowController.SetSimulationState(ProjectName.Core.SimulationState.RoverSelection);
+            }
+
+            Debug.Log("[RoverPlacement] Placement cancelled by user. Returned to Rover Selection.");
         }
 
         public void QuickSpawnTerrainCentre()

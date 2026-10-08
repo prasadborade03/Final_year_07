@@ -35,7 +35,7 @@ MonoBehaviour:
   sunlightPercentOfEarth: 2.5
   hazardTitle: ATMOSPHERE
   hazardValue: Corrosive / 92 bar
-  skyboxMaterial: {fileID: 2100000, guid: 8c47bb08382c097458d0f0f14e84d8bd, type: 2}
+  skyboxMaterial: {fileID: 2100000, guid: c629aefa4a4ff3b4dbe106ae03ebb82e, type: 2}
   sunDiskMode: 1
   sunSize: 0.02
   sunSizeConvergence: 5

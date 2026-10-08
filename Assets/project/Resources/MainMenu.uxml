@@ -7,10 +7,10 @@
             
             <!-- 1. Top Research Identifier & Header -->
             <ui:VisualElement class="menu-header">
-                <ui:Label text="NASA / ISRO RESEARCH TESTBED • AUTONOMOUS ROBOTICS LAB" class="header-pre-title" />
-                <ui:Label text="VR PLANETARY ROVER" class="header-title" />
+                <ui:Label text="PLANETARY ROVER DIGITAL TWIN • SIMULATION TESTBED" class="header-pre-title" />
+                <ui:Label text="PLANETARY ROVER" class="header-title" />
                 <ui:Label text="DIGITAL TWIN SIMULATION STUDIO" class="header-subtitle" />
-                <ui:Label text="Autonomous multi-mission rover simulator for Mars, Moon, and Titan terrain exploration." class="header-desc" />
+                <ui:Label text="High-fidelity digital twin rover simulation across Mars, Moon, and Titan environments." class="header-desc" />
             </ui:VisualElement>
 
             <!-- Subtle Divider -->

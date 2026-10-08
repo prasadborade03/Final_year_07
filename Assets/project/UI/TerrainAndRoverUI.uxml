@@ -28,7 +28,7 @@
         <!-- 2. Floating Top Row Shell -->
         <ui:VisualElement name="ShellTopRow" class="shell-top-row" picking-mode="Ignore">
             <!-- Mode Switch Pill (Driving HUD vs Full Studio) -->
-            <ui:VisualElement class="segmented-bar mode-toggle-bar hud-interactive" picking-mode="Position">
+            <ui:VisualElement name="ModeToggleBar" class="segmented-bar mode-toggle-bar hud-interactive" picking-mode="Position">
                 <ui:Button name="BtnModeDriving" class="segmented-item mode-toggle-item" tooltip="Unobstructed 3D view for driving [Tab]">
                     <ui:VisualElement class="icon-14 icon-steering-wheel tint-text-2" />
                     <ui:Label text="Driving hud" class="segmented-text" />
@@ -39,45 +39,23 @@
                 </ui:Button>
             </ui:VisualElement>
 
-            <!-- Planet Badge Pill & Minimize Pill -->
+            <!-- Actions & Menu Group -->
             <ui:VisualElement class="top-right-group hud-interactive" picking-mode="Position">
+                <ui:Button name="BtnResetRoverKeepTerrain" class="btn btn-secondary action-pill" tooltip="Respawn active rover &amp; reset telemetry [R]">
+                    <ui:VisualElement class="icon-14 icon-refresh tint-accent" />
+                    <ui:Label text="RESET ROVER" class="btn-text" />
+                </ui:Button>
+                <ui:Button name="BtnNewTerrain" class="btn btn-secondary action-pill" tooltip="Change terrain &amp; reset simulation">
+                    <ui:VisualElement class="icon-14 icon-mountains tint-accent" />
+                    <ui:Label text="CHANGE TERRAIN" class="btn-text" />
+                </ui:Button>
                 <ui:Button name="BtnMainMenu" class="btn btn-secondary main-menu-pill" tooltip="Exit Simulation &amp; Return to Start Menu">
                     <ui:VisualElement class="icon-14 icon-restore tint-accent" />
                     <ui:Label text="MAIN MENU" class="btn-text" />
                 </ui:Button>
-                <ui:Button name="BtnPlanetBadge" class="btn btn-secondary planet-pill" tooltip="Select Planet Environment [P]">
-                    <ui:VisualElement class="icon-16 icon-planet tint-accent" />
-                    <ui:Label name="LblPlanetName" text="MARS" class="btn-text planet-name-text" />
-                </ui:Button>
                 <ui:Button name="BtnMinimizeStudio" class="btn btn-secondary minimize-pill" tooltip="Minimize Studio [U]">
                     <ui:VisualElement class="icon-14 icon-minus tint-text-2" />
                 </ui:Button>
-            </ui:VisualElement>
-        </ui:VisualElement>
-
-        <!-- 2b. 7-Step Guided Workflow Banner -->
-        <ui:VisualElement name="WorkflowStepBanner" class="workflow-step-banner hud-interactive" picking-mode="Position">
-            <ui:VisualElement name="WorkflowStepPills" class="workflow-step-pills">
-                <ui:Label name="StepPill1" text="1. HEIGHTMAP" class="step-pill step-pill-active" />
-                <ui:Label name="StepPill2" text="2. TERRAIN" class="step-pill" />
-                <ui:Label name="StepPill3" text="3. ROVER" class="step-pill" />
-                <ui:Label name="StepPill4" text="4. PLACE" class="step-pill" />
-                <ui:Label name="StepPill5" text="5. ENVIRONMENT" class="step-pill" />
-                <ui:Label name="StepPill6" text="6. DRIVE" class="step-pill" />
-                <ui:Label name="StepPill7" text="7. RESET" class="step-pill" />
-            </ui:VisualElement>
-            <ui:VisualElement name="WorkflowGuideRow" class="workflow-guide-row">
-                <ui:Label name="LblWorkflowGuide" text="STEP 1: Pick a heightmap preset or upload PNG, then click Generate Terrain." class="workflow-guide-text" />
-                <ui:VisualElement name="WorkflowActionsRow" class="workflow-actions-row">
-                    <ui:Button name="BtnResetRoverKeepTerrain" class="btn btn-secondary workflow-action-btn" tooltip="Respawn active rover &amp; reset telemetry, keeping terrain (Loop to Step 5)">
-                        <ui:VisualElement class="btn-icon-leading icon-refresh" />
-                        <ui:Label text="RESET ROVER" class="btn-text" />
-                    </ui:Button>
-                    <ui:Button name="BtnNewTerrain" class="btn btn-secondary workflow-action-btn" tooltip="Start over with a new heightmap and terrain (Loop to Step 1)">
-                        <ui:VisualElement class="btn-icon-leading icon-mountains" />
-                        <ui:Label text="NEW TERRAIN" class="btn-text" />
-                    </ui:Button>
-                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -578,6 +556,388 @@
                 <ui:Button name="BtnModeCruise" text="Cruise" class="segmented-item mode-pill-active segmented-active" tooltip="Standard cruise speed" />
                 <ui:Button name="BtnModeExplore" text="Explore" class="segmented-item" tooltip="Fast exploration speed" />
                 <ui:Button name="BtnModePrecision" text="Precision" class="segmented-item" tooltip="Fine-tuned rock crawling" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 5. Guided Simulation Flow Container (States 1, 2, 3, 4) -->
+        <ui:VisualElement name="GuidedFlowContainer" class="guided-flow-container hud-interactive" picking-mode="Position">
+
+            <!-- State 1: Prepare Environment Setup -->
+            <ui:VisualElement name="PanelEnvironmentSetup" class="flow-panel">
+                <ui:VisualElement class="flow-header-row">
+                    <ui:Label text="PREPARE SIMULATION ENVIRONMENT" class="flow-title" />
+                    <ui:Label text="01 · ENVIRONMENT" class="flow-step-tag" />
+                </ui:VisualElement>
+                <ui:ScrollView name="ScrollFlowEnvironment" class="flow-scroll-view" mode="Vertical" horizontal-scroller-visibility="Hidden">
+                    <!-- Planet Selection -->
+                    <ui:Label text="PLANET" class="flow-section-label" />
+                    <ui:VisualElement class="planet-grid">
+                        <ui:Button name="BtnPlanetMars" class="planet-card planet-card-active">
+                            <ui:Label text="MARS" class="planet-card-title" />
+                            <ui:Label text="3.72 m/s² · −60°C" class="planet-card-spec" />
+                        </ui:Button>
+                        <ui:Button name="BtnPlanetEarth" class="planet-card">
+                            <ui:Label text="EARTH" class="planet-card-title" />
+                            <ui:Label text="9.81 m/s² · +15°C" class="planet-card-spec" />
+                        </ui:Button>
+                        <ui:Button name="BtnPlanetMoon" class="planet-card">
+                            <ui:Label text="MOON" class="planet-card-title" />
+                            <ui:Label text="1.62 m/s² · −170°C" class="planet-card-spec" />
+                        </ui:Button>
+                        <ui:Button name="BtnPlanetTitan" class="planet-card">
+                            <ui:Label text="TITAN" class="planet-card-title" />
+                            <ui:Label text="1.35 m/s² · −179°C" class="planet-card-spec" />
+                        </ui:Button>
+                        <ui:Button name="BtnPlanetVenus" class="planet-card">
+                            <ui:Label text="VENUS" class="planet-card-title" />
+                            <ui:Label text="8.87 m/s² · +465°C" class="planet-card-spec" />
+                        </ui:Button>
+                    </ui:VisualElement>
+
+                    <!-- Terrain Source -->
+                    <ui:Label text="TERRAIN SOURCE" class="flow-section-label" />
+                    <ui:VisualElement class="segmented-bar flow-source-bar">
+                        <ui:Button name="BtnSourcePreset" text="Preset Terrain" class="segmented-item segmented-active" />
+                        <ui:Button name="BtnSourceUpload" text="Upload Heightmap" class="segmented-item" />
+                        <ui:Button name="BtnSourcePainter" text="Terrain Painter" class="segmented-item" />
+                    </ui:VisualElement>
+
+                    <!-- Source 1: Presets -->
+                    <ui:VisualElement name="ViewSourcePreset">
+                        <ui:VisualElement class="flex-row gap-6 mb-4">
+                            <ui:Button name="BtnFlowPresetGale" text="Gale Crater" class="preset-chip-btn flex-1 preset-btn-lab-active" />
+                            <ui:Button name="BtnFlowPresetOlympus" text="Olympus Mons" class="preset-chip-btn flex-1" />
+                            <ui:Button name="BtnFlowPresetValles" text="Valles Marineris" class="preset-chip-btn flex-1" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="flex-row gap-6 mb-4">
+                            <ui:Button name="BtnFlowPresetShackleton" text="Shackleton" class="preset-chip-btn flex-1" />
+                            <ui:Button name="BtnFlowPresetPlains" text="Plains" class="preset-chip-btn flex-1" />
+                            <ui:Button name="BtnFlowPresetFractal" text="Fractals" class="preset-chip-btn flex-1" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Source 2: Upload -->
+                    <ui:VisualElement name="ViewSourceUpload" style="display: none;">
+                        <ui:VisualElement class="flex-row gap-6 align-center mb-4">
+                            <ui:Button name="BtnFlowUploadImg" class="btn btn-secondary flex-1" tooltip="Select grayscale image (PNG, JPG)">
+                                <ui:VisualElement class="btn-icon-leading icon-upload" />
+                                <ui:Label text="Select Heightmap Image" class="btn-text" />
+                            </ui:Button>
+                            <ui:Label name="LblFlowUploadStatus" text="No file selected" class="metric-label" style="margin-bottom: 0;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Source 3: Painter Mode -->
+                    <ui:VisualElement name="ViewSourcePainter" style="display: none;">
+                        <ui:Label text="Interactive Painter Mode: Select a base preset below, click Generate Terrain, then sculpt live in real time using Raise, Lower, Smooth, Flatten, and Noise brushes with dirty-rect undo/redo [Ctrl+Z]." class="planet-card-spec" style="margin-bottom: 8px; color: var(--accent);" />
+                    </ui:VisualElement>
+
+                    <!-- Terrain Material -->
+                    <ui:Label text="TERRAIN MATERIAL" class="flow-section-label" />
+                    <ui:VisualElement class="flex-row gap-6 mb-4">
+                        <ui:Button name="BtnFlowMatMartian" class="material-chip-btn flex-1 material-btn-active">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #C65135;" />
+                            <ui:Label text="Martian Rust" class="material-chip-label" />
+                        </ui:Button>
+                        <ui:Button name="BtnFlowMatLunar" class="material-chip-btn flex-1">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #9E9E9E;" />
+                            <ui:Label text="Lunar Regolith" class="material-chip-label" />
+                        </ui:Button>
+                        <ui:Button name="BtnFlowMatBasalt" class="material-chip-btn flex-1">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #2B2D31;" />
+                            <ui:Label text="Volcanic Basalt" class="material-chip-label" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="flex-row gap-6 mb-4">
+                        <ui:Button name="BtnFlowMatIce" class="material-chip-btn flex-1">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #78D5E3;" />
+                            <ui:Label text="Polar Cryo-Ice" class="material-chip-label" />
+                        </ui:Button>
+                        <ui:Button name="BtnFlowMatCanyon" class="material-chip-btn flex-1">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #A0522D;" />
+                            <ui:Label text="Red Sandstone" class="material-chip-label" />
+                        </ui:Button>
+                        <ui:Button name="BtnFlowMatWireframe" class="material-chip-btn flex-1">
+                            <ui:VisualElement class="color-swatch-circle" style="background-color: #31D07F;" />
+                            <ui:Label text="Topo Grid" class="material-chip-label" />
+                        </ui:Button>
+                    </ui:VisualElement>
+
+                    <!-- Advanced Terrain Settings Foldout -->
+                    <ui:Button name="BtnToggleAdvancedSettings" class="btn btn-secondary mt-2 mb-2" tooltip="Toggle detailed elevation and mesh resolution tuning">
+                        <ui:Label name="LblAdvancedToggleText" text="ADVANCED TERRAIN SETTINGS  ▼" class="btn-text" />
+                    </ui:Button>
+                    <ui:VisualElement name="ViewAdvancedSettings" style="display: none;">
+                        <ui:VisualElement class="slider-row">
+                            <ui:Label text="SCALE" class="slider-label" />
+                            <ui:Slider name="SliderFlowMaxHeight" low-value="5" high-value="500" value="120" class="custom-slider" />
+                            <ui:Label name="LabelFlowMaxHeightVal" text="120 m" class="slider-val-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="slider-row">
+                            <ui:Label text="BASE OFFSET" class="slider-label" />
+                            <ui:Slider name="SliderFlowBaseOffset" low-value="-50" high-value="50" value="0" class="custom-slider" />
+                            <ui:Label name="LabelFlowBaseOffsetVal" text="0 m" class="slider-val-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="slider-row">
+                            <ui:Label text="TERRAIN SIZE" class="slider-label" />
+                            <ui:Slider name="SliderFlowTerrainSize" low-value="200" high-value="2000" value="1000" class="custom-slider" />
+                            <ui:Label name="LabelFlowTerrainSizeVal" text="1000m" class="slider-val-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="slider-row" style="height: 24px; margin-bottom: 3px;">
+                            <ui:Label text="RESOLUTION" class="slider-label" />
+                            <ui:DropdownField name="DropdownFlowResolution" class="custom-dropdown flex-1" choices="257 x 257 (High Detail),513 x 513 (Very High),1025 x 1025 (Ultra Detail),2049 x 2049 (Extreme)" value="513 x 513 (Very High)" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="slider-row">
+                            <ui:Label text="SMOOTHING" class="slider-label" />
+                            <ui:Slider name="SliderFlowSmoothing" low-value="0" high-value="5" value="1" class="custom-slider" />
+                            <ui:Label name="LabelFlowSmoothingVal" text="1.0" class="slider-val-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="seed-row mt-2">
+                            <ui:Label text="Seed:" class="metric-label" style="margin-bottom: 0;" />
+                            <ui:IntegerField name="FieldFlowSeed" value="0" class="text-input seed-input" />
+                            <ui:Button name="BtnFlowRandomSeed" class="btn-icon-circle-sm" tooltip="Random Seed">
+                                <ui:VisualElement class="icon-14 icon-shuffle tint-accent" />
+                            </ui:Button>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+
+                <!-- Generate Terrain Action -->
+                <ui:VisualElement class="flow-actions-row">
+                    <ui:Button name="BtnFlowGenerateTerrain" class="btn btn-primary" style="height: 40px; padding: 0 24px;" tooltip="Generate 3D Planetary Terrain">
+                        <ui:VisualElement class="btn-icon-leading icon-mountains" />
+                        <ui:Label text="GENERATE TERRAIN" class="btn-text" style="font-size: 14px; -unity-font-style: bold;" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- State 2: Environment Ready -->
+            <ui:VisualElement name="PanelTerrainReady" class="flow-panel" style="display: none;">
+                <ui:VisualElement class="flow-header-row">
+                    <ui:Label text="ENVIRONMENT READY" class="flow-title" />
+                    <ui:Label text="02 · TERRAIN" class="flow-step-tag" />
+                </ui:VisualElement>
+                <ui:VisualElement class="summary-grid">
+                    <ui:VisualElement class="summary-cell">
+                        <ui:Label text="PLANET" class="summary-label" />
+                        <ui:Label name="LblReadyPlanet" text="MARS" class="summary-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="summary-cell">
+                        <ui:Label text="TERRAIN" class="summary-label" />
+                        <ui:Label name="LblReadyTerrain" text="GALE CRATER" class="summary-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="summary-cell">
+                        <ui:Label text="SURFACE MATERIAL" class="summary-label" />
+                        <ui:Label name="LblReadyMaterial" text="MARTIAN RUST" class="summary-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="summary-cell">
+                        <ui:Label text="TERRAIN SIZE" class="summary-label" />
+                        <ui:Label name="LblReadySize" text="1000 × 1000 m" class="summary-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="summary-cell">
+                        <ui:Label text="RESOLUTION" class="summary-label" />
+                        <ui:Label name="LblReadyRes" text="513 × 513" class="summary-val" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="summary-cell">
+                        <ui:Label text="SURFACE GRAVITY" class="summary-label" />
+                        <ui:Label name="LblReadyGravity" text="3.72 m/s²" class="summary-val" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="flow-actions-row">
+                    <ui:Button name="BtnReadyChangeTerrain" class="btn btn-secondary" style="height: 38px; padding: 0 18px;">
+                        <ui:VisualElement class="btn-icon-leading icon-restore" />
+                        <ui:Label text="CHANGE TERRAIN" class="btn-text" />
+                    </ui:Button>
+                    <ui:Button name="BtnReadyContinue" class="btn btn-primary" style="height: 38px; padding: 0 20px;">
+                        <ui:VisualElement class="btn-icon-leading icon-robot" />
+                        <ui:Label text="CONTINUE TO ROVER" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- State 3: Rover Selection -->
+            <ui:VisualElement name="PanelRoverSelection" class="flow-panel" style="display: none;">
+                <ui:VisualElement class="flow-header-row">
+                    <ui:Label text="DEPLOY DIGITAL TWIN" class="flow-title" />
+                    <ui:Label text="03 · ROVER" class="flow-step-tag" />
+                </ui:VisualElement>
+                <ui:Label text="SELECT ROVER" class="flow-section-label" />
+                <ui:VisualElement class="rover-list-group mb-4">
+                    <ui:Button name="BtnFlowRoverHusky" class="rover-row rover-row-active" tooltip="Clearpath Husky A200 (Skid-steer 4WD · 50 kg)">
+                        <ui:VisualElement class="icon-16 icon-robot tint-accent" />
+                        <ui:Label text="Clearpath Husky A200" class="rover-row-title" />
+                        <ui:Label text="SKID-STEER 4WD" class="status-badge status-badge-active" />
+                    </ui:Button>
+                    <ui:Button name="BtnFlowRoverM20" class="rover-row" tooltip="Deep Robotics M20 (Wheeled Quadruped · 899 kg)">
+                        <ui:VisualElement class="icon-16 icon-robot tint-text-3" />
+                        <ui:Label text="Deep Robotics M20" class="rover-row-title" />
+                        <ui:Label text="WHEELED QUADRUPED" class="status-badge" />
+                    </ui:Button>
+                    <ui:Button name="BtnFlowRoverM2020" class="rover-row" tooltip="NASA Perseverance M2020 (Rocker-Bogie 6WD · 1025 kg)">
+                        <ui:VisualElement class="icon-16 icon-robot tint-text-3" />
+                        <ui:Label text="NASA Perseverance M2020" class="rover-row-title" />
+                        <ui:Label text="ROCKER-BOGIE 6WD" class="status-badge" />
+                    </ui:Button>
+                    <ui:Button name="BtnFlowRoverUrdf" class="rover-row" tooltip="Import Custom URDF Robot Package">
+                        <ui:VisualElement class="icon-16 icon-upload tint-text-3" />
+                        <ui:Label text="+ IMPORT URDF" class="rover-row-title" />
+                        <ui:Label text="RUNTIME KIT" class="status-badge" />
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:Label text="SPAWN METHOD" class="flow-section-label" />
+                <ui:VisualElement class="flex-row gap-8 mb-4">
+                    <ui:Button name="BtnFlowClickToSpawn" class="btn btn-primary flex-1" style="height: 38px;">
+                        <ui:VisualElement class="btn-icon-leading icon-cursor-click" />
+                        <ui:Label text="CLICK TO SPAWN" class="btn-text" />
+                    </ui:Button>
+                    <ui:Button name="BtnFlowCenterSpawn" class="btn btn-secondary flex-1" style="height: 38px;">
+                        <ui:VisualElement class="btn-icon-leading icon-crosshair" />
+                        <ui:Label text="CENTRE SPAWN" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="flow-actions-row">
+                    <ui:Button name="BtnFlowBackToTerrain" class="btn btn-secondary" style="height: 36px; padding: 0 16px;">
+                        <ui:Label text="BACK TO TERRAIN" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+
+        </ui:VisualElement>
+
+        <!-- 6. Confirmation Modal Overlay -->
+        <ui:VisualElement name="ConfirmationModal" class="modal-scrim hud-interactive" style="display: none;" picking-mode="Position">
+            <ui:VisualElement class="modal-card">
+                <ui:Label name="LblModalTitle" text="CHANGE SIMULATION TERRAIN?" class="modal-title" />
+                <ui:Label name="LblModalMessage" text="Changing the terrain will reset the current simulation environment. The current rover placement and terrain will be cleared." class="modal-message" />
+                <ui:VisualElement class="modal-actions-row">
+                    <ui:Button name="BtnModalCancel" class="btn btn-secondary modal-btn">
+                        <ui:Label text="CANCEL" class="btn-text" />
+                    </ui:Button>
+                    <ui:Button name="BtnModalConfirm" class="btn btn-danger modal-btn">
+                        <ui:Label text="CONTINUE" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- 7. Modern UI Toolkit Planet Selection Modal Overlay -->
+        <ui:VisualElement name="PlanetSelectionModal" class="modal-scrim hud-interactive" style="display: none;" picking-mode="Position">
+            <ui:VisualElement class="planet-modal-card">
+                <!-- Header -->
+                <ui:VisualElement class="planet-modal-header">
+                    <ui:VisualElement class="planet-modal-header-left">
+                        <ui:Label text="PLANETARY ENVIRONMENT SELECTION" class="modal-title" />
+                        <ui:Label text="NASA NSSDCA FACT SHEET GROUND TRUTH · REALISTIC SKYBOX &amp; PHYSICS" class="planet-modal-subtitle" />
+                    </ui:VisualElement>
+                    <ui:Button name="BtnPlanetModalClose" text="✕" class="planet-modal-close-btn" />
+                </ui:VisualElement>
+
+                <!-- Body: Left = Planet List, Right = Details Inspector -->
+                <ui:VisualElement class="planet-modal-body">
+                    <!-- Left: Planet Selection List -->
+                    <ui:VisualElement class="planet-modal-left">
+                        <ui:Label text="SELECT CELESTIAL BODY" class="flow-section-label" />
+                        <ui:ScrollView class="planet-modal-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden">
+                            <ui:VisualElement class="planet-modal-grid">
+                                <ui:Button name="BtnModalPlanetMars" class="planet-select-card planet-select-card-active">
+                                    <ui:VisualElement class="planet-select-card-top">
+                                        <ui:Label text="MARS" class="planet-card-title" />
+                                        <ui:Label text="3.72 m/s²" class="planet-badge-mini" />
+                                    </ui:VisualElement>
+                                    <ui:Label text="≈ −60 °C · 0.64 kPa · Red Dust" class="planet-card-spec" />
+                                    <ui:Label text="Deep Space Nebulae HDR" class="planet-card-hdr-tag" />
+                                </ui:Button>
+                                <ui:Button name="BtnModalPlanetEarth" class="planet-select-card">
+                                    <ui:VisualElement class="planet-select-card-top">
+                                        <ui:Label text="EARTH" class="planet-card-title" />
+                                        <ui:Label text="9.81 m/s²" class="planet-badge-mini" />
+                                    </ui:VisualElement>
+                                    <ui:Label text="≈ +15 °C · 101.3 kPa · Temperate" class="planet-card-spec" />
+                                    <ui:Label text="Terrestrial Rayleigh Sky" class="planet-card-hdr-tag-earth" />
+                                </ui:Button>
+                                <ui:Button name="BtnModalPlanetMoon" class="planet-select-card">
+                                    <ui:VisualElement class="planet-select-card-top">
+                                        <ui:Label text="MOON" class="planet-card-title" />
+                                        <ui:Label text="1.62 m/s²" class="planet-badge-mini" />
+                                    </ui:VisualElement>
+                                    <ui:Label text="−170 / +100 °C · Vacuum · Regolith" class="planet-card-spec" />
+                                    <ui:Label text="Deep Space Nebulae HDR" class="planet-card-hdr-tag" />
+                                </ui:Button>
+                                <ui:Button name="BtnModalPlanetTitan" class="planet-select-card">
+                                    <ui:VisualElement class="planet-select-card-top">
+                                        <ui:Label text="TITAN" class="planet-card-title" />
+                                        <ui:Label text="1.35 m/s²" class="planet-badge-mini" />
+                                    </ui:VisualElement>
+                                    <ui:Label text="≈ −179 °C · 146.7 kPa · Methane Haze" class="planet-card-spec" />
+                                    <ui:Label text="Deep Space Nebulae HDR" class="planet-card-hdr-tag" />
+                                </ui:Button>
+                                <ui:Button name="BtnModalPlanetVenus" class="planet-select-card">
+                                    <ui:VisualElement class="planet-select-card-top">
+                                        <ui:Label text="VENUS" class="planet-card-title" />
+                                        <ui:Label text="8.87 m/s²" class="planet-badge-mini" />
+                                    </ui:VisualElement>
+                                    <ui:Label text="≈ +465 °C · 9200 kPa · Dense Smog" class="planet-card-spec" />
+                                    <ui:Label text="Deep Space Nebulae HDR" class="planet-card-hdr-tag" />
+                                </ui:Button>
+                            </ui:VisualElement>
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+
+                    <!-- Right: Details Inspector -->
+                    <ui:VisualElement class="planet-modal-right">
+                        <ui:Label text="ENVIRONMENT &amp; TELEMETRY SPECS" class="flow-section-label" />
+                        <ui:VisualElement class="planet-inspector-card">
+                            <ui:VisualElement class="planet-inspector-header">
+                                <ui:Label name="LblModalInspectorName" text="MARS" class="planet-inspector-title" />
+                                <ui:Label name="LblModalInspectorBadge" text="CURRENT ACTIVE" class="tag-active" />
+                            </ui:VisualElement>
+                            <ui:Label name="LblModalInspectorDesc" text="The Red Planet: Low gravity, thin CO2 atmosphere, red iron oxide dust, cold desert conditions." class="planet-inspector-desc" />
+
+                            <ui:VisualElement class="planet-specs-grid">
+                                <ui:VisualElement class="spec-pod">
+                                    <ui:Label text="SURFACE GRAVITY" class="spec-pod-label" />
+                                    <ui:Label name="LblModalGravity" text="3.72 m/s² (0.38g)" class="spec-pod-value" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="spec-pod">
+                                    <ui:Label text="SURFACE TEMP" class="spec-pod-label" />
+                                    <ui:Label name="LblModalTemp" text="≈ −60 °C" class="spec-pod-value" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="spec-pod">
+                                    <ui:Label text="PRESSURE" class="spec-pod-label" />
+                                    <ui:Label name="LblModalPress" text="0.64 kPa (0.006 atm)" class="spec-pod-value" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="spec-pod">
+                                    <ui:Label text="SKYBOX / LIGHTING" class="spec-pod-label" />
+                                    <ui:Label name="LblModalSkybox" text="Deep Space Nebulae HDR" class="spec-pod-value text-accent" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="spec-pod">
+                                    <ui:Label text="SOIL FRICTION" class="spec-pod-label" />
+                                    <ui:Label name="LblModalFriction" text="μ = 0.70 / 0.55" class="spec-pod-value" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="spec-pod">
+                                    <ui:Label text="HAZARD / WEATHER" class="spec-pod-label" />
+                                    <ui:Label name="LblModalHazard" text="Dust Storm / Arid" class="spec-pod-value" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Footer Actions -->
+                <ui:VisualElement class="modal-actions-row planet-modal-actions">
+                    <ui:Button name="BtnModalCancelPlanet" class="btn btn-secondary modal-btn">
+                        <ui:Label text="CANCEL" class="btn-text" />
+                    </ui:Button>
+                    <ui:Button name="BtnModalApplyPlanet" class="btn btn-primary modal-btn">
+                        <ui:Label text="APPLY ENVIRONMENT" class="btn-text" />
+                    </ui:Button>
+                    <ui:Button name="BtnModalApplyAndRespawn" class="btn btn-primary modal-btn">
+                        <ui:Label text="APPLY &amp; RESPAWN ROVER" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 
