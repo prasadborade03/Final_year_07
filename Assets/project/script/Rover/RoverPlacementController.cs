@@ -743,11 +743,16 @@ namespace ProjectName.Rover
             lastPlacementRoverId = roverId;
             hasLastPlacementPose = true;
 
-            // Step 8: Restore HUD & Exit Placement Mode
+            // Step 8: Notify SimulationFlowController & Restore HUD
             currentState = State.Idle;
             if (uiToolkit != null)
             {
                 uiToolkit.SetPlacementBannerActive(false, "");
+            }
+
+            if (SimulationFlowController.Instance != null)
+            {
+                SimulationFlowController.Instance.OnRoverSpawned();
             }
 
             Debug.Log($"[RoverPlacement] Rover '{roverId}' successfully spawned and placed at {targetPoint} (yaw: {yaw:F1}°).");
@@ -755,7 +760,7 @@ namespace ProjectName.Rover
 
         private void DestroyPreviousRovers()
         {
-            ActiveRoverContext.Unregister();
+            ActiveRoverContext.DestroyActiveRover();
 
             string[] roverNames = new[] { "GeneratedHusky", "GeneratedM20", "GeneratedPerseverance_Fixed" };
             foreach (var n in roverNames)

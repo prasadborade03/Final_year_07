@@ -77,6 +77,37 @@ namespace ProjectName.Terrain
         }
 
         /// <summary>
+        /// Thoroughly cleans and destroys any existing terrain GameObject, colliders, and rock scatterers in the scene.
+        /// Enforces Section 9 & 29: strictly only one active generated simulation terrain.
+        /// </summary>
+        public void ClearExistingTerrain()
+        {
+            if (currentTerrainObject != null)
+            {
+                if (Application.isPlaying) Destroy(currentTerrainObject);
+                else DestroyImmediate(currentTerrainObject);
+                currentTerrainObject = null;
+            }
+
+            // Find any other terrains in scene to ensure no stale terrains accumulate
+            var allTerrains = FindObjectsByType<UnityEngine.Terrain>();
+            foreach (var t in allTerrains)
+            {
+                if (t != null && t.gameObject != null)
+                {
+                    if (Application.isPlaying) Destroy(t.gameObject);
+                    else DestroyImmediate(t.gameObject);
+                }
+            }
+
+            // Clear scattered rocks
+            if (PlanetRockScatterer.Instance != null)
+            {
+                PlanetRockScatterer.Instance.ClearRocks();
+            }
+        }
+
+        /// <summary>
         /// Generates a live 3D terrain GameObject directly from a 2D float array (used by presets & canvas painter).
         /// </summary>
         public UnityEngine.Terrain GenerateTerrain(float[,] heights, TerrainTuningConfig config)
@@ -87,11 +118,8 @@ namespace ProjectName.Terrain
                 return null;
             }
 
-            // Remove any existing terrain to prevent stacking
-            if (currentTerrainObject != null)
-            {
-                Destroy(currentTerrainObject);
-            }
+            // Enforce single active terrain rule: destroy any existing terrain before generating
+            ClearExistingTerrain();
 
             int res = config.resolution;
             TerrainData terrainData = new TerrainData

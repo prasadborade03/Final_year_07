@@ -204,6 +204,71 @@ namespace ProjectName.Terrain
         private bool isLivePreviewEnabled = false;
         private Button btnApplyTerrainLab;
 
+        // =============================================================
+        // Guided Simulation Flow Elements & State
+        // =============================================================
+        private VisualElement guidedFlowContainer;
+        private VisualElement panelEnvironmentSetup;
+        private VisualElement panelTerrainReady;
+        private VisualElement panelRoverSelection;
+        private VisualElement panelSimulationReady;
+
+        // Flow Planet Selection
+        private Button btnPlanetMars;
+        private Button btnPlanetMoon;
+        private Button btnPlanetTitan;
+
+        // Flow Terrain Source
+        private Button btnSourcePreset;
+        private Button btnSourceUpload;
+        private Button btnSourcePainter;
+        private VisualElement viewSourcePreset;
+        private VisualElement viewSourceUpload;
+        private VisualElement viewSourcePainter;
+
+        // Flow Presets
+        private Button btnFlowPresetGale, btnFlowPresetOlympus, btnFlowPresetValles, btnFlowPresetShackleton, btnFlowPresetPlains, btnFlowPresetFractal;
+
+        // Flow Upload
+        private Button btnFlowUploadImg;
+        private Label lblFlowUploadStatus;
+
+        // Flow Materials
+        private Button btnFlowMatMartian, btnFlowMatLunar, btnFlowMatBasalt, btnFlowMatIce, btnFlowMatCanyon, btnFlowMatWireframe;
+
+        // Flow Advanced Settings
+        private Button btnToggleAdvancedSettings;
+        private Label lblAdvancedToggleText;
+        private VisualElement viewAdvancedSettings;
+        private bool isAdvancedSettingsVisible = false;
+        private Slider sliderFlowMaxHeight, sliderFlowBaseOffset, sliderFlowTerrainSize, sliderFlowSmoothing;
+        private Label labelFlowMaxHeightVal, labelFlowBaseOffsetVal, labelFlowTerrainSizeVal, labelFlowSmoothingVal;
+        private DropdownField dropdownFlowResolution;
+        private IntegerField fieldFlowSeed;
+        private Button btnFlowRandomSeed;
+        private Button btnFlowGenerateTerrain;
+
+        // Flow Terrain Ready
+        private Label lblReadyPlanet, lblReadyTerrain, lblReadyMaterial, lblReadySize, lblReadyRes, lblReadyGravity;
+        private Button btnReadyChangeTerrain, btnReadyContinue;
+
+        // Flow Rover Selection
+        private Button btnFlowRoverHusky, btnFlowRoverM20, btnFlowRoverM2020, btnFlowRoverUrdf;
+        private Button btnFlowClickToSpawn, btnFlowCenterSpawn, btnFlowBackToTerrain;
+        private string flowSelectedRoverId = "husky";
+
+        // Flow Simulation Ready
+        private Label lblSimReadyPlanet, lblSimReadyTerrain, lblSimReadyMaterial, lblSimReadyRover, lblSimReadyGravity;
+        private Button btnSimReadyBack, btnSimReadyStart;
+
+        // Confirmation Modal
+        private VisualElement modalConfirmation;
+        private Label lblModalTitle;
+        private Label lblModalMessage;
+        private Button btnModalCancel;
+        private Button btnModalConfirm;
+        private Action pendingModalConfirmAction;
+
         private void Awake()
         {
             if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
@@ -253,6 +318,13 @@ namespace ProjectName.Terrain
                 envCtrl.OnProfileApplied += HandlePlanetaryProfileApplied;
             }
 
+            if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
+            if (flowController != null)
+            {
+                flowController.OnSimulationStateChanged -= HandleSimulationStateChanged;
+                flowController.OnSimulationStateChanged += HandleSimulationStateChanged;
+            }
+
             BindUIElements();
             RefreshPreview();
             UpdatePresetButtonsUI();
@@ -261,7 +333,6 @@ namespace ProjectName.Terrain
             UpdateCurveButtonStyles();
             UpdateMaterialButtonStyles();
             UpdateHistoryUI();
-            SetDrivingHudMode(false); // Default to Studio view on open, user can switch to Driving HUD with [Tab]
 
             if (RoverCameraRig.Instance != null)
             {
@@ -279,14 +350,14 @@ namespace ProjectName.Terrain
                 ConfigureDriveBarForStandby();
             }
 
-            var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
-            if (curTerrain != null && curTerrain.terrainData != null)
+            if (flowController != null)
             {
-                SetWorkflowStep(ActiveRoverContext.HasActiveRover ? 6 : 3);
+                UpdateGuidedFlowUI(flowController.CurrentSimulationState);
             }
             else
             {
-                SetWorkflowStep(1);
+                var curTerrain = terrainGenerator != null ? terrainGenerator.GetCurrentTerrain() : UnityEngine.Terrain.activeTerrain;
+                UpdateGuidedFlowUI(curTerrain != null ? ProjectName.Core.SimulationState.TerrainReady : ProjectName.Core.SimulationState.EnvironmentSetup);
             }
         }
 
@@ -791,6 +862,503 @@ namespace ProjectName.Terrain
 
             btnApplyTerrainLab = root.Q<Button>("BtnApplyTerrainLab");
             if (btnApplyTerrainLab != null) btnApplyTerrainLab.clicked += OnApplyTerrainLabClicked;
+
+            // Bind Guided Simulation Flow UI elements
+            BindGuidedFlowElements(root);
+        }
+
+        // -------------------------------------------------------------
+        // Guided Simulation Flow Implementation
+        // -------------------------------------------------------------
+        private void BindGuidedFlowElements(VisualElement root)
+        {
+            guidedFlowContainer = root.Q<VisualElement>("GuidedFlowContainer");
+            panelEnvironmentSetup = root.Q<VisualElement>("PanelEnvironmentSetup");
+            panelTerrainReady = root.Q<VisualElement>("PanelTerrainReady");
+            panelRoverSelection = root.Q<VisualElement>("PanelRoverSelection");
+            panelSimulationReady = root.Q<VisualElement>("PanelSimulationReady");
+
+            // Flow Planet Selection
+            btnPlanetMars = root.Q<Button>("BtnPlanetMars");
+            btnPlanetMoon = root.Q<Button>("BtnPlanetMoon");
+            btnPlanetTitan = root.Q<Button>("BtnPlanetTitan");
+
+            if (btnPlanetMars != null) btnPlanetMars.clicked += () => SelectFlowPlanet("Mars");
+            if (btnPlanetMoon != null) btnPlanetMoon.clicked += () => SelectFlowPlanet("Moon");
+            if (btnPlanetTitan != null) btnPlanetTitan.clicked += () => SelectFlowPlanet("Titan");
+
+            // Flow Terrain Source
+            btnSourcePreset = root.Q<Button>("BtnSourcePreset");
+            btnSourceUpload = root.Q<Button>("BtnSourceUpload");
+            btnSourcePainter = root.Q<Button>("BtnSourcePainter");
+            viewSourcePreset = root.Q<VisualElement>("ViewSourcePreset");
+            viewSourceUpload = root.Q<VisualElement>("ViewSourceUpload");
+            viewSourcePainter = root.Q<VisualElement>("ViewSourcePainter");
+
+            if (btnSourcePreset != null) btnSourcePreset.clicked += () => SelectFlowTerrainSource("Preset");
+            if (btnSourceUpload != null) btnSourceUpload.clicked += () => SelectFlowTerrainSource("Upload");
+            if (btnSourcePainter != null) btnSourcePainter.clicked += () => SelectFlowTerrainSource("Painter");
+
+            // Flow Presets
+            btnFlowPresetGale = root.Q<Button>("BtnFlowPresetGale");
+            btnFlowPresetOlympus = root.Q<Button>("BtnFlowPresetOlympus");
+            btnFlowPresetValles = root.Q<Button>("BtnFlowPresetValles");
+            btnFlowPresetShackleton = root.Q<Button>("BtnFlowPresetShackleton");
+            btnFlowPresetPlains = root.Q<Button>("BtnFlowPresetPlains");
+            btnFlowPresetFractal = root.Q<Button>("BtnFlowPresetFractal");
+
+            if (btnFlowPresetGale != null) btnFlowPresetGale.clicked += () => SelectPreset(HeightmapPreset.GaleCrater);
+            if (btnFlowPresetOlympus != null) btnFlowPresetOlympus.clicked += () => SelectPreset(HeightmapPreset.OlympusMons);
+            if (btnFlowPresetValles != null) btnFlowPresetValles.clicked += () => SelectPreset(HeightmapPreset.VallesMarineris);
+            if (btnFlowPresetShackleton != null) btnFlowPresetShackleton.clicked += () => SelectPreset(HeightmapPreset.ShackletonCrater);
+            if (btnFlowPresetPlains != null) btnFlowPresetPlains.clicked += () => SelectPreset(HeightmapPreset.Plains);
+            if (btnFlowPresetFractal != null) btnFlowPresetFractal.clicked += () => SelectPreset(HeightmapPreset.ProceduralFractal);
+
+            // Flow Upload
+            btnFlowUploadImg = root.Q<Button>("BtnFlowUploadImg");
+            lblFlowUploadStatus = root.Q<Label>("LblFlowUploadStatus");
+            if (btnFlowUploadImg != null) btnFlowUploadImg.clicked += OnImportPNGClicked;
+
+            // Flow Materials
+            btnFlowMatMartian = root.Q<Button>("BtnFlowMatMartian");
+            btnFlowMatLunar = root.Q<Button>("BtnFlowMatLunar");
+            btnFlowMatBasalt = root.Q<Button>("BtnFlowMatBasalt");
+            btnFlowMatIce = root.Q<Button>("BtnFlowMatIce");
+            btnFlowMatCanyon = root.Q<Button>("BtnFlowMatCanyon");
+            btnFlowMatWireframe = root.Q<Button>("BtnFlowMatWireframe");
+
+            if (btnFlowMatMartian != null) btnFlowMatMartian.clicked += () => SetMaterial(PlanetaryMaterialType.MartianDust);
+            if (btnFlowMatLunar != null) btnFlowMatLunar.clicked += () => SetMaterial(PlanetaryMaterialType.LunarRegolith);
+            if (btnFlowMatBasalt != null) btnFlowMatBasalt.clicked += () => SetMaterial(PlanetaryMaterialType.VolcanicBasalt);
+            if (btnFlowMatIce != null) btnFlowMatIce.clicked += () => SetMaterial(PlanetaryMaterialType.PolarIce);
+            if (btnFlowMatCanyon != null) btnFlowMatCanyon.clicked += () => SetMaterial(PlanetaryMaterialType.RedCanyon);
+            if (btnFlowMatWireframe != null) btnFlowMatWireframe.clicked += () => SetMaterial(PlanetaryMaterialType.TopographicWireframe);
+
+            // Flow Advanced Settings
+            btnToggleAdvancedSettings = root.Q<Button>("BtnToggleAdvancedSettings");
+            lblAdvancedToggleText = root.Q<Label>("LblAdvancedToggleText");
+            viewAdvancedSettings = root.Q<VisualElement>("ViewAdvancedSettings");
+            if (btnToggleAdvancedSettings != null) btnToggleAdvancedSettings.clicked += ToggleAdvancedSettings;
+
+            sliderFlowMaxHeight = root.Q<Slider>("SliderFlowMaxHeight");
+            labelFlowMaxHeightVal = root.Q<Label>("LabelFlowMaxHeightVal");
+            if (sliderFlowMaxHeight != null)
+            {
+                sliderFlowMaxHeight.value = tuningConfig.maxHeight;
+                sliderFlowMaxHeight.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.maxHeight = evt.newValue;
+                    if (labelFlowMaxHeightVal != null) labelFlowMaxHeightVal.text = $"{evt.newValue:F0} m";
+                    if (sliderMaxHeight != null && sliderMaxHeight.value != evt.newValue) sliderMaxHeight.SetValueWithoutNotify(evt.newValue);
+                });
+            }
+
+            sliderFlowBaseOffset = root.Q<Slider>("SliderFlowBaseOffset");
+            labelFlowBaseOffsetVal = root.Q<Label>("LabelFlowBaseOffsetVal");
+            if (sliderFlowBaseOffset != null)
+            {
+                sliderFlowBaseOffset.value = tuningConfig.baseOffset;
+                sliderFlowBaseOffset.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.baseOffset = evt.newValue;
+                    if (labelFlowBaseOffsetVal != null) labelFlowBaseOffsetVal.text = $"{evt.newValue:F0} m";
+                    if (sliderBaseOffset != null && sliderBaseOffset.value != evt.newValue) sliderBaseOffset.SetValueWithoutNotify(evt.newValue);
+                });
+            }
+
+            sliderFlowTerrainSize = root.Q<Slider>("SliderFlowTerrainSize");
+            labelFlowTerrainSizeVal = root.Q<Label>("LabelFlowTerrainSizeVal");
+            if (sliderFlowTerrainSize != null)
+            {
+                sliderFlowTerrainSize.value = tuningConfig.terrainWidth;
+                sliderFlowTerrainSize.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.terrainWidth = evt.newValue;
+                    tuningConfig.terrainLength = evt.newValue;
+                    if (labelFlowTerrainSizeVal != null) labelFlowTerrainSizeVal.text = $"{evt.newValue:F0}m";
+                    if (sliderTerrainSize != null && sliderTerrainSize.value != evt.newValue) sliderTerrainSize.SetValueWithoutNotify(evt.newValue);
+                });
+            }
+
+            dropdownFlowResolution = root.Q<DropdownField>("DropdownFlowResolution");
+            if (dropdownFlowResolution != null)
+            {
+                dropdownFlowResolution.RegisterValueChangedCallback(evt =>
+                {
+                    if (evt.newValue.Contains("257")) tuningConfig.resolution = 257;
+                    else if (evt.newValue.Contains("1025")) tuningConfig.resolution = 1025;
+                    else if (evt.newValue.Contains("2049")) tuningConfig.resolution = 2049;
+                    else tuningConfig.resolution = 513;
+
+                    if (dropdownResolution != null && dropdownResolution.value != evt.newValue)
+                        dropdownResolution.SetValueWithoutNotify(evt.newValue);
+                });
+            }
+
+            sliderFlowSmoothing = root.Q<Slider>("SliderFlowSmoothing");
+            labelFlowSmoothingVal = root.Q<Label>("LabelFlowSmoothingVal");
+            if (sliderFlowSmoothing != null)
+            {
+                sliderFlowSmoothing.value = tuningConfig.smoothingFactor;
+                sliderFlowSmoothing.RegisterValueChangedCallback(evt =>
+                {
+                    tuningConfig.smoothingFactor = evt.newValue;
+                    if (labelFlowSmoothingVal != null) labelFlowSmoothingVal.text = $"{evt.newValue:F1}";
+                    if (sliderSmoothing != null && sliderSmoothing.value != evt.newValue) sliderSmoothing.SetValueWithoutNotify(evt.newValue);
+                });
+            }
+
+            fieldFlowSeed = root.Q<IntegerField>("FieldFlowSeed");
+            if (fieldFlowSeed != null)
+            {
+                fieldFlowSeed.value = currentSeed;
+                fieldFlowSeed.RegisterValueChangedCallback(evt =>
+                {
+                    currentSeed = evt.newValue;
+                    if (fieldSeed != null && fieldSeed.value != evt.newValue) fieldSeed.SetValueWithoutNotify(evt.newValue);
+                });
+            }
+
+            btnFlowRandomSeed = root.Q<Button>("BtnFlowRandomSeed");
+            if (btnFlowRandomSeed != null)
+            {
+                btnFlowRandomSeed.clicked += () =>
+                {
+                    currentSeed = UnityEngine.Random.Range(0, 999999);
+                    if (fieldFlowSeed != null) fieldFlowSeed.value = currentSeed;
+                    if (fieldSeed != null) fieldSeed.value = currentSeed;
+                };
+            }
+
+            btnFlowGenerateTerrain = root.Q<Button>("BtnFlowGenerateTerrain");
+            if (btnFlowGenerateTerrain != null) btnFlowGenerateTerrain.clicked += OnFlowGenerateTerrainClicked;
+
+            // Flow Terrain Ready
+            lblReadyPlanet = root.Q<Label>("LblReadyPlanet");
+            lblReadyTerrain = root.Q<Label>("LblReadyTerrain");
+            lblReadyMaterial = root.Q<Label>("LblReadyMaterial");
+            lblReadySize = root.Q<Label>("LblReadySize");
+            lblReadyRes = root.Q<Label>("LblReadyRes");
+            lblReadyGravity = root.Q<Label>("LblReadyGravity");
+
+            btnReadyChangeTerrain = root.Q<Button>("BtnReadyChangeTerrain");
+            if (btnReadyChangeTerrain != null)
+            {
+                btnReadyChangeTerrain.clicked += () =>
+                {
+                    if (flowController != null) flowController.StartEnvironmentSetup();
+                };
+            }
+
+            btnReadyContinue = root.Q<Button>("BtnReadyContinue");
+            if (btnReadyContinue != null)
+            {
+                btnReadyContinue.clicked += () =>
+                {
+                    if (flowController != null) flowController.ContinueToRoverSelection();
+                };
+            }
+
+            // Flow Rover Selection
+            btnFlowRoverHusky = root.Q<Button>("BtnFlowRoverHusky");
+            btnFlowRoverM20 = root.Q<Button>("BtnFlowRoverM20");
+            btnFlowRoverM2020 = root.Q<Button>("BtnFlowRoverM2020");
+            btnFlowRoverUrdf = root.Q<Button>("BtnFlowRoverUrdf");
+
+            if (btnFlowRoverHusky != null) btnFlowRoverHusky.clicked += () => SelectFlowRover("husky");
+            if (btnFlowRoverM20 != null) btnFlowRoverM20.clicked += () => SelectFlowRover("m20");
+            if (btnFlowRoverM2020 != null) btnFlowRoverM2020.clicked += () => SelectFlowRover("m2020");
+            if (btnFlowRoverUrdf != null) btnFlowRoverUrdf.clicked += () =>
+            {
+                ShowNotification("Runtime URDF Import Kit: Select .urdf file via AutonomousRobotKit floating tool.");
+            };
+
+            btnFlowClickToSpawn = root.Q<Button>("BtnFlowClickToSpawn");
+            if (btnFlowClickToSpawn != null)
+            {
+                btnFlowClickToSpawn.clicked += () =>
+                {
+                    if (flowController != null)
+                    {
+                        flowController.StartRoverPlacement(flowSelectedRoverId);
+                    }
+                    else if (RoverPlacementController.Instance != null)
+                    {
+                        RoverPlacementController.Instance.StartPlacement(flowSelectedRoverId);
+                    }
+                };
+            }
+
+            btnFlowCenterSpawn = root.Q<Button>("BtnFlowCenterSpawn");
+            if (btnFlowCenterSpawn != null)
+            {
+                btnFlowCenterSpawn.clicked += () =>
+                {
+                    if (RoverPlacementController.Instance != null)
+                    {
+                        RoverPlacementController.Instance.ConfirmPlacementAtPoint(
+                            Vector3.zero, 0f, flowSelectedRoverId
+                        );
+                        RoverPlacementController.Instance.QuickSpawnTerrainCentre();
+                    }
+                };
+            }
+
+            btnFlowBackToTerrain = root.Q<Button>("BtnFlowBackToTerrain");
+            if (btnFlowBackToTerrain != null)
+            {
+                btnFlowBackToTerrain.clicked += () =>
+                {
+                    if (flowController != null) flowController.SetSimulationState(ProjectName.Core.SimulationState.TerrainReady);
+                };
+            }
+
+            // Flow Simulation Ready
+            lblSimReadyPlanet = root.Q<Label>("LblSimReadyPlanet");
+            lblSimReadyTerrain = root.Q<Label>("LblSimReadyTerrain");
+            lblSimReadyMaterial = root.Q<Label>("LblSimReadyMaterial");
+            lblSimReadyRover = root.Q<Label>("LblSimReadyRover");
+            lblSimReadyGravity = root.Q<Label>("LblSimReadyGravity");
+
+            btnSimReadyBack = root.Q<Button>("BtnSimReadyBack");
+            if (btnSimReadyBack != null)
+            {
+                btnSimReadyBack.clicked += () =>
+                {
+                    if (flowController != null)
+                    {
+                        flowController.CleanActiveRover();
+                        flowController.ContinueToRoverSelection();
+                    }
+                };
+            }
+
+            btnSimReadyStart = root.Q<Button>("BtnSimReadyStart");
+            if (btnSimReadyStart != null)
+            {
+                btnSimReadyStart.clicked += () =>
+                {
+                    if (flowController != null)
+                    {
+                        flowController.StartMission();
+                    }
+                    else
+                    {
+                        ActiveRoverContext.SetFrozen(false);
+                        SetDrivingHudMode(true);
+                    }
+                };
+            }
+
+            // Confirmation Modal
+            modalConfirmation = root.Q<VisualElement>("ConfirmationModal");
+            lblModalTitle = root.Q<Label>("LblModalTitle");
+            lblModalMessage = root.Q<Label>("LblModalMessage");
+            btnModalCancel = root.Q<Button>("BtnModalCancel");
+            btnModalConfirm = root.Q<Button>("BtnModalConfirm");
+
+            if (btnModalCancel != null) btnModalCancel.clicked += HideConfirmationModal;
+            if (btnModalConfirm != null)
+            {
+                btnModalConfirm.clicked += () =>
+                {
+                    HideConfirmationModal();
+                    pendingModalConfirmAction?.Invoke();
+                    pendingModalConfirmAction = null;
+                };
+            }
+        }
+
+        private void HandleSimulationStateChanged(ProjectName.Core.SimulationState state)
+        {
+            UpdateGuidedFlowUI(state);
+        }
+
+        private void UpdateGuidedFlowUI(ProjectName.Core.SimulationState state)
+        {
+            bool inFlow = state != ProjectName.Core.SimulationState.ActiveSimulation;
+
+            if (guidedFlowContainer != null)
+                guidedFlowContainer.style.display = (inFlow && state != ProjectName.Core.SimulationState.RoverSpawning) ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (panelEnvironmentSetup != null)
+                panelEnvironmentSetup.style.display = (state == ProjectName.Core.SimulationState.EnvironmentSetup || state == ProjectName.Core.SimulationState.TerrainGenerating) ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (panelTerrainReady != null)
+            {
+                panelTerrainReady.style.display = (state == ProjectName.Core.SimulationState.TerrainReady) ? DisplayStyle.Flex : DisplayStyle.None;
+                if (state == ProjectName.Core.SimulationState.TerrainReady)
+                {
+                    if (lblReadyPlanet != null) lblReadyPlanet.text = ProjectName.Core.SimulationContext.SelectedPlanet.ToUpperInvariant();
+                    if (lblReadyTerrain != null) lblReadyTerrain.text = currentPreset.ToString().ToUpperInvariant();
+                    if (lblReadyMaterial != null) lblReadyMaterial.text = tuningConfig.materialType.ToString().ToUpperInvariant();
+                    if (lblReadySize != null) lblReadySize.text = $"{tuningConfig.terrainWidth:F0} × {tuningConfig.terrainLength:F0} m";
+                    if (lblReadyRes != null) lblReadyRes.text = $"{tuningConfig.resolution} × {tuningConfig.resolution}";
+                    if (lblReadyGravity != null) lblReadyGravity.text = $"{ProjectName.Core.SimulationContext.SelectedGravity:F2} m/s²";
+                }
+            }
+
+            if (panelRoverSelection != null)
+                panelRoverSelection.style.display = (state == ProjectName.Core.SimulationState.RoverSelection) ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (panelSimulationReady != null)
+            {
+                panelSimulationReady.style.display = (state == ProjectName.Core.SimulationState.SimulationReady) ? DisplayStyle.Flex : DisplayStyle.None;
+                if (state == ProjectName.Core.SimulationState.SimulationReady)
+                {
+                    if (lblSimReadyPlanet != null) lblSimReadyPlanet.text = ProjectName.Core.SimulationContext.SelectedPlanet.ToUpperInvariant();
+                    if (lblSimReadyTerrain != null) lblSimReadyTerrain.text = currentPreset.ToString().ToUpperInvariant();
+                    if (lblSimReadyMaterial != null) lblSimReadyMaterial.text = tuningConfig.materialType.ToString().ToUpperInvariant();
+                    if (lblSimReadyRover != null) lblSimReadyRover.text = ProjectName.Core.SimulationContext.SelectedRoverDisplayName.ToUpperInvariant();
+                    if (lblSimReadyGravity != null) lblSimReadyGravity.text = $"{ProjectName.Core.SimulationContext.SelectedGravity:F2} m/s²";
+                }
+            }
+
+            // Hide Side Columns and Bottom Bars during guided setup
+            if (studioMainGrid != null)
+            {
+                studioMainGrid.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+            if (uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                var shellBottomLeft = uiDocument.rootVisualElement.Q<VisualElement>("ShellBottomLeft");
+                if (shellBottomLeft != null) shellBottomLeft.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+
+                var shellBottomRight = uiDocument.rootVisualElement.Q<VisualElement>("ShellBottomRight");
+                if (shellBottomRight != null) shellBottomRight.style.display = inFlow ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            // Update 7-step pills
+            switch (state)
+            {
+                case ProjectName.Core.SimulationState.EnvironmentSetup:
+                    SetWorkflowStep(1);
+                    break;
+                case ProjectName.Core.SimulationState.TerrainGenerating:
+                    SetWorkflowStep(2);
+                    break;
+                case ProjectName.Core.SimulationState.TerrainReady:
+                    SetWorkflowStep(3);
+                    break;
+                case ProjectName.Core.SimulationState.RoverSelection:
+                    SetWorkflowStep(3);
+                    break;
+                case ProjectName.Core.SimulationState.RoverSpawning:
+                    SetWorkflowStep(4);
+                    break;
+                case ProjectName.Core.SimulationState.SimulationReady:
+                    SetWorkflowStep(5);
+                    break;
+                case ProjectName.Core.SimulationState.ActiveSimulation:
+                    SetWorkflowStep(6);
+                    SetDrivingHudMode(true); // Driving HUD as primary simulation view
+                    break;
+            }
+        }
+
+        private void SelectFlowPlanet(string planetName)
+        {
+            ProjectName.Core.SimulationContext.SelectedPlanet = planetName;
+
+            SetBtnClass(btnPlanetMars, "planet-card-active", planetName.Equals("Mars", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnPlanetMoon, "planet-card-active", planetName.Equals("Moon", StringComparison.OrdinalIgnoreCase));
+            SetBtnClass(btnPlanetTitan, "planet-card-active", planetName.Equals("Titan", StringComparison.OrdinalIgnoreCase));
+
+            if (btnPlanetBadge != null)
+            {
+                var lbl = btnPlanetBadge.Q<Label>("LblPlanetName");
+                if (lbl != null) lbl.text = planetName.ToUpperInvariant();
+                else btnPlanetBadge.text = planetName.ToUpperInvariant();
+            }
+
+            // Load matching planet profile
+            PlanetProfile profile = Resources.Load<PlanetProfile>($"Planets/{planetName}") ??
+                                    Resources.Load<PlanetProfile>(planetName);
+            if (profile == null)
+            {
+                var all = Resources.LoadAll<PlanetaryProfile>("Planets");
+                foreach (var p in all)
+                {
+                    if (p.planetName.Equals(planetName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        profile = p;
+                        break;
+                    }
+                }
+            }
+
+            if (profile != null && PlanetEnvironmentController.Instance != null)
+            {
+                PlanetEnvironmentController.Instance.ApplyProfile(profile);
+            }
+
+            // Sync default material & gravity
+            if (planetName.Equals("Mars", StringComparison.OrdinalIgnoreCase))
+            {
+                SetMaterial(PlanetaryMaterialType.MartianDust);
+                ProjectName.Core.SimulationContext.SelectedGravity = 3.72f;
+            }
+            else if (planetName.Equals("Moon", StringComparison.OrdinalIgnoreCase))
+            {
+                SetMaterial(PlanetaryMaterialType.LunarRegolith);
+                ProjectName.Core.SimulationContext.SelectedGravity = 1.62f;
+            }
+            else if (planetName.Equals("Titan", StringComparison.OrdinalIgnoreCase))
+            {
+                SetMaterial(PlanetaryMaterialType.VolcanicBasalt);
+                ProjectName.Core.SimulationContext.SelectedGravity = 1.35f;
+            }
+        }
+
+        private void SelectFlowTerrainSource(string source)
+        {
+            ProjectName.Core.SimulationContext.SelectedTerrainSource = source;
+            SetBtnClass(btnSourcePreset, "segmented-active", source == "Preset");
+            SetBtnClass(btnSourceUpload, "segmented-active", source == "Upload");
+            SetBtnClass(btnSourcePainter, "segmented-active", source == "Painter");
+
+            if (viewSourcePreset != null) viewSourcePreset.style.display = source == "Preset" ? DisplayStyle.Flex : DisplayStyle.None;
+            if (viewSourceUpload != null) viewSourceUpload.style.display = source == "Upload" ? DisplayStyle.Flex : DisplayStyle.None;
+            if (viewSourcePainter != null) viewSourcePainter.style.display = source == "Painter" ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void ToggleAdvancedSettings()
+        {
+            isAdvancedSettingsVisible = !isAdvancedSettingsVisible;
+            if (viewAdvancedSettings != null)
+                viewAdvancedSettings.style.display = isAdvancedSettingsVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            if (lblAdvancedToggleText != null)
+                lblAdvancedToggleText.text = isAdvancedSettingsVisible ? "ADVANCED TERRAIN SETTINGS  ▲" : "ADVANCED TERRAIN SETTINGS  ▼";
+        }
+
+        private void SelectFlowRover(string roverId)
+        {
+            flowSelectedRoverId = roverId.ToLowerInvariant();
+            if (flowController != null) flowController.SelectRover(flowSelectedRoverId);
+
+            SetBtnClass(btnFlowRoverHusky, "rover-row-active", flowSelectedRoverId == "husky");
+            SetBtnClass(btnFlowRoverM20, "rover-row-active", flowSelectedRoverId == "m20");
+            SetBtnClass(btnFlowRoverM2020, "rover-row-active", flowSelectedRoverId == "m2020");
+        }
+
+        private void OnFlowGenerateTerrainClicked()
+        {
+            if (flowController != null) flowController.OnTerrainGenerationStarted();
+            OnGenerateTerrainClicked();
+        }
+
+        public void ShowConfirmationModal(string title, string message, Action onConfirm)
+        {
+            pendingModalConfirmAction = onConfirm;
+            if (lblModalTitle != null) lblModalTitle.text = title;
+            if (lblModalMessage != null) lblModalMessage.text = message;
+            if (modalConfirmation != null) modalConfirmation.style.display = DisplayStyle.Flex;
+        }
+
+        public void HideConfirmationModal()
+        {
+            if (modalConfirmation != null) modalConfirmation.style.display = DisplayStyle.None;
+            pendingModalConfirmAction = null;
         }
 
         private void Update()
@@ -1134,8 +1702,14 @@ namespace ProjectName.Terrain
 
             RebuildWheelUI(handle);
             ConfigureDriveBarForRover(handle.profile);
-            UpdateLiveTelemetryUI();
-            SetWorkflowStep(6);
+            if (flowController != null && flowController.CurrentSimulationState != ProjectName.Core.SimulationState.ActiveSimulation)
+            {
+                SetWorkflowStep(5);
+            }
+            else
+            {
+                SetWorkflowStep(6);
+            }
         }
 
         private void HandleRoverDestroyed()
@@ -2668,17 +3242,39 @@ namespace ProjectName.Terrain
 
         private void OnNewTerrainClicked()
         {
-            if (flowController != null)
+            if (ActiveRoverContext.HasActiveRover || (flowController != null && flowController.CurrentSimulationState == ProjectName.Core.SimulationState.ActiveSimulation))
             {
-                flowController.DisableAllRovers();
+                ShowConfirmationModal(
+                    "CHANGE SIMULATION TERRAIN?",
+                    "Changing the terrain will reset the current simulation environment. The current rover placement and terrain will be cleared.",
+                    () =>
+                    {
+                        if (flowController != null)
+                        {
+                            flowController.ResetSimulation();
+                        }
+                        else
+                        {
+                            ActiveRoverContext.DestroyActiveRover();
+                            if (terrainGenerator != null) terrainGenerator.ClearExistingTerrain();
+                        }
+                        ShowNotification("Environment reset. Ready for new terrain.");
+                    }
+                );
             }
-            if (ActiveRoverContext.HasActiveRover)
+            else
             {
-                ActiveRoverContext.DestroyActiveRover();
+                if (flowController != null)
+                {
+                    flowController.ResetSimulation();
+                }
+                else
+                {
+                    ActiveRoverContext.DestroyActiveRover();
+                    if (terrainGenerator != null) terrainGenerator.ClearExistingTerrain();
+                }
+                ShowNotification("Ready for new terrain. Select preset and generate.");
             }
-            SetDrivingHudMode(false);
-            SetWorkflowStep(1, "STEP 1: Pick a heightmap preset or upload PNG, then click Generate Terrain.");
-            ShowNotification("Ready for new terrain. Select preset and generate.");
         }
 
         private void OnRootGeometryChanged(GeometryChangedEvent evt)
@@ -2702,6 +3298,11 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
+            if (flowController != null)
+            {
+                flowController.OnSimulationStateChanged -= HandleSimulationStateChanged;
+            }
+
             if (PlanetEnvironmentController.Instance != null)
             {
                 PlanetEnvironmentController.Instance.OnProfileApplied -= HandlePlanetaryProfileApplied;

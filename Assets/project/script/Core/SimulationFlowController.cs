@@ -1,12 +1,55 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
 using ProjectName.Rover;
+using ProjectName.Terrain;
+
+namespace ProjectName.Core
+{
+    public enum SimulationState
+    {
+        RuntimeSelection,   // State 0: Main Menu
+        EnvironmentSetup,   // State 1: Select Planet, Terrain Source, Preset/Upload/Painter, Material, Advanced Settings
+        TerrainGenerating,  // Generating mesh, colliders, materials
+        TerrainReady,       // State 2: 3D terrain visible, summary displayed, [Change Terrain] or [Continue to Rover]
+        RoverSelection,     // State 3: Choose Husky / M20 / M2020, [+ Import URDF], [Click to Spawn] / [Centre Spawn]
+        RoverSpawning,      // Holographic ghost marker placement mode
+        SimulationReady,    // State 4: Confirmation screen showing Planet, Terrain, Rover, Gravity, [Start Mission]
+        ActiveSimulation    // State 5: Active Mission (Driving HUD as primary, Full Studio as toggle)
+    }
+
+    /// <summary>
+    /// Master Simulation Context holding current configuration and facts.
+    /// Single source of truth for the active simulation lifecycle.
+    /// </summary>
+    public static class SimulationContext
+    {
+        public static string SelectedPlanet = "Mars";
+        public static string SelectedTerrainPreset = "Gale Crater";
+        public static string SelectedTerrainSource = "Preset"; // Preset, Upload, Painter
+        public static string SelectedMaterial = "Martian Rust";
+        public static string SelectedRoverId = "husky";
+        public static string SelectedRoverDisplayName = "Clearpath Husky A200";
+        public static float SelectedGravity = 3.72f;
+        public static Vector3 TerrainSize = new Vector3(1000f, 120f, 1000f);
+        public static int TerrainResolution = 513;
+        public static SimulationState CurrentState = SimulationState.EnvironmentSetup;
+    }
+}
 
 public class SimulationFlowController : MonoBehaviour
 {
-    [Header("Terrain")]
+    public static SimulationFlowController Instance { get; private set; }
+
+    [Header("Simulation State Machine")]
+    [SerializeField] private ProjectName.Core.SimulationState currentSimState = ProjectName.Core.SimulationState.EnvironmentSetup;
+    public ProjectName.Core.SimulationState CurrentSimulationState => currentSimState;
+    public event Action<ProjectName.Core.SimulationState> OnSimulationStateChanged;
+
+    [Header("Terrain References")]
     public ProjectName.UI.UploadHeightmapUI uploadUI;
+    public TerrainGenerator terrainGenerator;
     public GameObject robotSelectPanel;
 
     [Header("Husky")]
@@ -34,17 +77,15 @@ public class SimulationFlowController : MonoBehaviour
     public bool showDebugLogs = true;
 
     // Events for UI Toolkit binding
-    public System.Action<string> onGuideTextChanged;
-    public System.Action<string> onStateChanged;
+    public Action<string> onGuideTextChanged;
+    public Action<string> onStateChanged;
 
-    // Internal state
+    // Backward-compatible enum
     public enum State { WaitingForTerrain, WaitingForRobotChoice, WaitingForClickToPlace, ActiveDriving }
-    private State currentState = State.WaitingForTerrain;
-
-    public State CurrentState => currentState;
+    public State CurrentState => MapToLegacyState(currentSimState);
     public string SelectedRobot => selectedRobot;
 
-    private string selectedRobot = "";
+    private string selectedRobot = "husky";
     private GameObject pendingRobot = null;
     private GameObject activeSpawnedRover = null;
 
@@ -56,7 +97,25 @@ public class SimulationFlowController : MonoBehaviour
     public Transform leftControllerTransform;
     private bool wasVRTriggerPressedLastFrame = false;
 
-    void Start()
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
+
+        if (terrainGenerator == null)
+        {
+            terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
+        }
+    }
+
+    private void Start()
     {
         if (rightControllerTransform == null)
         {
@@ -69,13 +128,17 @@ public class SimulationFlowController : MonoBehaviour
             if (leftGO != null) leftControllerTransform = leftGO.transform;
         }
 
-        SetState(State.WaitingForTerrain);
-        SetGuideText("Configure heightmap tuning & click Generate to begin.");
+        // Section 24: Blank Initial Simulation Environment
+        // Ensure no stale terrain or rover remains from any previous session
+        CleanSimulationEnvironment();
+
+        SetSimulationState(ProjectName.Core.SimulationState.EnvironmentSetup);
+        SetGuideText("Prepare Simulation Environment: Select planet, terrain source, and click Generate Terrain.");
     }
 
-    void Update()
+    private void Update()
     {
-        if (currentState == State.WaitingForClickToPlace)
+        if (currentSimState == ProjectName.Core.SimulationState.RoverSpawning)
         {
             bool vrTriggerDown = CheckVRTriggerJustPressed();
             if (Input.GetMouseButtonDown(0) || vrTriggerDown)
@@ -85,87 +148,241 @@ public class SimulationFlowController : MonoBehaviour
         }
     }
 
-    private bool CheckVRTriggerJustPressed()
-    {
-        bool isTriggerPressed = false;
-        var rightHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
-        if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out bool rPressed) && rPressed)
-        {
-            isTriggerPressed = true;
-        }
-        else
-        {
-            var leftHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.LeftHand);
-            if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out bool lPressed) && lPressed)
-            {
-                isTriggerPressed = true;
-            }
-        }
+    // =========================================================================
+    // STATE MACHINE TRANSITIONS
+    // =========================================================================
 
-        bool justPressed = isTriggerPressed && !wasVRTriggerPressedLastFrame;
-        wasVRTriggerPressedLastFrame = isTriggerPressed;
-        return justPressed;
+    public void SetSimulationState(ProjectName.Core.SimulationState newState)
+    {
+        currentSimState = newState;
+        ProjectName.Core.SimulationContext.CurrentState = newState;
+        Log($"Simulation State changed -> {newState}");
+
+        onStateChanged?.Invoke(newState.ToString());
+        OnSimulationStateChanged?.Invoke(newState);
     }
 
-    private void SetState(State newState)
+    private State MapToLegacyState(ProjectName.Core.SimulationState s)
     {
-        currentState = newState;
-        onStateChanged?.Invoke(currentState.ToString());
+        switch (s)
+        {
+            case ProjectName.Core.SimulationState.EnvironmentSetup:
+            case ProjectName.Core.SimulationState.TerrainGenerating:
+                return State.WaitingForTerrain;
+            case ProjectName.Core.SimulationState.TerrainReady:
+            case ProjectName.Core.SimulationState.RoverSelection:
+                return State.WaitingForRobotChoice;
+            case ProjectName.Core.SimulationState.RoverSpawning:
+                return State.WaitingForClickToPlace;
+            case ProjectName.Core.SimulationState.SimulationReady:
+            case ProjectName.Core.SimulationState.ActiveSimulation:
+            default:
+                return State.ActiveDriving;
+        }
     }
 
-    // -------------------------------------------------
-    // Called by UI after terrain is generated
-    // -------------------------------------------------
+    /// <summary>
+    /// Step 1: Return to or start Environment Setup.
+    /// </summary>
+    public void StartEnvironmentSetup()
+    {
+        SetSimulationState(ProjectName.Core.SimulationState.EnvironmentSetup);
+        SetGuideText("Select planet, terrain source, material, and click Generate Terrain.");
+    }
+
+    /// <summary>
+    /// Called when terrain generation starts.
+    /// </summary>
+    public void OnTerrainGenerationStarted()
+    {
+        SetSimulationState(ProjectName.Core.SimulationState.TerrainGenerating);
+        SetGuideText("Generating 3D planetary terrain & configuring colliders...");
+    }
+
+    /// <summary>
+    /// Step 2: Called when terrain has been successfully generated.
+    /// </summary>
     public void OnTerrainReady()
     {
-        if (robotSelectPanel != null)
-            robotSelectPanel.SetActive(true);
-
-        SetState(State.WaitingForRobotChoice);
-        SetGuideText("Terrain ready! Select a rover (Husky, M20, or M2020) to deploy.");
-        Log("Terrain ready → choose a robot");
+        SetSimulationState(ProjectName.Core.SimulationState.TerrainReady);
+        SetGuideText("Terrain Ready! Review environment specifications and continue to rover deployment.");
+        Log("Terrain ready -> State.TerrainReady");
     }
 
-    // -------------------------------------------------
-    // Called by the UI buttons
-    // -------------------------------------------------
-    public void OnSelectHusky()
+    /// <summary>
+    /// Step 3: Transition from Terrain Ready to Rover Selection.
+    /// </summary>
+    public void ContinueToRoverSelection()
     {
-        selectedRobot = "husky";
+        SetSimulationState(ProjectName.Core.SimulationState.RoverSelection);
+        SetGuideText("Select a digital twin rover (Husky, M20, M2020) and choose a spawn method.");
+        Log("Transitioned to State.RoverSelection");
+    }
+
+    /// <summary>
+    /// Selects rover model and prepares placement.
+    /// </summary>
+    public void SelectRover(string roverId)
+    {
+        selectedRobot = roverId.ToLowerInvariant();
+        ProjectName.Core.SimulationContext.SelectedRoverId = selectedRobot;
+        if (selectedRobot == "husky") ProjectName.Core.SimulationContext.SelectedRoverDisplayName = "Clearpath Husky A200";
+        else if (selectedRobot == "m20") ProjectName.Core.SimulationContext.SelectedRoverDisplayName = "Deep Robotics M20";
+        else if (selectedRobot == "m2020") ProjectName.Core.SimulationContext.SelectedRoverDisplayName = "NASA Perseverance M2020";
+
+        Log($"Rover selected: {selectedRobot}");
+    }
+
+    /// <summary>
+    /// Starts interactive placement mode (Click-to-spawn).
+    /// </summary>
+    public void StartRoverPlacement(string roverId)
+    {
+        SelectRover(roverId);
+        SetSimulationState(ProjectName.Core.SimulationState.RoverSpawning);
+        SetGuideText($"Aim at terrain and click/trigger to place {ProjectName.Core.SimulationContext.SelectedRoverDisplayName}.");
+
         if (RoverPlacementController.Instance != null)
         {
-            RoverPlacementController.Instance.StartPlacement("husky");
+            RoverPlacementController.Instance.StartPlacement(selectedRobot);
         }
         else
         {
             StartPlacementMode();
         }
+    }
+
+    /// <summary>
+    /// Spawns rover directly at terrain center.
+    /// </summary>
+    public void SpawnRoverAtCenter(string roverId)
+    {
+        SelectRover(roverId);
+        if (RoverPlacementController.Instance != null)
+        {
+            RoverPlacementController.Instance.QuickSpawnTerrainCentre();
+        }
+        else
+        {
+            StartPlacementMode();
+        }
+    }
+
+    /// <summary>
+    /// Step 4: Called once a rover has been placed/spawned.
+    /// Freezes the rover in standby and transitions to SimulationReady.
+    /// </summary>
+    public void OnRoverSpawned()
+    {
+        // Freeze rover until mission starts
+        ActiveRoverContext.SetFrozen(true);
+        DisableRoverControllers();
+
+        SetSimulationState(ProjectName.Core.SimulationState.SimulationReady);
+        SetGuideText($"Simulation Ready: {ProjectName.Core.SimulationContext.SelectedRoverDisplayName} stationed on {ProjectName.Core.SimulationContext.SelectedPlanet}. Click Start Mission.");
+        Log("Rover spawned -> State.SimulationReady (Frozen standby)");
+    }
+
+    /// <summary>
+    /// Step 5: Starts active driving mission.
+    /// </summary>
+    public void StartMission()
+    {
+        // Unfreeze active rover
+        ActiveRoverContext.SetFrozen(false);
+        EnableActiveRoverController();
+
+        SetSimulationState(ProjectName.Core.SimulationState.ActiveSimulation);
+        SetGuideText($"Active Mission! Drive: WASD / Thumbstick. Telemetry streaming live.");
+        Log("Active Mission started -> State.ActiveSimulation");
+    }
+
+    // =========================================================================
+    // LIFECYCLE CLEANUP & ENVIRONMENT RESET
+    // =========================================================================
+
+    /// <summary>
+    /// Destroys active rover and unregisters context.
+    /// </summary>
+    public void CleanActiveRover()
+    {
+        DisableAllRovers();
+        ActiveRoverContext.DestroyActiveRover();
+        activeSpawnedRover = null;
+        pendingRobot = null;
+
+        // Clear any leftover spawned rovers by name
+        string[] roverNames = { "GeneratedHusky", "GeneratedM20", "GeneratedPerseverance_Fixed" };
+        foreach (var name in roverNames)
+        {
+            var go = GameObject.Find(name);
+            if (go != null)
+            {
+                Destroy(go);
+            }
+        }
+
+        Log("Active rover cleaned and unregistered.");
+    }
+
+    /// <summary>
+    /// Destroys generated terrain and clears references.
+    /// </summary>
+    public void CleanTerrain()
+    {
+        if (terrainGenerator == null) terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
+        if (terrainGenerator != null)
+        {
+            terrainGenerator.ClearExistingTerrain();
+        }
+        else
+        {
+            var allTerrains = FindObjectsByType<UnityEngine.Terrain>();
+            foreach (var t in allTerrains)
+            {
+                if (t != null && t.gameObject != null) Destroy(t.gameObject);
+            }
+        }
+
+        Log("Terrain cleaned and destroyed.");
+    }
+
+    /// <summary>
+    /// Full reset: Destroys active rover, destroys terrain, and returns to Environment Setup.
+    /// </summary>
+    public void CleanSimulationEnvironment()
+    {
+        CleanActiveRover();
+        CleanTerrain();
+    }
+
+    /// <summary>
+    /// Clean simulation reset returning to Environment Setup.
+    /// </summary>
+    public void ResetSimulation()
+    {
+        Log("Resetting simulation...");
+        CleanSimulationEnvironment();
+        StartEnvironmentSetup();
+    }
+
+    // =========================================================================
+    // ROVER SELECTION WRAPPERS (for UI Buttons)
+    // =========================================================================
+
+    public void OnSelectHusky()
+    {
+        StartRoverPlacement("husky");
     }
 
     public void OnSelectM20()
     {
-        selectedRobot = "m20";
-        if (RoverPlacementController.Instance != null)
-        {
-            RoverPlacementController.Instance.StartPlacement("m20");
-        }
-        else
-        {
-            StartPlacementMode();
-        }
+        StartRoverPlacement("m20");
     }
 
     public void OnSelectM2020()
     {
-        selectedRobot = "m2020";
-        if (RoverPlacementController.Instance != null)
-        {
-            RoverPlacementController.Instance.StartPlacement("m2020");
-        }
-        else
-        {
-            StartPlacementMode();
-        }
+        StartRoverPlacement("m2020");
     }
 
     private void StartPlacementMode()
@@ -174,7 +391,6 @@ public class SimulationFlowController : MonoBehaviour
             robotSelectPanel.SetActive(false);
 
         DisableAllRovers();
-
         pendingRobot = null;
 
         if (selectedRobot == "husky" && huskyImporter != null)
@@ -195,8 +411,8 @@ public class SimulationFlowController : MonoBehaviour
 
         if (pendingRobot == null)
         {
-            LogWarning($"Spawn failed for '{selectedRobot}'. Check that SpawnRover() returns a GameObject and the importer reference is assigned.");
-            SetGuideText("Something went wrong spawning the robot. Check the console.");
+            LogWarning($"Spawn failed for '{selectedRobot}'. Check importer reference.");
+            SetGuideText("Something went wrong spawning the robot. Check console.");
             return;
         }
 
@@ -211,27 +427,15 @@ public class SimulationFlowController : MonoBehaviour
             spawnPos.y = terrain.SampleHeight(spawnPos) + tPos.y + 0.35f;
 
             TeleportRover(pendingRobot, spawnPos);
-            SetRoverFrozen(pendingRobot, false);
-
-            if (selectedRobot == "husky" && huskyController != null)
-                huskyController.enabled = true;
-            else if (selectedRobot == "m20" && m20Controller != null)
-                m20Controller.enabled = true;
-            else if (selectedRobot == "m2020" && m2020Controller != null)
-                m2020Controller.enabled = true;
-
-            SetState(State.ActiveDriving);
-            SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD / Arrows.");
-            Log($"{selectedRobot} spawned and placed on terrain at {spawnPos}. Active driving enabled.");
+            OnRoverSpawned();
             pendingRobot = null;
         }
         else
         {
             SetRoverFrozen(pendingRobot, true);
             TeleportRover(pendingRobot, new Vector3(0f, 2f, 0f));
-            SetState(State.WaitingForClickToPlace);
-            SetGuideText($"Generate terrain and click on the surface to place the {selectedRobot.ToUpper()}.");
-            Log($"{selectedRobot} spawned. Waiting for terrain and click to place.");
+            SetSimulationState(ProjectName.Core.SimulationState.RoverSpawning);
+            SetGuideText($"Click on the planetary surface to place the {selectedRobot.ToUpper()}.");
         }
     }
 
@@ -242,7 +446,7 @@ public class SimulationFlowController : MonoBehaviour
         bool isShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         if (!isShift && !fromVR && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            Log("Click ignored — pointer was over an interactive UI element.");
+            Log("Click ignored — pointer was over interactive UI element.");
             return;
         }
 
@@ -275,30 +479,16 @@ public class SimulationFlowController : MonoBehaviour
             {
                 Vector3 placementPoint = hit.point + Vector3.up * placementYOffset;
                 TeleportRover(pendingRobot, placementPoint);
-                SetRoverFrozen(pendingRobot, false);
-
-                if (selectedRobot == "husky" && huskyController != null)
-                    huskyController.enabled = true;
-                else if (selectedRobot == "m20" && m20Controller != null)
-                    m20Controller.enabled = true;
-                else if (selectedRobot == "m2020" && m2020Controller != null)
-                    m2020Controller.enabled = true;
 
                 Log($"Robot '{selectedRobot}' placed at {placementPoint}");
-                SetGuideText($"{selectedRobot.ToUpper()} active! Drive: WASD. M20: Q/E knee lift. M2020: M (mode), Space (clearance).");
-
-                SetState(State.ActiveDriving);
+                OnRoverSpawned();
                 pendingRobot = null;
             }
             else
             {
-                Log($"Raycast hit '{hit.collider.name}' but it is not Terrain — click ignored.");
+                Log($"Raycast hit '{hit.collider.name}' but it is not Terrain.");
                 SetGuideText("That's not terrain! Click on the planetary surface to place the robot.");
             }
-        }
-        else
-        {
-            Log("Raycast did not hit anything.");
         }
     }
 
@@ -312,16 +502,13 @@ public class SimulationFlowController : MonoBehaviour
         }
 
         ArticulationBody rootBody = FindRootArticulationBody(rover);
-
         if (rootBody == null)
         {
-            LogWarning($"No root ArticulationBody found anywhere under '{rover.name}' — falling back to transform.position.");
             rover.transform.position = position;
             return;
         }
 
         rootBody.TeleportRoot(position, rover.transform.rotation);
-        Log($"TeleportRoot called on '{rover.name}' (root body: '{rootBody.name}') → {position}");
     }
 
     private ArticulationBody FindRootArticulationBody(GameObject rover)
@@ -337,7 +524,6 @@ public class SimulationFlowController : MonoBehaviour
     private void SetRoverFrozen(GameObject rover, bool frozen)
     {
         var bodies = rover.GetComponentsInChildren<ArticulationBody>();
-
         foreach (var body in bodies)
         {
             if (body.isRoot)
@@ -351,8 +537,20 @@ public class SimulationFlowController : MonoBehaviour
                 body.angularVelocity = Vector3.zero;
             }
         }
+    }
 
-        Log($"SetRoverFrozen({frozen}) applied to {bodies.Length} ArticulationBody components on '{rover.name}'.");
+    private void EnableActiveRoverController()
+    {
+        if (selectedRobot == "husky" && huskyController != null) huskyController.enabled = true;
+        else if (selectedRobot == "m20" && m20Controller != null) m20Controller.enabled = true;
+        else if (selectedRobot == "m2020" && m2020Controller != null) m2020Controller.enabled = true;
+    }
+
+    private void DisableRoverControllers()
+    {
+        if (huskyController != null) huskyController.enabled = false;
+        if (m20Controller != null) m20Controller.enabled = false;
+        if (m2020Controller != null) m2020Controller.enabled = false;
     }
 
     public void DisableAllRovers()
@@ -369,9 +567,9 @@ public class SimulationFlowController : MonoBehaviour
 
     public void ToggleRelocateMode()
     {
-        if (currentState == State.WaitingForClickToPlace)
+        if (currentSimState == ProjectName.Core.SimulationState.RoverSpawning)
         {
-            SetState(State.ActiveDriving);
+            SetSimulationState(ProjectName.Core.SimulationState.ActiveSimulation);
             SetGuideText("Relocate mode exited.");
         }
         else
@@ -381,8 +579,8 @@ public class SimulationFlowController : MonoBehaviour
             {
                 pendingRobot = rover;
                 SetRoverFrozen(pendingRobot, true);
-                SetState(State.WaitingForClickToPlace);
-                SetGuideText("Relocate mode active. Click anywhere on the terrain to relocate.");
+                SetSimulationState(ProjectName.Core.SimulationState.RoverSpawning);
+                SetGuideText("Relocate mode active. Click anywhere on terrain to relocate.");
             }
             else
             {
@@ -443,11 +641,7 @@ public class SimulationFlowController : MonoBehaviour
             {
                 handle.telemetry.ResetMissionTimeAndOdometer();
             }
-            Log($"Active rover '{handle.roverId}' respawned at {spawnPos}. Telemetry reset.");
-        }
-        else if (!string.IsNullOrEmpty(selectedRobot))
-        {
-            StartPlacementMode();
+            Log($"Active rover '{handle.roverId}' respawned at {spawnPos}.");
         }
     }
 
@@ -456,6 +650,28 @@ public class SimulationFlowController : MonoBehaviour
         if (guideText != null)
             guideText.text = message;
         onGuideTextChanged?.Invoke(message);
+    }
+
+    private bool CheckVRTriggerJustPressed()
+    {
+        bool isTriggerPressed = false;
+        var rightHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+        if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out bool rPressed) && rPressed)
+        {
+            isTriggerPressed = true;
+        }
+        else
+        {
+            var leftHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.LeftHand);
+            if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.triggerButton, out bool lPressed) && lPressed)
+            {
+                isTriggerPressed = true;
+            }
+        }
+
+        bool justPressed = isTriggerPressed && !wasVRTriggerPressedLastFrame;
+        wasVRTriggerPressedLastFrame = isTriggerPressed;
+        return justPressed;
     }
 
     private void Log(string message)
@@ -473,7 +689,6 @@ public class SimulationFlowController : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!showDebugLogs || !hasLastHit) return;
-
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(lastHitPoint, 0.5f);
     }
