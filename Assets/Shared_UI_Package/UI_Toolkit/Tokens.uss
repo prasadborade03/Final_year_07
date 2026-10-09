@@ -1,85 +1,102 @@
 :root {
     /* -------------------------------------------------------------
-       Pure Black Technical Design System Tokens
+       JARVIS / Iron Man HUD Design System Tokens
+       Copied directly from reference commits:
+       bee59b20, 504175ac, 86e3aca8, a182f708, df6e8778, 8a181c7f
+       - Translucent Holographic Cyber-Glass (see terrain & rovers through UI)
+       - Iconic Arc Reactor Cyan (#00E5FF) and Tactical Amber/Emerald Accents
+       - Peripheral Head-Mounted Visor framing with high readability
+       - Unobstructed central 3D gameplay view
        ------------------------------------------------------------- */
-    /* Primary panel background: #0A0A0A / #111111 */
-    --surface: #0A0A0AF2;
-    /* Secondary / nested surfaces: #141414 / #161616 */
-    --surface-2: #141414;
-    /* Tertiary / active item surfaces: #202020 */
-    --surface-3: #202020;
-    --scrim: #000000C7;
+    /* Semi-transparent deep cyber-glass: enables seeing the 3D game view through panels */
+    --surface: #04122273;
+    --surface-2: #081C3485;
+    --surface-3: #0C26449E;
+    --scrim: #020A1459;
 
-    /* Neutral borders without blue tint */
-    --border: #2A2A2A;
-    --border-hi: #3D3D3D;
+    /* Luminous Arc Cyan Wireframes */
+    --border: #00E5FF61;
+    --border-hi: #00F5FFD9;
+    --border-subtle: #00E5FF2E;
 
-    /* Technical Accent Color: Pure Cyber Cyan/Teal (reserved for active states and actions) */
-    --accent: #00D4FF;
-    --accent-hover: #33DDFF;
-    --accent-glow: #00D4FF33;
-    --accent-dim: #00D4FF1F;
+    /* Jarvis Arc Reactor Cyan Accent */
+    --accent: #00E5FF;
+    --accent-hover: #38E1FF;
+    --accent-glow: #00E5FF52;
+    --accent-dim: #00E5FF29;
 
-    /* Semantic Button Sets (Solid technical fills on black) */
-    --primary-bg: #1A1A1A;
-    --primary-border: #00D4FF;
+    /* Semantic Buttons (Holographic Glass Fills) */
+    --primary-bg: #00E5FF38;
+    --primary-border: #00E5FF;
     --primary-text: #FFFFFF;
+    --primary-hover-bg: #00E5FF59;
+    --primary-hover-border: #38E1FF;
 
-    --secondary-bg: #141414;
-    --secondary-border: #2E2E2E;
-    --secondary-text: #E4E4E7;
+    --secondary-bg: #061A307A;
+    --secondary-border: #00E5FF66;
+    --secondary-text: #E0F7FA;
+    --secondary-hover-bg: #0C2A48A6;
+    --secondary-hover-border: #00E5FF;
 
-    --confirm-bg: #122416;
-    --confirm-border: #22C55E;
-    --confirm-text: #86EFAC;
+    --confirm-bg: #00E67638;
+    --confirm-border: #00E676;
+    --confirm-text: #B9F6CA;
+    --confirm-hover-bg: #00E67659;
+    --confirm-hover-border: #B9F6CA;
 
-    --cancel-bg: #271414;
-    --cancel-border: #EF4444;
-    --cancel-text: #FCA5A5;
+    --cancel-bg: #FF174438;
+    --cancel-border: #FF1744;
+    --cancel-text: #FF8A80;
+    --cancel-hover-bg: #FF174459;
+    --cancel-hover-border: #FF8A80;
 
-    --danger-bg: #2C1013;
-    --danger-border: #EF4444;
-    --danger-text: #FCA5A5;
+    --danger-bg: #FF174447;
+    --danger-border: #FF1744;
+    --danger-text: #FF8A80;
+    --danger-hover-bg: #FF174466;
+    --danger-hover-border: #FF8A80;
 
-    --disabled-bg: #111111;
-    --disabled-border: #222222;
-    --disabled-text: #52525B;
+    --disabled-bg: #06101A59;
+    --disabled-border: #00E5FF26;
+    --disabled-text: #80DEEA73;
 
-    /* Status-Only Tones */
-    --good: #22C55E;
-    --fair: #F59E0B;
-    --poor: #EF4444;
+    /* Active / Selected Item Sets */
+    --active-bg: #00E5FF47;
+    --active-border: #00E5FF;
+    --active-text: #FFFFFF;
 
-    /* Typography Color Hierarchy (High-contrast for VR Headsets) */
-    --text-1: #FFFFFF; /* Primary crisp white numeric values, headers & titles */
-    --text-2: #E8E8EC; /* Secondary neutral text, labels, body (boosted from A1A1AA for high VR contrast) */
-    --text-3: #B4B4BC; /* Muted micro-labels, units (boosted from 71717A for sharp readability) */
+    /* Status Indicators */
+    --good: #00E676;
+    --fair: #FFB300;
+    --poor: #FF1744;
 
-    /* -------------------------------------------------------------
-       Strict Rectangular Language Tokens (Slightly rounded for VR comfort)
-       ------------------------------------------------------------- */
-    --r-panel: 10px;    /* Maximum corner radius for cards and panels */
-    --r-inner: 8px;     /* Inner containers, rows, inputs */
-    --r-btn: 8px;       /* All buttons, chips, tabs, selectors */
-    --r-pill: 8px;      /* 8px rectangular pills */
-    --r-sm: 6px;        /* Tool buttons, slider tracks & thumbs, status tags */
+    /* Typography: High-Contrast Luminous White & Cyan */
+    --text-1: #FFFFFF;
+    --text-2: #80DEEA;
+    --text-3: #4DD0E1;
+    --text-accent: #00E5FF;
 
-    /* Spacing & Sizing Tokens (Zoomed & Enlarged for VR) */
+    /* High-Tech Rectangular Geometry */
+    --r-panel: 6px;
+    --r-inner: 4px;
+    --r-btn: 4px;
+    --r-pill: 4px;
+    --r-sm: 3px;
+
+    /* Spacing & Sizing Tokens */
     --screen-margin: 24px;
     --panel-gap: 8px;
-    --panel-pad: 12px 14px;
-    --title-gap: 10px;
-    --row-gap: 8px;
+    --panel-pad: 8px 10px;
+    --title-gap: 8px;
+    --row-gap: 6px;
 
-    --h-control: 46px;
-    --h-control-sm: 38px;
-    --h-tile: 38px;
+    --h-control: 44px;
+    --h-control-sm: 36px;
+    --h-tile: 36px;
 
-    --side-col-width: 360px;
+    --side-col-width: 340px;
 
-    /* -------------------------------------------------------------
-       Typography Fonts
-       ------------------------------------------------------------- */
+    /* Typography Fonts */
     --font-heading: url("/Assets/project/UI/fonts/Rajdhani-SemiBold.ttf");
     --font-body: url("/Assets/project/UI/fonts/Inter.ttf");
 }

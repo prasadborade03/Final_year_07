@@ -287,6 +287,38 @@ namespace ProjectName.Planetary
                 {
                     RenderSettings.skybox = profile.skyboxMaterial;
                 }
+
+                // Custom HDR cubemap reflection texture to eliminate daylight blue sky leaks (Commit 5532ee2)
+                Cubemap hdrCubemap = Resources.Load<Cubemap>("HDR_multi_nebulae_2");
+#if UNITY_EDITOR
+                if (hdrCubemap == null)
+                {
+                    hdrCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/HDR_multi_nebulae_2.hdr");
+                }
+#endif
+                if (hdrCubemap != null)
+                {
+                    RenderSettings.customReflectionTexture = hdrCubemap;
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                }
+                else
+                {
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                }
+                RenderSettings.reflectionIntensity = 0.25f;
+
+                // Deep space flat ambient lighting (Commit 5532ee2)
+                RenderSettings.ambientMode = AmbientMode.Flat;
+                Color spaceDarkAmbient = new Color(0.05f, 0.05f, 0.07f, 1.0f);
+                RenderSettings.ambientLight = spaceDarkAmbient;
+                RenderSettings.ambientSkyColor = spaceDarkAmbient;
+                RenderSettings.ambientEquatorColor = new Color(0.03f, 0.03f, 0.04f, 1.0f);
+                RenderSettings.ambientGroundColor = new Color(0.02f, 0.02f, 0.02f, 1.0f);
+                RenderSettings.ambientIntensity = 1.0f;
+
+                // Clear celestial skybox: Never drown the deep cosmic HDRI in opaque exponential fog
+                RenderSettings.fog = false;
+                RenderSettings.fogDensity = 0f;
             }
             else
             {
@@ -309,37 +341,35 @@ namespace ProjectName.Planetary
                 {
                     RenderSettings.skybox = profile.skyboxMaterial;
                 }
-            }
 
-            // 2. Ambient Trilight Lighting
-            RenderSettings.ambientMode = profile.ambientMode;
-            if (profile.ambientMode == AmbientMode.Trilight)
-            {
-                RenderSettings.ambientSkyColor = profile.ambientSkyColor * profile.ambientIntensity;
-                RenderSettings.ambientEquatorColor = profile.ambientEquatorColor * profile.ambientIntensity;
-                RenderSettings.ambientGroundColor = profile.ambientGroundColor * profile.ambientIntensity;
-            }
-            else
-            {
-                RenderSettings.ambientLight = profile.ambientSkyColor * profile.ambientIntensity;
-            }
-            RenderSettings.ambientIntensity = Mathf.Max(0f, profile.ambientIntensity);
+                // Terrestrial lighting, sky reflections and atmospheric Rayleigh fog
+                RenderSettings.ambientMode = profile.ambientMode;
+                if (profile.ambientMode == AmbientMode.Trilight)
+                {
+                    RenderSettings.ambientSkyColor = profile.ambientSkyColor * profile.ambientIntensity;
+                    RenderSettings.ambientEquatorColor = profile.ambientEquatorColor * profile.ambientIntensity;
+                    RenderSettings.ambientGroundColor = profile.ambientGroundColor * profile.ambientIntensity;
+                }
+                else
+                {
+                    RenderSettings.ambientLight = profile.ambientSkyColor * profile.ambientIntensity;
+                }
+                RenderSettings.ambientIntensity = Mathf.Max(0f, profile.ambientIntensity);
 
-            // 3. Reflections
-            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
-            RenderSettings.reflectionIntensity = Mathf.Clamp01(profile.reflectionIntensity);
+                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+                RenderSettings.reflectionIntensity = Mathf.Clamp01(profile.reflectionIntensity);
 
-            // 4. Fog (Rule: fogColor == sky horizon color; Moon has fogEnabled = false)
-            RenderSettings.fog = profile.fogEnabled;
-            if (profile.fogEnabled)
-            {
-                RenderSettings.fogMode = profile.fogMode;
-                RenderSettings.fogColor = profile.fogColor;
-                RenderSettings.fogDensity = Mathf.Clamp(profile.fogDensity, 0f, 0.2f);
-            }
-            else
-            {
-                RenderSettings.fogDensity = 0f;
+                RenderSettings.fog = profile.fogEnabled;
+                if (profile.fogEnabled)
+                {
+                    RenderSettings.fogMode = profile.fogMode;
+                    RenderSettings.fogColor = profile.fogColor;
+                    RenderSettings.fogDensity = Mathf.Clamp(profile.fogDensity, 0f, 0.2f);
+                }
+                else
+                {
+                    RenderSettings.fogDensity = 0f;
+                }
             }
         }
 

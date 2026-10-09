@@ -64,8 +64,8 @@ public static class PlanetProfileSetupUtility
         p.reflectionIntensity = 0.5f;
 
         p.fogColor = new Color(0.72f, 0.48f, 0.32f, 1f);
-        p.fogDensity = 0.003f;
-        p.fogEnabled = true;
+        p.fogDensity = 0.0f;
+        p.fogEnabled = false;
 
         p.defaultMaterialPreset = PlanetaryMaterialType.MartianDust;
         p.description = "The Red Planet: Low gravity, thin CO2 atmosphere, red iron oxide dust, cold desert conditions.";
@@ -205,8 +205,8 @@ public static class PlanetProfileSetupUtility
         p.reflectionIntensity = 0.5f;
 
         p.fogColor = new Color(0.68f, 0.42f, 0.16f, 1f);
-        p.fogDensity = 0.008f;
-        p.fogEnabled = true;
+        p.fogDensity = 0.0f;
+        p.fogEnabled = false;
 
         p.defaultMaterialPreset = PlanetaryMaterialType.VolcanicBasalt;
         p.description = "Titan: Saturn's largest moon with dense nitrogen atmosphere, hydrocarbon lakes, methane cycle, cryogenic temperatures.";
@@ -252,8 +252,8 @@ public static class PlanetProfileSetupUtility
         p.reflectionIntensity = 0.5f;
 
         p.fogColor = new Color(0.58f, 0.52f, 0.28f, 1f);
-        p.fogDensity = 0.009f;
-        p.fogEnabled = true;
+        p.fogDensity = 0.0f;
+        p.fogEnabled = false;
 
         p.defaultMaterialPreset = PlanetaryMaterialType.VolcanicBasalt;
         p.description = "Venus: Runaway greenhouse world, crushing 92 bar CO2 atmosphere, lead-melting surface heat, sulfuric acid haze.";

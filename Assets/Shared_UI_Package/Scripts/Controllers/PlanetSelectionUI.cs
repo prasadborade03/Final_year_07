@@ -319,7 +319,12 @@ namespace ProjectName.UI
                 rt.sizeDelta = new Vector2(0f, 52f);
 
                 Image img = btnObj.GetComponent<Image>();
-                img.color = (selectedProfile == p) ? new Color(0.0f, 0.45f, 0.65f, 0.85f) : new Color(0.08f, 0.14f, 0.22f, 0.85f);
+                bool isSel = (selectedProfile == p);
+                img.color = isSel ? new Color(0.0f, 0.898f, 1.0f, 0.22f) : new Color(0.031f, 0.110f, 0.204f, 0.65f);
+
+                var outline = btnObj.AddComponent<Outline>();
+                outline.effectColor = isSel ? new Color(0.0f, 0.90f, 1.0f, 0.90f) : new Color(0.0f, 0.898f, 1.0f, 0.28f);
+                outline.effectDistance = new Vector2(1f, -1f);
 
                 Button btn = btnObj.GetComponent<Button>();
                 btn.onClick.AddListener(() =>
@@ -340,8 +345,10 @@ namespace ProjectName.UI
                 TextMeshProUGUI tmp = txtObj.GetComponent<TextMeshProUGUI>();
                 tmp.fontSize = 13;
                 tmp.alignment = TextAlignmentOptions.MidlineLeft;
-                string defTag = p.isDefault ? " <color=#FFD54F>[DEFAULT]</color>" : "";
-                tmp.text = $"<b>{p.planetName.ToUpper()}</b>{defTag}\n<size=75%><color=#B0BEC5>g={p.gravityY:F2} m/s² | Drag={p.roverDrag:F2} | Fog={p.fogDensity:F3}</color></size>";
+                string defTag = p.isDefault ? " <color=#38BDF8>[DEFAULT]</color>" : "";
+                string titleColor = isSel ? "#00E5FF" : "#FFFFFF";
+                string subColor = isSel ? "#80DEEA" : "#4DD0E1";
+                tmp.text = $"<b><color={titleColor}>{p.planetName.ToUpper()}</color></b>{defTag}\n<size=75%><color={subColor}>g={p.gravityY:F2} m/s² | Drag={p.roverDrag:F2} | Solar={p.sunlightPercentOfEarth:F0}%</color></size>";
             }
         }
 
@@ -375,26 +382,35 @@ namespace ProjectName.UI
             modalRt.sizeDelta = new Vector2(760f, 520f);
 
             Image modalBg = modalRoot.GetComponent<Image>();
-            modalBg.color = new Color(0.03f, 0.07f, 0.12f, 0.96f);
+            modalBg.color = new Color(0.016f, 0.071f, 0.133f, 0.88f);
+            var modalOutline = modalRoot.AddComponent<Outline>();
+            modalOutline.effectColor = new Color(0.0f, 0.898f, 1.0f, 0.55f);
+            modalOutline.effectDistance = new Vector2(1f, -1f);
 
-            Color cardBg = new Color(0.06f, 0.12f, 0.18f, 0.90f);
-            Color cyan = new Color(0.0f, 0.90f, 1.0f);
+            Color cardBg = new Color(0.031f, 0.110f, 0.204f, 0.70f);
+            Color cyan = new Color(0.0f, 0.898f, 1.0f);
 
             // 1. Header Bar
             GameObject header = CreatePanel(modalRoot.transform, "Header",
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -6f), new Vector2(-16f, 48f), cardBg);
+            var headerOutline = header.AddComponent<Outline>();
+            headerOutline.effectColor = new Color(0.0f, 0.898f, 1.0f, 0.35f);
+            headerOutline.effectDistance = new Vector2(1f, -1f);
 
             CreateTextMesh(header.transform, "Title",
                 Vector2.zero, Vector2.one, new Vector2(16f, 0f), new Vector2(-80f, 0f),
                 16, TextAlignmentOptions.MidlineLeft, cyan,
-                "<b>PLANETARY ENVIRONMENT SELECTION STUDIO</b>  <size=75%><color=#B0BEC5>(Unity Built-in Systems)</color></size>");
+                "<b>PLANETARY ENVIRONMENT SELECTION STUDIO</b>  <size=75%><color=#80DEEA>(Unity Built-in Systems)</color></size>");
 
             // Close 'X' Button
             GameObject closeObj = CreateButton(header.transform, "BtnClose",
                 new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
                 new Vector2(-8f, 0f), new Vector2(36f, 32f),
-                new Color(0.4f, 0.1f, 0.1f, 0.8f), "X", 14);
+                new Color(1.0f, 0.09f, 0.267f, 0.25f), "X", 14);
+            var closeOutline = closeObj.AddComponent<Outline>();
+            closeOutline.effectColor = new Color(1.0f, 0.09f, 0.267f, 0.80f);
+            closeOutline.effectDistance = new Vector2(1f, -1f);
             btnClose = closeObj.GetComponent<Button>();
             btnClose.onClick.AddListener(() => SetModalVisible(false));
 
@@ -402,6 +418,9 @@ namespace ProjectName.UI
             GameObject listPanel = CreatePanel(modalRoot.transform, "PlanetListPanel",
                 new Vector2(0f, 0f), new Vector2(0.36f, 1f), new Vector2(0f, 0.5f),
                 new Vector2(12f, -30f), new Vector2(-18f, -74f), cardBg);
+            var listOutline = listPanel.AddComponent<Outline>();
+            listOutline.effectColor = new Color(0.0f, 0.898f, 1.0f, 0.35f);
+            listOutline.effectDistance = new Vector2(1f, -1f);
 
             // Vertical Layout for Buttons
             VerticalLayoutGroup vlg = listPanel.AddComponent<VerticalLayoutGroup>();
@@ -417,6 +436,9 @@ namespace ProjectName.UI
             GameObject rightPanel = CreatePanel(modalRoot.transform, "DiffInspectorPanel",
                 new Vector2(0.38f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
                 new Vector2(-12f, -30f), new Vector2(-18f, -74f), cardBg);
+            var rightOutline = rightPanel.AddComponent<Outline>();
+            rightOutline.effectColor = new Color(0.0f, 0.898f, 1.0f, 0.35f);
+            rightOutline.effectDistance = new Vector2(1f, -1f);
 
             selectedPlanetTitleText = CreateTextMesh(rightPanel.transform, "SelectedTitle",
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(14f, -30f), new Vector2(-14f, -4f),
@@ -424,7 +446,7 @@ namespace ProjectName.UI
 
             selectedPlanetDescText = CreateTextMesh(rightPanel.transform, "SelectedDesc",
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(14f, -66f), new Vector2(-14f, -32f),
-                11, TextAlignmentOptions.TopLeft, new Color(0.8f, 0.85f, 0.9f));
+                11, TextAlignmentOptions.TopLeft, new Color(0.88f, 0.91f, 0.94f));
 
             diffInspectorText = CreateTextMesh(rightPanel.transform, "DiffText",
                 new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(14f, 62f), new Vector2(-14f, -72f),
@@ -434,14 +456,20 @@ namespace ProjectName.UI
             GameObject btnApplyEnvObj = CreateButton(rightPanel.transform, "BtnApplyEnv",
                 new Vector2(0f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(8f, 12f), new Vector2(-12f, 44f),
-                new Color(0.12f, 0.45f, 0.35f, 0.95f), "Apply Environment\n<size=9px><color=#94a3b8>Keep rover pose</color></size>", 11);
+                new Color(0.0f, 0.902f, 0.463f, 0.22f), "<b>APPLY ENVIRONMENT</b>\n<size=9px><color=#B9F6CA>Keep rover pose</color></size>", 11);
+            var envOutline = btnApplyEnvObj.AddComponent<Outline>();
+            envOutline.effectColor = new Color(0.0f, 0.902f, 0.463f, 0.85f);
+            envOutline.effectDistance = new Vector2(1f, -1f);
             btnApplyEnvironment = btnApplyEnvObj.GetComponent<Button>();
             btnApplyEnvironment.onClick.AddListener(() => ApplySelectedProfile(false));
 
             GameObject btnApplyRespawnObj = CreateButton(rightPanel.transform, "BtnApplyRespawn",
                 new Vector2(0.5f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(8f, 12f), new Vector2(-12f, 44f),
-                new Color(0.15f, 0.55f, 0.75f, 0.95f), "Apply & Respawn\n<size=9px><color=#cbd5e1>Reset to safe pose</color></size>", 11);
+                new Color(0.0f, 0.898f, 1.0f, 0.22f), "<b>APPLY & RESPAWN</b>\n<size=9px><color=#E0F7FA>Reset to safe pose</color></size>", 11);
+            var respawnOutline = btnApplyRespawnObj.AddComponent<Outline>();
+            respawnOutline.effectColor = new Color(0.0f, 0.898f, 1.0f, 0.85f);
+            respawnOutline.effectDistance = new Vector2(1f, -1f);
             btnApplyAndRespawn = btnApplyRespawnObj.GetComponent<Button>();
             btnApplyAndRespawn.onClick.AddListener(() => ApplySelectedProfile(true));
         }

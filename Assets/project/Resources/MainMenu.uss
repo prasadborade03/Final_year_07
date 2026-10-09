@@ -1,14 +1,18 @@
 /* =========================================================================
    VR Planetary Rover Digital Twin Simulation Studio
-   Professional Main Menu Stylesheet
-   Design Philosophy: Calm, precise, scientific, human-designed aerospace UI
+   Professional Main Menu Stylesheet (Aerospace Sci-Fi Unified Theme)
+   Follows STYLE reference:
+   - Deep tactical charcoal/near-black backplates
+   - 1px hairline cyber cyan outlines
+   - Bright cyan active cards and radio dots
+   - Technical typography with high-contrast text
    ========================================================================= */
 
 .menu-root {
     width: 100%;
     height: 100%;
     flex-grow: 1;
-    background-color: #0A0E17;
+    background-color: #020A1473;
     align-items: center;
     justify-content: center;
     padding: 32px 24px;
@@ -18,8 +22,12 @@
 .menu-window {
     width: 980px;
     max-width: 96%;
-    background-color: #101622;
-    border-color: #1C2636;
+    background-color: #041222E0;
+    border-color: #00E5FF73;
+    border-top-color: #00F5FF;
+    border-top-width: 2px;
+    border-left-color: #00E5FFA6;
+    border-left-width: 2px;
     border-width: 1px;
     border-radius: 6px;
     padding: 36px 44px;
@@ -51,7 +59,7 @@
 .header-subtitle {
     font-size: 14px;
     font-style: bold;
-    color: #00D4FF;
+    color: #00E5FF;
     letter-spacing: 2px;
     margin-bottom: 8px;
 }
@@ -65,7 +73,7 @@
 /* Subtle Hairline Dividers */
 .menu-divider {
     height: 1px;
-    background-color: #1A2433;
+    background-color: #00B4D833;
     margin-top: 22px;
     margin-bottom: 22px;
 }
@@ -103,9 +111,11 @@
 /* Native-feel Decision Cards */
 .mode-card {
     flex: 1;
-    background-color: #131A26;
-    border-color: #1E2B3E;
-    border-width: 1.5px;
+    background-color: #081C34A6;
+    border-color: #00E5FF59;
+    border-left-color: #00E5FF73;
+    border-left-width: 2px;
+    border-width: 1px;
     border-radius: 6px;
     padding: 16px 20px;
     flex-direction: column;
@@ -115,14 +125,18 @@
 }
 
 .mode-card:hover {
-    background-color: #172130;
-    border-color: #2D3E56;
+    background-color: #0C2A48CC;
+    border-color: #00E5FF;
+    border-left-color: #00E5FF;
 }
 
 /* Selected state: Elevated contrast with refined cyan accent border */
 .mode-card-active {
-    background-color: #142336;
-    border-color: #00D4FF;
+    background-color: #00E5FF38;
+    border-color: #00E5FF;
+    border-left-color: #00E5FF;
+    border-left-width: 3px;
+    border-width: 1px;
 }
 
 .mode-card-header {
@@ -144,7 +158,7 @@
 }
 
 .mode-card-active .mode-indicator {
-    border-color: #00D4FF;
+    border-color: #00E5FF;
 }
 
 .mode-radio-dot {
@@ -155,7 +169,7 @@
 }
 
 .mode-card-active .mode-radio-dot {
-    background-color: #00D4FF;
+    background-color: #00E5FF;
 }
 
 .mode-card-title {
@@ -173,7 +187,9 @@
 .tag-runtime {
     font-size: 10px;
     color: #94A3B8;
-    background-color: #1A2433;
+    background-color: #101A29;
+    border-color: #00B4D840;
+    border-width: 1px;
     padding: 2px 7px;
     border-radius: 4px;
     margin-right: 6px;
@@ -182,9 +198,9 @@
 .tag-recommended {
     font-size: 10px;
     font-style: bold;
-    color: #00D4FF;
-    background-color: rgba(0, 212, 255, 0.10);
-    border-color: rgba(0, 212, 255, 0.35);
+    color: #00E5FF;
+    background-color: #00E5FF1F;
+    border-color: #00E5FF;
     border-width: 1px;
     padding: 2px 7px;
     border-radius: 4px;
@@ -194,9 +210,9 @@
 .tag-standard {
     font-size: 10px;
     font-style: bold;
-    color: #94A3B8;
-    background-color: rgba(148, 163, 184, 0.10);
-    border-color: rgba(148, 163, 184, 0.25);
+    color: #E2E8F0;
+    background-color: #94A3B81A;
+    border-color: #00B4D840;
     border-width: 1px;
     padding: 2px 7px;
     border-radius: 4px;
@@ -212,7 +228,7 @@
 
 .mode-card-footer {
     border-top-width: 1px;
-    border-color: #1C2738;
+    border-color: #00B4D833;
     padding-top: 8px;
 }
 
@@ -225,8 +241,8 @@
 .runtime-setting-row {
     flex-direction: row;
     align-items: center;
-    background-color: #0D131C;
-    border-color: #182230;
+    background-color: #081C34A6;
+    border-color: #00E5FF59;
     border-width: 1px;
     border-radius: 4px;
     padding: 8px 14px;
@@ -253,7 +269,7 @@
 .status-value {
     font-size: 11px;
     font-style: bold;
-    color: #00D4FF;
+    color: #00E5FF;
     letter-spacing: 0.5px;
 }
 
@@ -270,8 +286,10 @@
 
 .overview-col {
     flex: 1;
-    background-color: #0D131C;
-    border-color: #182230;
+    background-color: #081C34A6;
+    border-color: #00E5FF59;
+    border-left-color: #00E5FF73;
+    border-left-width: 2px;
     border-width: 1px;
     border-radius: 5px;
     padding: 14px 16px;
@@ -303,7 +321,7 @@
 
 /* Primary Action CTA Button: Most Obvious on Screen */
 .btn-primary-launch {
-    background-color: #00D4FF;
+    background-color: #00E5FF;
     border-width: 0;
     border-radius: 4px;
     padding: 13px 44px;
@@ -315,7 +333,7 @@
 }
 
 .btn-primary-launch:hover {
-    background-color: #33DDFF;
+    background-color: #38BDF8;
 }
 
 .btn-primary-launch:active {
@@ -323,7 +341,7 @@
 }
 
 .btn-primary-text {
-    color: #070B12;
+    color: #041222;
     font-size: 14px;
     font-style: bold;
     letter-spacing: 1.5px;
@@ -331,8 +349,8 @@
 
 /* Secondary Action: Quiet and Restrained */
 .btn-secondary-exit {
-    background-color: transparent;
-    border-color: #222E40;
+    background-color: #061A3099;
+    border-color: #00E5FF66;
     border-width: 1px;
     border-radius: 4px;
     padding: 11px 22px;
@@ -344,12 +362,12 @@
 }
 
 .btn-secondary-exit:hover {
-    background-color: rgba(255, 255, 255, 0.04);
-    border-color: #33435C;
+    background-color: #0C2A48D9;
+    border-color: #00E5FF;
 }
 
 .btn-secondary-text {
-    color: #8292A6;
+    color: #80DEEA;
     font-size: 13px;
     letter-spacing: 0.5px;
 }

@@ -535,28 +535,38 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- 4. Floating Bottom Shell Controls -->
-        <!-- Bottom-Left: Camera Perspectives -->
+        <!-- =========================================================================
+             4. DUAL DEDICATED INTERACTIVE BOXES (Camera Box & Drive Box)
+             ========================================================================= -->
+        <!-- Box 1 (Left): Rover Camera Perspectives -->
         <ui:VisualElement name="ShellBottomLeft" class="shell-bottom-left" picking-mode="Position">
-            <ui:Label text="Camera" class="pill-label" />
+            <ui:VisualElement class="box-header-row">
+                <ui:Label text="CAMERA PERSPECTIVES" class="box-title" />
+                <ui:Label text="[V] CYCLE · [F] FOCUS" class="box-subtitle" />
+            </ui:VisualElement>
             <ui:VisualElement class="segmented-bar bottom-segmented-bar">
-                <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front rover chase view" />
-                <ui:Button name="BtnCamRear" text="Rear" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view" />
+                <ui:Button name="BtnCamRear" text="Back" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view (Back)" />
+                <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front chase view" />
                 <ui:Button name="BtnCamLeft" text="Left" class="segmented-item" tooltip="Left flank view" />
                 <ui:Button name="BtnCamRight" text="Right" class="segmented-item" tooltip="Right flank view" />
-                <ui:Button name="BtnCamTop" text="Free" class="segmented-item" tooltip="Top-down satellite view" />
+                <ui:Button name="BtnCamTop" text="Up" class="segmented-item" tooltip="Top-down satellite view" />
+                <ui:Button name="BtnCamFree" text="Free" class="segmented-item" tooltip="Free-Fly 6DOF view [WASD+RMB]" />
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- Bottom-Right: Driving Modes -->
+        <!-- Box 2 (Right): Rover Drive Controls & Live Speed -->
         <ui:VisualElement name="ShellBottomRight" class="shell-bottom-right" picking-mode="Position">
-            <ui:Label name="LblDriveGroup" text="Driving mode" class="pill-label" />
+            <ui:VisualElement class="box-header-row">
+                <ui:Label name="LblDriveGroup" text="DRIVE CONTROLS" class="box-title" />
+                <ui:Label name="ValLinearSpeedHud" text="0.00 m/s" class="box-live-speed" />
+            </ui:VisualElement>
             <ui:VisualElement name="GroupDriveModes" class="segmented-bar bottom-segmented-bar">
                 <ui:Button name="BtnModeStop" text="Stop" class="segmented-item" tooltip="Full stop / handbrake" />
                 <ui:Button name="BtnModeCruise" text="Cruise" class="segmented-item mode-pill-active segmented-active" tooltip="Standard cruise speed" />
                 <ui:Button name="BtnModeExplore" text="Explore" class="segmented-item" tooltip="Fast exploration speed" />
                 <ui:Button name="BtnModePrecision" text="Precision" class="segmented-item" tooltip="Fine-tuned rock crawling" />
             </ui:VisualElement>
+            <ui:Label text="WASD: Drive · RMB: Fly Cam · [C]: Input Focus" class="box-footer-hint" />
         </ui:VisualElement>
 
         <!-- 5. Guided Simulation Flow Container (States 1, 2, 3, 4) -->

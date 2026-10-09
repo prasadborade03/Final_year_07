@@ -96,13 +96,13 @@
 }
 
 .mode-toggle-item:hover {
-    background-color: #1E1E1E;
+    background-color: #142033;
     color: var(--text-1);
 }
 
 .mode-toggle-item.segmented-active,
 .mode-toggle-item.view-switch-active {
-    background-color: #16242B;
+    background-color: var(--active-bg);
     border-color: var(--accent);
     color: #FFFFFF;
     -unity-font-style: bold;
@@ -139,8 +139,8 @@
     transition: background-color 100ms ease-out, border-color 100ms ease-out;
 }
 .planet-pill:hover {
-    background-color: #1E1E1E;
-    border-color: #444444;
+    background-color: #142033;
+    border-color: var(--border-hi);
 }
 
 .planet-name-text {
@@ -167,8 +167,8 @@
     transition: background-color 100ms ease-out, border-color 100ms ease-out;
 }
 .minimize-pill:hover {
-    background-color: #1E1E1E;
-    border-color: #444444;
+    background-color: #142033;
+    border-color: var(--border-hi);
 }
 
 /* Minimized Restore Button (Rectangular 6px) */
@@ -189,35 +189,88 @@
 }
 
 .restore-circle-btn:hover {
-    background-color: #16242B;
+    background-color: #142033;
     border-color: var(--accent-hover);
 }
 
 .restore-circle-btn:active {
-    background-color: #0E0E0E;
+    background-color: #0A111C;
 }
 
 /* -------------------------------------------------------------------------
-   2. Floating Bottom Controls (Camera & Driving Mode)
+   2. Floating Bottom Controls: Dual Dedicated Interactive Boxes
    ------------------------------------------------------------------------- */
 .shell-bottom-left {
     position: absolute;
-    bottom: var(--screen-margin);
-    left: var(--screen-margin);
+    bottom: 22px;
+    left: 28px;
+    padding: 8px 12px;
+    background-color: var(--surface);
+    border-radius: var(--r-panel);
+    border-width: 1px;
+    border-color: var(--border);
+    border-top-width: 2px;
+    border-top-color: var(--accent);
+    border-left-width: 2px;
+    border-left-color: #00E5FFA6;
+    pointer-events: auto;
+    gap: 6px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
-    pointer-events: auto;
 }
 
 .shell-bottom-right {
     position: absolute;
-    bottom: var(--screen-margin);
-    right: var(--screen-margin);
+    bottom: 22px;
+    right: 28px;
+    padding: 8px 12px;
+    background-color: var(--surface);
+    border-radius: var(--r-panel);
+    border-width: 1px;
+    border-color: var(--border);
+    border-top-width: 2px;
+    border-top-color: var(--accent);
+    border-left-width: 2px;
+    border-left-color: #00E5FFA6;
+    pointer-events: auto;
+    gap: 6px;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
-    pointer-events: auto;
+}
+
+.box-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.box-title {
+    color: #00E5FF;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.box-subtitle {
+    color: #80DEEA;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+}
+
+.box-live-speed {
+    color: #00FF88;
+    font-size: 13px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.box-footer-hint {
+    color: #80DEEA;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
 }
 
 .pill-label {
@@ -237,10 +290,10 @@
 }
 
 .bottom-segmented-bar {
-    width: 310px;
-    height: 42px;
+    width: 330px;
+    height: 40px;
     border-radius: var(--r-btn);
-    background-color: var(--surface);
+    background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
     padding: 2px;
@@ -248,12 +301,12 @@
 
 .bottom-segmented-bar .segmented-item {
     border-radius: var(--r-sm);
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .bottom-segmented-bar .segmented-item.mode-pill-active,
 .bottom-segmented-bar .segmented-item.segmented-active {
-    background-color: #16242B;
+    background-color: var(--active-bg);
     border-color: var(--accent);
     color: #FFFFFF;
     -unity-font-style: bold;
@@ -332,11 +385,18 @@
     border-width: 1px;
     border-color: var(--border);
     border-top-color: var(--border-hi);
-    border-top-width: 1px;
+    border-top-width: 2px;
+    border-left-color: #00E5FFA6;
+    border-left-width: 2px;
     width: 100%;
     flex-shrink: 0;
     margin-bottom: var(--panel-gap);
-    transition: opacity 180ms ease-out, translate 180ms ease-out;
+    transition: opacity 180ms ease-out, translate 180ms ease-out, border-color 150ms ease-out;
+}
+
+.panel-card:hover {
+    border-color: #00E5FFA6;
+    border-top-color: var(--accent-hover);
 }
 
 .panel-header-row {
@@ -365,13 +425,13 @@
 }
 
 .rover-row:hover {
-    background-color: #1F1F1F;
-    border-color: #444444;
+    background-color: #142033;
+    border-color: var(--border-hi);
 }
 
 .rover-row-active {
     border-color: var(--accent);
-    background-color: #16242B;
+    background-color: var(--active-bg);
 }
 
 .rover-row-title {
@@ -400,7 +460,7 @@
 .status-badge-active {
     color: var(--good);
     border-color: var(--good);
-    background-color: rgba(34, 197, 94, 0.15);
+    background-color: #00E67633;
 }
 
 /* -------------------------------------------------------------------------
@@ -485,7 +545,7 @@
 .wheel-seg.seg-active { background-color: var(--good); }
 .wheel-seg.seg-fair { background-color: var(--fair); }
 .wheel-seg.seg-slip { background-color: var(--poor); }
-.wheel-seg.seg-inactive { background-color: rgba(255, 255, 255, 0.08); }
+.wheel-seg.seg-inactive { background-color: #FFFFFF14; }
 
 /* -------------------------------------------------------------------------
    6. Mode B: Full Studio Cards Specific Styles & 2D Painter
@@ -519,7 +579,7 @@
     right: 0;
     bottom: 0;
     border-width: 1px;
-    border-color: rgba(0, 212, 255, 0.12);
+    border-color: #00D4FF1F;
     pointer-events: none;
 }
 
@@ -529,7 +589,7 @@
     border-radius: 50%;
     border-width: 1.5px;
     border-color: var(--accent);
-    background-color: rgba(0, 212, 255, 0.15);
+    background-color: #00D4FF26;
     pointer-events: none;
     display: none;
 }
@@ -560,7 +620,7 @@
     position: absolute;
     bottom: 4px;
     right: 4px;
-    background-color: rgba(10, 10, 10, 0.85);
+    background-color: #0A0A0AD9;
     border-radius: var(--r-sm);
     border-width: 1px;
     border-color: var(--border);
@@ -591,15 +651,15 @@
 }
 
 .preset-chip-btn:hover {
-    background-color: #202020;
-    border-color: #444444;
+    background-color: #142033;
+    border-color: var(--border-hi);
 }
 
 .preset-chip-btn.preset-active,
 .preset-chip-btn.preset-btn-lab-active {
-    background-color: #0E2A38;
-    border-color: #00E5FF;
-    border-width: 2px;
+    background-color: var(--active-bg);
+    border-color: var(--accent);
+    border-width: 1px;
     color: #FFFFFF;
     -unity-font-style: bold;
 }
@@ -637,7 +697,7 @@
 }
 
 #FieldSeed:hover {
-    border-color: #444444;
+    border-color: var(--border-hi);
 }
 
 #FieldSeed:focus {
@@ -661,9 +721,15 @@
     border-radius: var(--r-sm);
 }
 
+.brush-segmented-item:hover {
+    background-color: #142033;
+    border-color: #00B4D873;
+    color: var(--text-1);
+}
+
 .brush-segmented-item.brush-btn-active,
 .brush-segmented-item.segmented-active {
-    background-color: #16242B;
+    background-color: var(--active-bg);
     border-color: var(--accent);
     color: #FFFFFF;
 }
@@ -769,14 +835,14 @@
 }
 
 .material-chip-btn:hover {
-    background-color: #202020;
-    border-color: #444444;
+    background-color: #142033;
+    border-color: var(--border-hi);
 }
 
 .material-chip-btn.material-btn-active {
-    background-color: #0E2A38;
-    border-color: #00E5FF;
-    border-width: 2px;
+    background-color: var(--active-bg);
+    border-color: var(--accent);
+    border-width: 1px;
 }
 
 .material-chip-label {
@@ -802,7 +868,7 @@
 
 .curve-segmented-bar .segmented-item.curve-btn-active,
 .curve-segmented-bar .segmented-item.segmented-active {
-    background-color: #16242B;
+    background-color: var(--active-bg);
     border-color: var(--accent);
     color: #FFFFFF;
     -unity-font-style: bold;
@@ -950,7 +1016,7 @@
     width: auto;
     min-width: 760px;
     max-width: 95%;
-    background-color: rgba(14, 18, 28, 0.94);
+    background-color: #0E121CF0;
     border-width: 1px;
     border-color: #1F2D44;
     border-radius: 8px;
@@ -973,9 +1039,9 @@
     font-size: 11px;
     -unity-font-style: bold;
     color: #64748B;
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: #FFFFFF0A;
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: #FFFFFF14;
     border-radius: 4px;
     padding: 2px 7px;
     letter-spacing: 0.5px;
@@ -983,14 +1049,14 @@
 
 .step-pill.step-pill-done {
     color: #34D399;
-    border-color: rgba(52, 211, 153, 0.35);
-    background-color: rgba(52, 211, 153, 0.12);
+    border-color: #34D39959;
+    background-color: #34D3991F;
 }
 
 .step-pill.step-pill-active {
     color: #00D4FF;
     border-color: #00D4FF;
-    background-color: rgba(0, 212, 255, 0.20);
+    background-color: #00D4FF33;
     -unity-font-style: bold;
 }
 
@@ -1054,6 +1120,9 @@
     border-width: 1px;
     border-color: var(--border);
     border-top-color: var(--border-hi);
+    border-top-width: 2px;
+    border-left-color: #00E5FFA6;
+    border-left-width: 2px;
     padding: 18px 22px;
     flex-direction: column;
 }
@@ -1088,10 +1157,10 @@
     font-size: 13px;
     -unity-font-style: bold;
     letter-spacing: 1px;
-    color: #00D4FF;
-    background-color: rgba(0, 212, 255, 0.12);
+    color: var(--accent);
+    background-color: var(--primary-bg);
     border-width: 1px;
-    border-color: #00D4FF;
+    border-color: var(--accent);
     border-radius: var(--r-sm);
     padding: 2px 8px;
 }
@@ -1121,6 +1190,8 @@
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
+    border-left-width: 2px;
+    border-left-color: #00E5FF4D;
     border-radius: var(--r-btn);
     padding: 10px 12px;
     flex-direction: column;
@@ -1129,14 +1200,16 @@
 }
 
 .planet-card:hover {
-    background-color: var(--surface-3);
+    background-color: #0C2A48A6;
     border-color: var(--border-hi);
+    border-left-color: var(--accent);
 }
 
 .planet-card-active {
-    background-color: var(--surface-3);
+    background-color: var(--active-bg);
     border-color: var(--accent);
-    border-width: 1px;
+    border-left-width: 3px;
+    border-left-color: var(--accent);
 }
 
 .planet-card-title {
@@ -1212,7 +1285,7 @@
     bottom: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: var(--scrim);
     align-items: center;
     justify-content: center;
     pointer-events: auto;
@@ -1221,10 +1294,13 @@
 .modal-card {
     width: 480px;
     max-width: 90%;
-    background-color: #121214;
+    background-color: var(--surface);
     border-width: 1px;
-    border-color: #2E2E33;
-    border-top-color: var(--accent);
+    border-color: var(--border);
+    border-top-color: var(--border-hi);
+    border-top-width: 2px;
+    border-left-color: #00E5FFA6;
+    border-left-width: 2px;
     border-radius: var(--r-panel);
     padding: 24px;
     flex-direction: column;
@@ -1265,10 +1341,13 @@
 .planet-modal-card {
     width: 840px;
     max-width: 95%;
-    background-color: #121214;
+    background-color: var(--surface);
     border-width: 1px;
-    border-color: #2E2E33;
-    border-top-color: var(--accent);
+    border-color: var(--border);
+    border-top-color: var(--border-hi);
+    border-top-width: 2px;
+    border-left-color: #00E5FFA6;
+    border-left-width: 2px;
     border-radius: var(--r-panel);
     padding: 24px;
     flex-direction: column;
@@ -1347,6 +1426,8 @@
     background-color: var(--surface-2);
     border-width: 1px;
     border-color: var(--border);
+    border-left-width: 2px;
+    border-left-color: #00E5FF4D;
     border-radius: var(--r-btn);
     padding: 8px 12px;
     flex-direction: column;
@@ -1355,14 +1436,16 @@
 }
 
 .planet-select-card:hover {
-    background-color: var(--surface-3);
+    background-color: #0C2A48A6;
     border-color: var(--border-hi);
+    border-left-color: var(--accent);
 }
 
 .planet-select-card-active {
-    background-color: rgba(0, 229, 255, 0.08);
+    background-color: var(--active-bg);
     border-color: var(--accent);
-    border-width: 1px;
+    border-left-width: 3px;
+    border-left-color: var(--accent);
 }
 
 .planet-select-card-top {
@@ -1376,7 +1459,7 @@
     -unity-font: var(--font-mono);
     font-size: 11px;
     color: var(--accent);
-    background-color: rgba(0, 229, 255, 0.12);
+    background-color: #00E5FF1F;
     padding: 2px 6px;
     border-radius: 3px;
 }

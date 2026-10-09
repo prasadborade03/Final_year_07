@@ -54,10 +54,10 @@ MonoBehaviour:
   ambientGroundColor: {r: 0.14, g: 0.1, b: 0.08, a: 1}
   ambientIntensity: 1
   reflectionIntensity: 0.5
-  fogEnabled: 1
+  fogEnabled: 0
   fogMode: 3
   fogColor: {r: 0.72, g: 0.48, b: 0.32, a: 1}
-  fogDensity: 0.003
+  fogDensity: 0
   defaultMaterialPreset: 0
   rockDensity: 0.35
   rockColorTint: {r: 0.72, g: 0.42, b: 0.32, a: 1}
