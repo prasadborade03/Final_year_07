@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -63,12 +64,18 @@ namespace ProjectName.Rover
         }
 
         [Header("State & Perspective")]
-        public Perspective currentPerspective = Perspective.Rear;
+        public Perspective currentPerspective = Perspective.Free;
 
         [Header("Cinematic Transitions")]
-        [Tooltip("Smooth blending transition duration in seconds")]
+        [Tooltip("Smooth blending transition duration in seconds (Flat/Desktop mode)")]
         [Range(0.2f, 1.5f)]
-        public float transitionDuration = 0.5f;
+        public float transitionDuration = 0.35f;
+
+        [Header("VR Comfort Transitions")]
+        [Tooltip("Duration of comfort fade-out to black in seconds")]
+        public float vrFadeOutDuration = 0.10f;
+        [Tooltip("Duration of comfort fade-in from black in seconds")]
+        public float vrFadeInDuration = 0.15f;
 
         [Header("Follow Smoothing")]
         [Tooltip("Position damping time in seconds (SmoothDamp)")]
@@ -109,11 +116,21 @@ namespace ProjectName.Rover
         private bool isTeleporting = false;
         private bool isFollowingActive = false;
 
-        // Transition Blend State
+        // Transition Blend State (Flat/Desktop mode)
         private bool isBlending = false;
         private float blendTimer = 0f;
         private Vector3 blendStartPos;
         private Quaternion blendStartRot;
+
+        // VR Comfort Screen Fade State
+        private GameObject vrFadeQuad;
+        private Material vrFadeMaterial;
+        private MeshRenderer vrFadeRenderer;
+        private Coroutine vrFadeCoroutine;
+
+        // Input edge detection & debounce
+        private bool wasVrStickClicked = false;
+        private float lastPerspectiveCycleTime = 0f;
 
         // Orbit & Zoom offsets
         private float orbitYaw = 0f;
@@ -178,6 +195,7 @@ namespace ProjectName.Rover
         {
             ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
+            ResetVRFadeOverlay();
         }
 
         private void Start()
@@ -195,7 +213,7 @@ namespace ProjectName.Rover
 
         private void Update()
         {
-            // Keyboard shortcut 'V' cycles perspectives in sequence
+            // Perspective cycling: 'V' key on desktop, or Right Thumbstick Click in VR
             bool cyclePressed = false;
             bool focusPressed = false;
 
@@ -208,6 +226,12 @@ namespace ProjectName.Rover
 #endif
             if (!cyclePressed && Input.GetKeyDown(KeyCode.V)) cyclePressed = true;
             if (!focusPressed && Input.GetKeyDown(KeyCode.F)) focusPressed = true;
+
+            // VR Right Thumbstick click (edge-detected)
+            if (!cyclePressed && CheckVRRightStickClick())
+            {
+                cyclePressed = true;
+            }
 
             if (cyclePressed)
             {
@@ -443,10 +467,25 @@ namespace ProjectName.Rover
 
         /// <summary>
         /// Transitions to the specified camera perspective.
-        /// Selecting Free preserves the current camera pose without snap/teleport.
-        /// Selecting a rover perspective starts a smooth cinematic blend toward the calculated pose.
+        /// In VR: Uses a brief comfort fade (~0.10s out, pose swap, ~0.15s in) to eliminate motion sickness.
+        /// In Flat/Desktop: Uses a short game-like eased blend (~0.35s).
+        /// Selecting Free preserves current camera pose and hands off to Free-Fly controls.
         /// </summary>
         public void SetPerspective(Perspective perspective, bool snapImmediate = false)
+        {
+            bool vrMode = IsVRHeadsetActive();
+
+            if (vrMode && !snapImmediate)
+            {
+                if (vrFadeCoroutine != null) StopCoroutine(vrFadeCoroutine);
+                vrFadeCoroutine = StartCoroutine(DoVRComfortPerspectiveSwitch(perspective));
+                return;
+            }
+
+            ExecutePerspectiveSwitch(perspective, snapImmediate);
+        }
+
+        private void ExecutePerspectiveSwitch(Perspective perspective, bool snapImmediate)
         {
             currentPerspective = perspective;
             orbitYaw = 0f;
@@ -458,7 +497,8 @@ namespace ProjectName.Rover
 
             if (perspective == Perspective.Free)
             {
-                // CRITICAL REQUIREMENT: Free camera preserves current camera pose!
+                // Free camera: preserves current instantaneous camera pose!
+                isFollowingActive = false;
                 isBlending = false;
 
                 if (DesktopFreeFlyCamera.Instance != null)
@@ -476,19 +516,30 @@ namespace ProjectName.Rover
             else
             {
                 // Returning to a rover follow perspective
+                isFollowingActive = true;
+
                 if (DesktopFreeFlyCamera.Instance != null && DesktopFreeFlyCamera.Instance.isGrabActive)
                 {
                     DesktopFreeFlyCamera.Instance.EndGrabMode();
                 }
 
+                ComputeDesiredCameraPose(out Vector3 desiredCamPos, out Quaternion desiredCamRot);
+                Vector3 desiredRigPos = desiredCamPos - (desiredCamRot * childCameraOffset);
+
                 if (snapImmediate)
                 {
-                    isTeleporting = true;
+                    transform.position = desiredRigPos;
+                    if (!IsVRHeadsetActive())
+                    {
+                        transform.rotation = desiredCamRot;
+                    }
+                    currentVelocity = Vector3.zero;
+                    isTeleporting = false;
                     isBlending = false;
                 }
                 else
                 {
-                    // Start smooth cinematic blend from current instantaneous pose
+                    // Start smooth cinematic blend from current instantaneous pose (Flat/Desktop mode)
                     blendStartPos = transform.position;
                     blendStartRot = currentRot;
                     blendTimer = 0f;
@@ -501,19 +552,69 @@ namespace ProjectName.Rover
         }
 
         /// <summary>
-        /// Called when rover placement is finished and driving starts.
-        /// Transitions cleanly into default Rear Follow mode.
+        /// New default state on rover placement / mission start:
+        /// Default camera mode is FREE FLY, positioned at the rear vantage point framing the active rover,
+        /// but NOT automatically locked to follow the rover once active.
         /// </summary>
-        public void StartFollowActiveRover()
+        public void InitializeFreeFlyAtRoverRear()
         {
-            isFollowingActive = true;
             if (ActiveRoverContext.HasActiveRover)
             {
                 HandleRoverActivated(ActiveRoverContext.Current);
             }
 
-            SetPerspective(Perspective.Rear, snapImmediate: false);
-            Debug.Log("[RoverCameraRig] StartFollowActiveRover engaged -> Default Rear Follow activated.");
+            // Calculate ideal rear vantage point framing the active rover
+            ComputePerspectiveCameraPose(Perspective.Rear, out Vector3 rearPos, out Quaternion rearRot);
+
+            Vector3 desiredRigPos = rearPos - (rearRot * childCameraOffset);
+            transform.position = desiredRigPos;
+
+            bool vrMode = IsVRHeadsetActive();
+            if (!vrMode)
+            {
+                transform.rotation = rearRot;
+            }
+
+            currentVelocity = Vector3.zero;
+            isTeleporting = false;
+            isBlending = false;
+
+            // Default camera mode is FREE FLY (NOT automatically locked to follow rover)
+            currentPerspective = Perspective.Free;
+            isFollowingActive = false;
+            orbitYaw = 0f;
+            orbitPitch = 0f;
+            zoomScale = 1.0f;
+
+            if (DesktopFreeFlyCamera.Instance != null)
+            {
+                DesktopFreeFlyCamera.Instance.SyncPoseFromCurrent(rearPos, rearRot);
+            }
+
+            if (FreeFlyRigController.Instance != null)
+            {
+                FreeFlyRigController.Instance.enabled = true;
+            }
+
+            OnPerspectiveChanged?.Invoke(Perspective.Free);
+            Debug.Log($"[RoverCameraRig] InitializeFreeFlyAtRoverRear complete -> Mode: FREE FLY at rear pose: {rearPos}");
+        }
+
+        public void ComputePerspectiveCameraPose(Perspective perspective, out Vector3 desiredPos, out Quaternion desiredRot)
+        {
+            Perspective saved = currentPerspective;
+            currentPerspective = perspective;
+            ComputeDesiredCameraPose(out desiredPos, out desiredRot);
+            currentPerspective = saved;
+        }
+
+        /// <summary>
+        /// Called when rover placement is finished and driving starts.
+        /// Directs to default Free Fly initialized at rear rover pose.
+        /// </summary>
+        public void StartFollowActiveRover()
+        {
+            InitializeFreeFlyAtRoverRear();
         }
 
         /// <summary>
@@ -529,35 +630,180 @@ namespace ProjectName.Rover
         }
 
         /// <summary>
-        /// Cycles perspective presets in sequence: Rear -> Left -> Front -> Right -> Top -> Free -> Rear.
+        /// Cycles perspective presets in sequence:
+        /// FREE FLY -> REAR -> FRONT -> LEFT -> RIGHT -> UP (TOP) -> FREE FLY.
+        /// Debounced to avoid rapid multi-stepping from a single physical click.
         /// </summary>
         public void CyclePerspective()
         {
+            if (Time.unscaledTime - lastPerspectiveCycleTime < 0.22f) return;
+            lastPerspectiveCycleTime = Time.unscaledTime;
+
             Perspective next;
             switch (currentPerspective)
             {
-                case Perspective.Rear:
-                    next = Perspective.Left;
+                case Perspective.Free:
+                    next = Perspective.Rear;
                     break;
-                case Perspective.Left:
+                case Perspective.Rear:
                     next = Perspective.Front;
                     break;
                 case Perspective.Front:
+                    next = Perspective.Left;
+                    break;
+                case Perspective.Left:
                     next = Perspective.Right;
                     break;
                 case Perspective.Right:
                     next = Perspective.Top;
                     break;
                 case Perspective.Top:
-                    next = Perspective.Free;
-                    break;
-                case Perspective.Free:
                 default:
-                    next = Perspective.Rear;
+                    next = Perspective.Free;
                     break;
             }
 
             SetPerspective(next, false);
+        }
+
+        private void EnsureVRFadeOverlay()
+        {
+            if (vrFadeQuad != null && vrFadeRenderer != null && vrFadeMaterial != null) return;
+
+            if (targetCamera == null)
+            {
+                ResolveTargetCamera();
+                if (targetCamera == null) return;
+            }
+
+            Transform existing = targetCamera.transform.Find("VRComfortFadeQuad");
+            if (existing != null)
+            {
+                vrFadeQuad = existing.gameObject;
+                vrFadeRenderer = vrFadeQuad.GetComponent<MeshRenderer>();
+                if (vrFadeRenderer != null)
+                {
+                    vrFadeMaterial = vrFadeRenderer.material;
+                    return;
+                }
+            }
+
+            vrFadeQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            vrFadeQuad.name = "VRComfortFadeQuad";
+
+            var col = vrFadeQuad.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+
+            vrFadeQuad.transform.SetParent(targetCamera.transform, false);
+            float nearClip = targetCamera != null ? targetCamera.nearClipPlane : 0.1f;
+            vrFadeQuad.transform.localPosition = new Vector3(0f, 0f, Mathf.Max(0.12f, nearClip + 0.04f));
+            vrFadeQuad.transform.localRotation = Quaternion.identity;
+            vrFadeQuad.transform.localScale = new Vector3(8f, 8f, 1f);
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) shader = Shader.Find("Sprites/Default");
+            if (shader == null) shader = Shader.Find("UI/Default");
+            if (shader == null) shader = Shader.Find("Hidden/Internal-Colored");
+
+            vrFadeMaterial = new Material(shader);
+            vrFadeMaterial.name = "VRComfortFadeMat";
+            vrFadeMaterial.color = new Color(0f, 0f, 0f, 0f);
+
+            if (vrFadeMaterial.HasProperty("_Surface")) vrFadeMaterial.SetFloat("_Surface", 1f); // Transparent
+            if (vrFadeMaterial.HasProperty("_Blend")) vrFadeMaterial.SetFloat("_Blend", 0f); // Alpha
+            if (vrFadeMaterial.HasProperty("_BaseColor")) vrFadeMaterial.SetColor("_BaseColor", new Color(0f, 0f, 0f, 0f));
+            vrFadeMaterial.renderQueue = 5000;
+
+            vrFadeRenderer = vrFadeQuad.GetComponent<MeshRenderer>();
+            vrFadeRenderer.material = vrFadeMaterial;
+            vrFadeRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            vrFadeRenderer.receiveShadows = false;
+            vrFadeRenderer.enabled = false;
+        }
+
+        private void SetFadeAlpha(float alpha)
+        {
+            if (vrFadeMaterial == null) return;
+            Color c = new Color(0f, 0f, 0f, Mathf.Clamp01(alpha));
+            vrFadeMaterial.color = c;
+            if (vrFadeMaterial.HasProperty("_BaseColor"))
+            {
+                vrFadeMaterial.SetColor("_BaseColor", c);
+            }
+        }
+
+        private void ResetVRFadeOverlay()
+        {
+            if (vrFadeCoroutine != null)
+            {
+                StopCoroutine(vrFadeCoroutine);
+                vrFadeCoroutine = null;
+            }
+            SetFadeAlpha(0f);
+            if (vrFadeRenderer != null)
+            {
+                vrFadeRenderer.enabled = false;
+            }
+        }
+
+        private IEnumerator DoVRComfortPerspectiveSwitch(Perspective nextPerspective)
+        {
+            EnsureVRFadeOverlay();
+            if (vrFadeRenderer != null)
+            {
+                vrFadeRenderer.enabled = true;
+            }
+
+            // 1. Brief comfort fade-out (~0.10s)
+            float elapsed = 0f;
+            float outDuration = Mathf.Max(0.02f, vrFadeOutDuration);
+            while (elapsed < outDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                SetFadeAlpha(Mathf.Clamp01(elapsed / outDuration));
+                yield return null;
+            }
+            SetFadeAlpha(1f);
+
+            // 2. Discrete pose swap at peak black
+            ExecutePerspectiveSwitch(nextPerspective, snapImmediate: true);
+
+            // Small 1-frame hold at black
+            yield return null;
+
+            // 3. Comfort fade-in (~0.15s)
+            elapsed = 0f;
+            float inDuration = Mathf.Max(0.02f, vrFadeInDuration);
+            while (elapsed < inDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                SetFadeAlpha(1f - Mathf.Clamp01(elapsed / inDuration));
+                yield return null;
+            }
+            SetFadeAlpha(0f);
+
+            if (vrFadeRenderer != null)
+            {
+                vrFadeRenderer.enabled = false;
+            }
+            vrFadeCoroutine = null;
+        }
+
+        private bool CheckVRRightStickClick()
+        {
+            bool isDown = false;
+            var rightHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+            if (rightHand.isValid)
+            {
+                if (rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primary2DAxisClick, out bool clickVal) && clickVal)
+                {
+                    isDown = true;
+                }
+            }
+
+            bool pressedThisFrame = isDown && !wasVrStickClicked;
+            wasVrStickClicked = isDown;
+            return pressedThisFrame;
         }
 
         private void HandleRoverActivated(RoverHandle handle)

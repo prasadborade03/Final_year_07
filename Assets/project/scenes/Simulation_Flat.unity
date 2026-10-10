@@ -5336,6 +5336,20 @@ MonoBehaviour:
       m_SingletonActionBindings: []
       m_Flags: 0
     m_Reference: {fileID: 0}
+  rightStickClickAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: ea8682b6-0f62-4ecf-81ba-5faafba20165
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  rightLineVisual: {fileID: 0}
+  rightLineRenderer: {fileID: 0}
   desktopGripKey: 103
   isFlying: 0
 --- !u!114 &8821593979247426196
@@ -5352,6 +5366,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverCameraRig
   currentPerspective: 0
   transitionDuration: 0.5
+  vrFadeOutDuration: 0.1
+  vrFadeInDuration: 0.15
   smoothTime: 0.14
   rotationDamping: 8
   orbitSensitivity: 3

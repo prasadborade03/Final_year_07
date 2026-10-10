@@ -84,7 +84,15 @@ namespace ProjectName.VR
 
         [Tooltip("Action for Right Hand Button A (Down)")]
         public InputActionProperty rightButtonAAction;
+
+        [Tooltip("Action for Right Hand Thumbstick Click (Cycle Perspective)")]
+        public InputActionProperty rightStickClickAction;
 #endif
+
+        [Header("Controller Ray Visuals")]
+        [Tooltip("Line visual component on the Right Controller (hidden during Free Fly flight)")]
+        [SerializeField] private Behaviour rightLineVisual;
+        [SerializeField] private LineRenderer rightLineRenderer;
 
         [Header("Desktop / Simulator Fallbacks")]
         [Tooltip("Hold this key on desktop to simulate holding the Right Grip modifier")]
@@ -95,6 +103,7 @@ namespace ProjectName.VR
         private bool isFlying = false;
         private Vector3 currentVelocity = Vector3.zero;
         private bool wasGripHeld = false;
+        private bool wasStickClickHeld = false;
 
         public bool IsFlying => isFlying;
 
@@ -129,6 +138,8 @@ namespace ProjectName.VR
                     snapTurnProvider = xrOriginTransform.GetComponentInChildren<SnapTurnProvider>();
                 }
             }
+
+            CacheRightControllerVisuals();
         }
 
         private void Start()
@@ -144,11 +155,13 @@ namespace ProjectName.VR
             }
 
             flySpeed = RoverCameraRig.FreeFlySpeed;
+            CacheRightControllerVisuals();
         }
 
         private void OnEnable()
         {
             RoverCameraRig.OnCameraSpeedChanged += HandleCameraSpeedChanged;
+            RoverCameraRig.OnPerspectiveChanged += HandlePerspectiveChanged;
             flySpeed = RoverCameraRig.FreeFlySpeed;
 
 #if ENABLE_INPUT_SYSTEM
@@ -156,23 +169,54 @@ namespace ProjectName.VR
             if (rightThumbstickAction.action != null) rightThumbstickAction.action.Enable();
             if (rightButtonBAction.action != null) rightButtonBAction.action.Enable();
             if (rightButtonAAction.action != null) rightButtonAAction.action.Enable();
+            if (rightStickClickAction.action != null) rightStickClickAction.action.Enable();
 #endif
+            CacheRightControllerVisuals();
         }
 
         private void OnDisable()
         {
             RoverCameraRig.OnCameraSpeedChanged -= HandleCameraSpeedChanged;
+            RoverCameraRig.OnPerspectiveChanged -= HandlePerspectiveChanged;
 
 #if ENABLE_INPUT_SYSTEM
             if (rightGripAction.action != null) rightGripAction.action.Disable();
             if (rightThumbstickAction.action != null) rightThumbstickAction.action.Disable();
             if (rightButtonBAction.action != null) rightButtonBAction.action.Disable();
             if (rightButtonAAction.action != null) rightButtonAAction.action.Disable();
+            if (rightStickClickAction.action != null) rightStickClickAction.action.Disable();
 #endif
             RestoreSnapTurn();
+            SetRightRayVisualVisible(true);
             currentVelocity = Vector3.zero;
             isFlying = false;
             wasGripHeld = false;
+            wasStickClickHeld = false;
+        }
+
+        private void OnDestroy()
+        {
+            SetRightRayVisualVisible(true);
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                SetRightRayVisualVisible(true);
+            }
+        }
+
+        private void HandlePerspectiveChanged(RoverCameraRig.Perspective newPerspective)
+        {
+            if (newPerspective != RoverCameraRig.Perspective.Free)
+            {
+                if (wasGripHeld)
+                {
+                    OnFlyModeExited();
+                }
+                SetRightRayVisualVisible(true);
+            }
         }
 
         private void HandleCameraSpeedChanged(float newSpeed)
@@ -184,6 +228,29 @@ namespace ProjectName.VR
         {
             // Sync speed directly from HUD speed tuner
             flySpeed = RoverCameraRig.FreeFlySpeed;
+
+            // Check Right Thumbstick click for camera perspective cycling
+            bool stickClicked = false;
+#if ENABLE_INPUT_SYSTEM
+            if (rightStickClickAction.action != null && rightStickClickAction.action.enabled)
+            {
+                stickClicked = rightStickClickAction.action.IsPressed();
+            }
+#endif
+            if (!stickClicked)
+            {
+                var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+                if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primary2DAxisClick, out bool clickVal) && clickVal)
+                {
+                    stickClicked = true;
+                }
+            }
+
+            if (stickClicked && !wasStickClickHeld)
+            {
+                RoverCameraRig.Instance?.CyclePerspective();
+            }
+            wasStickClickHeld = stickClicked;
 
             // FreeFly mode must be active in RoverCameraRig
             bool isFreeMode = RoverCameraRig.Instance != null &&
@@ -396,14 +463,16 @@ namespace ProjectName.VR
         private void OnFlyModeEntered()
         {
             SuppressSnapTurn();
-            Debug.Log("[FreeFlyRigController] VR Free-Fly translation engaged (Right Grip held). Snap-turn suppressed.");
+            SetRightRayVisualVisible(false);
+            Debug.Log("[FreeFlyRigController] VR Free-Fly translation engaged (Right Grip held). Controller ray visual hidden. Snap-turn suppressed.");
         }
 
         private void OnFlyModeExited()
         {
             RestoreSnapTurn();
+            SetRightRayVisualVisible(true);
             currentVelocity = Vector3.zero;
-            Debug.Log("[FreeFlyRigController] VR Free-Fly translation released. Snap-turn restored.");
+            Debug.Log("[FreeFlyRigController] VR Free-Fly translation released. Controller ray visual restored. Snap-turn restored.");
         }
 
         private void SuppressSnapTurn()
@@ -424,6 +493,66 @@ namespace ProjectName.VR
             if (snapTurnProvider != null && !snapTurnProvider.enabled)
             {
                 snapTurnProvider.enabled = true;
+            }
+        }
+
+        private void CacheRightControllerVisuals()
+        {
+            if (xrOriginTransform == null) return;
+
+            Transform rightController = xrOriginTransform.Find("Camera Offset/Right Controller");
+            if (rightController == null)
+            {
+                foreach (var t in xrOriginTransform.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == "Right Controller")
+                    {
+                        rightController = t;
+                        break;
+                    }
+                }
+            }
+
+            if (rightController != null)
+            {
+                if (rightLineRenderer == null)
+                {
+                    rightLineRenderer = rightController.GetComponentInChildren<LineRenderer>(true);
+                }
+
+                if (rightLineVisual == null)
+                {
+                    foreach (var comp in rightController.GetComponentsInChildren<MonoBehaviour>(true))
+                    {
+                        if (comp != null && comp.GetType().Name.Contains("LineVisual"))
+                        {
+                            rightLineVisual = comp;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Toggles visibility of the right controller ray line visual without disabling
+        /// the underlying XRRayInteractor, ensuring grab and interaction remain intact.
+        /// </summary>
+        public void SetRightRayVisualVisible(bool visible)
+        {
+            if (rightLineVisual == null && rightLineRenderer == null)
+            {
+                CacheRightControllerVisuals();
+            }
+
+            if (rightLineVisual != null && rightLineVisual.enabled != visible)
+            {
+                rightLineVisual.enabled = visible;
+            }
+
+            if (rightLineRenderer != null && rightLineRenderer.enabled != visible)
+            {
+                rightLineRenderer.enabled = visible;
             }
         }
 

@@ -284,7 +284,7 @@ public class SimulationFlowController : MonoBehaviour
 
         if (ProjectName.Rover.RoverCameraRig.Instance != null)
         {
-            ProjectName.Rover.RoverCameraRig.Instance.StartFollowActiveRover();
+            ProjectName.Rover.RoverCameraRig.Instance.InitializeFreeFlyAtRoverRear();
         }
     }
 
@@ -302,7 +302,7 @@ public class SimulationFlowController : MonoBehaviour
 
         if (ProjectName.Rover.RoverCameraRig.Instance != null)
         {
-            ProjectName.Rover.RoverCameraRig.Instance.StartFollowActiveRover();
+            ProjectName.Rover.RoverCameraRig.Instance.InitializeFreeFlyAtRoverRear();
         }
     }
 

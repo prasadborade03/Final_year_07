@@ -138,7 +138,7 @@ namespace ProjectName.Terrain
         private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop, btnCamFree;
         private Slider sliderCamSpeed;
         private Label valCamSpeedHud;
-        private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Rear;
+        private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Free;
 
         // Placement Mode Banner & Controls
         private VisualElement placementBanner;

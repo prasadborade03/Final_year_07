@@ -542,7 +542,7 @@
         <ui:VisualElement name="ShellBottomLeft" class="shell-bottom-left" picking-mode="Position">
             <ui:VisualElement class="box-header-row">
                 <ui:Label text="CAMERA PERSPECTIVES" class="box-title" />
-                <ui:Label text="[V] CYCLE · [F] FOCUS" class="box-subtitle" />
+                <ui:Label text="[R-STICK / V] CYCLE · [F] FOCUS" class="box-subtitle" />
             </ui:VisualElement>
             <ui:VisualElement name="CamSpeedTunerRow" class="cam-speed-row">
                 <ui:Label text="CAM SPEED" class="cam-speed-label" />
@@ -550,12 +550,12 @@
                 <ui:Label name="ValCamSpeedHud" text="12.0 m/s" class="cam-speed-val" />
             </ui:VisualElement>
             <ui:VisualElement class="segmented-bar bottom-segmented-bar">
-                <ui:Button name="BtnCamRear" text="Back" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view (Back)" />
+                <ui:Button name="BtnCamRear" text="Back" class="segmented-item" tooltip="Rear chase view (Back)" />
                 <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front chase view" />
                 <ui:Button name="BtnCamLeft" text="Left" class="segmented-item" tooltip="Left flank view" />
                 <ui:Button name="BtnCamRight" text="Right" class="segmented-item" tooltip="Right flank view" />
                 <ui:Button name="BtnCamTop" text="Up" class="segmented-item" tooltip="Top-down satellite view" />
-                <ui:Button name="BtnCamFree" text="Free" class="segmented-item" tooltip="Free-Fly 6DOF view [WASD+RMB]" />
+                <ui:Button name="BtnCamFree" text="Free" class="segmented-item mode-pill-active segmented-active" tooltip="Free-Fly 6DOF view [WASD+RMB]" />
             </ui:VisualElement>
         </ui:VisualElement>
 
