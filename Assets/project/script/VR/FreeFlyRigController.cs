@@ -10,69 +10,84 @@ using ProjectName.Rover;
 namespace ProjectName.VR
 {
     /// <summary>
-    /// FreeFlyRigController implements the 6DOF Free-Fly Camera modifier specified in §4.3 of the VR Control Scheme.
+    /// FreeFlyRigController implements 6DOF Free-Fly Camera translation for VR.
     ///
-    /// ARCHITECTURAL DECISIONS & SPEC COMPLIANCE:
-    /// 1. Why Right Grip instead of Right Trigger (§4.3):
-    ///    The trigger (index finger) is dedicated to Select / Click / Grab (§4.1).
-    ///    Using the trigger for free-fly would mean every grab or UI click risked accidental camera flight.
-    ///    In professional VR design, Grip (middle finger squeeze) is the standard modifier for sustained holds.
-    ///
-    /// 2. Moving the XR Origin, NOT the Camera directly (§4.3):
-    ///    The VR Camera transform is continuously overwritten every frame by headset hardware tracking.
-    ///    Moving the camera directly causes jitter and gets discarded. The parent XR Origin rig
-    ///    must be translated so the user and all tracked devices translate together.
-    ///
-    /// 3. Thumbstick Consumption & Snap-Turn Suppression (§4.3, §5):
-    ///    While Right Grip is held, the Right Thumbstick drives flight translation.
-    ///    The SnapTurnProvider is temporarily suppressed/disabled so the player does not snap-rotate
-    ///    while attempting to fly. Upon releasing Grip, normal snap-turning immediately resumes.
-    ///
-    /// 4. Rover Camera Rig Integration:
-    ///    If RoverCameraRig is in follow mode (Rear/Front/Left/Right/Top), activating Free-Fly
-    ///    switches perspective to Perspective.Free so the chassis follower does not fight user flight.
+    /// Spec §5 Compliance:
+    /// 1. LEFT JOYSTICK: continues controlling the rover drive, completely independent.
+    /// 2. RIGHT JOYSTICK: controls horizontal free-camera translation ONLY when FREE camera mode
+    ///    is active and the Right Grip (Grab) control is held.
+    /// 3. HMD / Head Tracking: continues controlling the user's view naturally as normal;
+    ///    headset tracking is NEVER overwritten.
+    /// 4. VERTICAL TRANSLATION:
+    ///    - Button B (Right Hand Secondary Button): Move camera UP (+Y)
+    ///    - Button A (Right Hand Primary Button): Move camera DOWN (-Y)
+    /// 5. WHEN GRAB IS RELEASED:
+    ///    - Right joystick stops moving camera.
+    ///    - Camera translation halts immediately.
+    ///    - SnapTurnProvider resumes normally.
+    /// 6. SPEED TUNER: dynamically driven by RoverCameraRig.FreeFlySpeed.
     /// </summary>
     [DisallowMultipleComponent]
     public class FreeFlyRigController : MonoBehaviour
     {
+        private static FreeFlyRigController _instance;
+        public static FreeFlyRigController Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = UnityEngine.Object.FindAnyObjectByType<FreeFlyRigController>();
+                }
+                return _instance;
+            }
+            private set => _instance = value;
+        }
+
         [Header("Rig & Tracking References")]
-        [Tooltip("The root XR Origin transform to translate. If null, uses this gameObject's transform.")]
+        [Tooltip("The root XR Origin transform to translate. If null, auto-resolves parent/self.")]
         public Transform xrOriginTransform;
 
-        [Tooltip("The XR tracking camera providing forward/right look vectors. If null, resolves Camera.main.")]
+        [Tooltip("The XR tracking camera providing look vectors. If null, resolves Camera.main.")]
         public Camera xrCamera;
 
-        [Tooltip("Optional reference to the SnapTurnProvider to suppress while flying. If null, auto-resolves on rig.")]
+        [Tooltip("Optional reference to the SnapTurnProvider to suppress while flying.")]
         public SnapTurnProvider snapTurnProvider;
 
-        [Header("Flight Dynamics (§4.3 Comfort Settings)")]
-        [Tooltip("Maximum cruising speed in meters per second.")]
-        public float flySpeed = 6.0f;
+        [Header("Flight Dynamics")]
+        [Tooltip("Flight speed in meters per second (synced with HUD speed tuner)")]
+        public float flySpeed = 12.0f;
 
-        [Tooltip("Speed when boosting (e.g. thumbstick click or full deflection).")]
-        public float fastFlySpeed = 14.0f;
+        [Tooltip("Boost flight speed in meters per second")]
+        public float fastFlySpeed = 24.0f;
 
-        [Tooltip("Acceleration responsiveness (lerp speed).")]
+        [Tooltip("Acceleration responsiveness (lerp speed)")]
         public float acceleration = 8.0f;
 
-        [Tooltip("Deceleration damping when thumbstick is released.")]
+        [Tooltip("Deceleration damping when thumbstick is released")]
         public float deceleration = 10.0f;
 
-        [Tooltip("Grip squeeze threshold to engage free-fly mode.")]
+        [Tooltip("Grip squeeze threshold to engage free-fly mode")]
         [Range(0.1f, 0.9f)]
         public float gripThreshold = 0.5f;
 
         [Header("Input System Bindings")]
 #if ENABLE_INPUT_SYSTEM
-        [Tooltip("Action for Right Hand Grip (Button or Float).")]
+        [Tooltip("Action for Right Hand Grip (Button or Float)")]
         public InputActionProperty rightGripAction;
 
-        [Tooltip("Action for Right Hand Thumbstick (Vector2).")]
+        [Tooltip("Action for Right Hand Thumbstick (Vector2)")]
         public InputActionProperty rightThumbstickAction;
+
+        [Tooltip("Action for Right Hand Button B (Up)")]
+        public InputActionProperty rightButtonBAction;
+
+        [Tooltip("Action for Right Hand Button A (Down)")]
+        public InputActionProperty rightButtonAAction;
 #endif
 
         [Header("Desktop / Simulator Fallbacks")]
-        [Tooltip("Hold this key on desktop to simulate holding the Right Grip modifier.")]
+        [Tooltip("Hold this key on desktop to simulate holding the Right Grip modifier")]
         public KeyCode desktopGripKey = KeyCode.G;
 
         [Header("Runtime State")]
@@ -85,9 +100,20 @@ namespace ProjectName.VR
 
         private void Awake()
         {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else if (Instance != this)
+            {
+                Destroy(this);
+                return;
+            }
+
             if (xrOriginTransform == null)
             {
-                xrOriginTransform = transform;
+                var origin = GameObject.Find("XR Origin");
+                xrOriginTransform = origin != null ? origin.transform : transform;
             }
 
             if (xrCamera == null)
@@ -98,6 +124,10 @@ namespace ProjectName.VR
             if (snapTurnProvider == null)
             {
                 snapTurnProvider = GetComponentInChildren<SnapTurnProvider>();
+                if (snapTurnProvider == null && xrOriginTransform != null)
+                {
+                    snapTurnProvider = xrOriginTransform.GetComponentInChildren<SnapTurnProvider>();
+                }
             }
         }
 
@@ -108,43 +138,68 @@ namespace ProjectName.VR
                 ResolveXRCamera();
             }
 
-            if (snapTurnProvider == null)
+            if (snapTurnProvider == null && xrOriginTransform != null)
             {
-                snapTurnProvider = GetComponentInChildren<SnapTurnProvider>();
+                snapTurnProvider = xrOriginTransform.GetComponentInChildren<SnapTurnProvider>();
             }
+
+            flySpeed = RoverCameraRig.FreeFlySpeed;
         }
 
         private void OnEnable()
         {
+            RoverCameraRig.OnCameraSpeedChanged += HandleCameraSpeedChanged;
+            flySpeed = RoverCameraRig.FreeFlySpeed;
+
 #if ENABLE_INPUT_SYSTEM
             if (rightGripAction.action != null) rightGripAction.action.Enable();
             if (rightThumbstickAction.action != null) rightThumbstickAction.action.Enable();
+            if (rightButtonBAction.action != null) rightButtonBAction.action.Enable();
+            if (rightButtonAAction.action != null) rightButtonAAction.action.Enable();
 #endif
         }
 
         private void OnDisable()
         {
+            RoverCameraRig.OnCameraSpeedChanged -= HandleCameraSpeedChanged;
+
 #if ENABLE_INPUT_SYSTEM
             if (rightGripAction.action != null) rightGripAction.action.Disable();
             if (rightThumbstickAction.action != null) rightThumbstickAction.action.Disable();
+            if (rightButtonBAction.action != null) rightButtonBAction.action.Disable();
+            if (rightButtonAAction.action != null) rightButtonAAction.action.Disable();
 #endif
-            // Ensure snap turn is restored if component is disabled during flight
             RestoreSnapTurn();
+            currentVelocity = Vector3.zero;
+            isFlying = false;
+            wasGripHeld = false;
+        }
+
+        private void HandleCameraSpeedChanged(float newSpeed)
+        {
+            flySpeed = newSpeed;
         }
 
         private void Update()
         {
-            bool gripHeld = IsRightGripHeld();
-            Vector2 thumbstick = ReadRightThumbstick();
+            // Sync speed directly from HUD speed tuner
+            flySpeed = RoverCameraRig.FreeFlySpeed;
 
-            if (gripHeld)
+            // FreeFly mode must be active in RoverCameraRig
+            bool isFreeMode = RoverCameraRig.Instance != null &&
+                              RoverCameraRig.Instance.currentPerspective == RoverCameraRig.Perspective.Free;
+
+            bool gripHeld = IsRightGripHeld();
+            bool shouldFly = isFreeMode && gripHeld;
+
+            if (shouldFly)
             {
                 if (!wasGripHeld)
                 {
                     OnFlyModeEntered();
                 }
 
-                ExecuteFlightMovement(thumbstick);
+                ExecuteFlightMovement();
             }
             else
             {
@@ -157,23 +212,25 @@ namespace ProjectName.VR
                 if (currentVelocity.sqrMagnitude > 0.0001f)
                 {
                     currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, Time.deltaTime * deceleration);
-                    xrOriginTransform.position += currentVelocity * Time.deltaTime;
+                    if (xrOriginTransform != null)
+                    {
+                        xrOriginTransform.position += currentVelocity * Time.deltaTime;
+                    }
                 }
             }
 
-            wasGripHeld = gripHeld;
-            isFlying = gripHeld;
+            wasGripHeld = shouldFly;
+            isFlying = shouldFly;
         }
 
         /// <summary>
         /// Reads whether the Right Grip is currently held via Input System, OpenXR device, or desktop key.
         /// </summary>
-        private bool IsRightGripHeld()
+        public bool IsRightGripHeld()
         {
 #if ENABLE_INPUT_SYSTEM
-            if (rightGripAction.action != null)
+            if (rightGripAction.action != null && rightGripAction.action.enabled)
             {
-                // Can be a float value or a button
                 if (rightGripAction.action.type == InputActionType.Button)
                 {
                     if (rightGripAction.action.IsPressed()) return true;
@@ -200,7 +257,7 @@ namespace ProjectName.VR
                 }
             }
 
-            // Desktop / Device Simulator fallback
+            // Desktop fallback
             if (Input.GetKey(desktopGripKey))
             {
                 return true;
@@ -217,7 +274,7 @@ namespace ProjectName.VR
             Vector2 stick = Vector2.zero;
 
 #if ENABLE_INPUT_SYSTEM
-            if (rightThumbstickAction.action != null)
+            if (rightThumbstickAction.action != null && rightThumbstickAction.action.enabled)
             {
                 stick = rightThumbstickAction.action.ReadValue<Vector2>();
             }
@@ -246,9 +303,58 @@ namespace ProjectName.VR
         }
 
         /// <summary>
-        /// Executes full 3D translation along camera look and strafe vectors (§4.3).
+        /// Reads Button B on Right Controller (Up).
         /// </summary>
-        private void ExecuteFlightMovement(Vector2 thumbstick)
+        private bool IsButtonBPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (rightButtonBAction.action != null && rightButtonBAction.action.enabled)
+            {
+                if (rightButtonBAction.action.IsPressed()) return true;
+            }
+#endif
+            var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out bool bVal))
+            {
+                if (bVal) return true;
+            }
+
+            // Desktop fallback: KeyCode.B
+            if (Input.GetKey(KeyCode.B) || Input.GetKey(KeyCode.E)) return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Reads Button A on Right Controller (Down).
+        /// </summary>
+        private bool IsButtonAPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (rightButtonAAction.action != null && rightButtonAAction.action.enabled)
+            {
+                if (rightButtonAAction.action.IsPressed()) return true;
+            }
+#endif
+            var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            if (rightHand.isValid && rightHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool aVal))
+            {
+                if (aVal) return true;
+            }
+
+            // Desktop fallback: KeyCode.A (when grip is held) or KeyCode.Q
+            if (Input.GetKey(KeyCode.Q) || (Input.GetKey(KeyCode.N) && Input.GetKey(desktopGripKey))) return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Executes full 3D translation:
+        /// Horizontal movement along horizontal camera forward/right.
+        /// Vertical movement via Button B (Up) and Button A (Down).
+        /// Headset tracking is NEVER overwritten.
+        /// </summary>
+        private void ExecuteFlightMovement()
         {
             if (xrCamera == null)
             {
@@ -256,49 +362,55 @@ namespace ProjectName.VR
                 if (xrCamera == null) return;
             }
 
-            // Spec §4.3: full 3D direction here — you WANT vertical movement while flying
-            // moveDir = camera.transform.forward * moveInput.y + camera.transform.right * moveInput.x
-            Vector3 camForward = xrCamera.transform.forward;
-            Vector3 camRight = xrCamera.transform.right;
+            Vector2 thumbstick = ReadRightThumbstick();
+
+            // Project forward and right onto horizontal XZ plane so head pitch does not alter altitude
+            Vector3 camForward = Vector3.ProjectOnPlane(xrCamera.transform.forward, Vector3.up).normalized;
+            if (camForward.sqrMagnitude < 0.001f) camForward = xrCamera.transform.forward;
+
+            Vector3 camRight = Vector3.ProjectOnPlane(xrCamera.transform.right, Vector3.up).normalized;
+            if (camRight.sqrMagnitude < 0.001f) camRight = xrCamera.transform.right;
 
             Vector3 targetDirection = (camForward * thumbstick.y + camRight * thumbstick.x);
-            float targetSpeed = flySpeed;
 
-            Vector3 targetVelocity = targetDirection * targetSpeed;
+            // Vertical movement: Button B = Up (+Y), Button A = Down (-Y)
+            if (IsButtonBPressed())
+            {
+                targetDirection += Vector3.up;
+            }
+            if (IsButtonAPressed())
+            {
+                targetDirection -= Vector3.up;
+            }
 
-            // Ease towards target velocity
+            Vector3 targetVelocity = targetDirection * flySpeed;
+
             currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, Time.deltaTime * acceleration);
 
-            // Translate the XR Origin rig root
-            xrOriginTransform.position += currentVelocity * Time.deltaTime;
+            if (xrOriginTransform != null)
+            {
+                xrOriginTransform.position += currentVelocity * Time.deltaTime;
+            }
         }
 
         private void OnFlyModeEntered()
         {
-            // 1. Suppress Snap-Turn so thumbstick input does not snap rotate while flying
             SuppressSnapTurn();
-
-            // 2. Disengage Rover follow camera if active so it does not pull the camera back
-            if (RoverCameraRig.Instance != null && RoverCameraRig.Instance.currentPerspective != RoverCameraRig.Perspective.Free)
-            {
-                RoverCameraRig.Instance.SetPerspective(RoverCameraRig.Perspective.Free, false);
-            }
-
-            Debug.Log("[FreeFlyRigController] Free-Fly mode engaged (Right Grip held). Snap-turn suppressed.");
+            Debug.Log("[FreeFlyRigController] VR Free-Fly translation engaged (Right Grip held). Snap-turn suppressed.");
         }
 
         private void OnFlyModeExited()
         {
-            // Restore Snap-Turn when Grip is released
             RestoreSnapTurn();
-            Debug.Log("[FreeFlyRigController] Free-Fly mode exited (Right Grip released). Snap-turn restored.");
+            currentVelocity = Vector3.zero;
+            Debug.Log("[FreeFlyRigController] VR Free-Fly translation released. Snap-turn restored.");
         }
 
         private void SuppressSnapTurn()
         {
-            if (snapTurnProvider == null)
+            if (snapTurnProvider == null && xrOriginTransform != null)
             {
-                snapTurnProvider = GetComponentInChildren<SnapTurnProvider>();
+                snapTurnProvider = xrOriginTransform.GetComponentInChildren<SnapTurnProvider>();
             }
 
             if (snapTurnProvider != null && snapTurnProvider.enabled)

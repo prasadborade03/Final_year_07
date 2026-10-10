@@ -544,6 +544,11 @@
                 <ui:Label text="CAMERA PERSPECTIVES" class="box-title" />
                 <ui:Label text="[V] CYCLE · [F] FOCUS" class="box-subtitle" />
             </ui:VisualElement>
+            <ui:VisualElement name="CamSpeedTunerRow" class="cam-speed-row">
+                <ui:Label text="CAM SPEED" class="cam-speed-label" />
+                <ui:Slider name="SliderCamSpeed" low-value="2.0" high-value="50.0" value="12.0" class="custom-slider cam-speed-slider" />
+                <ui:Label name="ValCamSpeedHud" text="12.0 m/s" class="cam-speed-val" />
+            </ui:VisualElement>
             <ui:VisualElement class="segmented-bar bottom-segmented-bar">
                 <ui:Button name="BtnCamRear" text="Back" class="segmented-item mode-pill-active segmented-active" tooltip="Rear chase view (Back)" />
                 <ui:Button name="BtnCamFront" text="Front" class="segmented-item" tooltip="Front chase view" />

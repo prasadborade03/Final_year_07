@@ -135,7 +135,9 @@ namespace ProjectName.Terrain
         private Label lblDriveGroup;
         private Label lblHelperHint;
         private Button btnModeStop, btnModeCruise, btnModeExplore, btnModePrecision;
-        private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop;
+        private Button btnCamFront, btnCamRear, btnCamLeft, btnCamRight, btnCamTop, btnCamFree;
+        private Slider sliderCamSpeed;
+        private Label valCamSpeedHud;
         private RoverCameraRig.Perspective currentCamPerspective = RoverCameraRig.Perspective.Rear;
 
         // Placement Mode Banner & Controls
@@ -338,6 +340,7 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated += HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged += HandleRigPerspectiveChanged;
+            RoverCameraRig.OnCameraSpeedChanged += HandleCameraSpeedChanged;
 
             var envCtrl = PlanetEnvironmentController.Instance ?? (PlanetEnvironmentController)FindAnyObjectByType<PlanetEnvironmentController>();
             if (envCtrl != null)
@@ -615,12 +618,29 @@ namespace ProjectName.Terrain
             btnCamLeft = root.Q<Button>("BtnCamLeft");
             btnCamRight = root.Q<Button>("BtnCamRight");
             btnCamTop = root.Q<Button>("BtnCamTop");
+            btnCamFree = root.Q<Button>("BtnCamFree");
 
             if (btnCamFront != null) btnCamFront.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Front);
             if (btnCamRear != null) btnCamRear.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Rear);
             if (btnCamLeft != null) btnCamLeft.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Left);
             if (btnCamRight != null) btnCamRight.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Right);
             if (btnCamTop != null) btnCamTop.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Top);
+            if (btnCamFree != null) btnCamFree.clicked += () => SetCameraPerspective(RoverCameraRig.Perspective.Free);
+
+            // Camera Speed Tuner
+            sliderCamSpeed = root.Q<Slider>("SliderCamSpeed");
+            valCamSpeedHud = root.Q<Label>("ValCamSpeedHud");
+            if (sliderCamSpeed != null)
+            {
+                float initialSpeed = RoverCameraRig.FreeFlySpeed;
+                sliderCamSpeed.value = initialSpeed;
+                if (valCamSpeedHud != null) valCamSpeedHud.text = $"{initialSpeed:F1} m/s";
+                sliderCamSpeed.RegisterValueChangedCallback(evt =>
+                {
+                    RoverCameraRig.FreeFlySpeed = evt.newValue;
+                    if (valCamSpeedHud != null) valCamSpeedHud.text = $"{evt.newValue:F1} m/s";
+                });
+            }
 
             // ---------------------------------------------------------
             // Terrain Lab: Tab Selector & Workbench Bindings
@@ -2560,18 +2580,33 @@ namespace ProjectName.Terrain
             SetBtnClass(btnCamLeft, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
             SetBtnClass(btnCamRight, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
+            SetBtnClass(btnCamFree, "mode-pill-active", currentCamPerspective == RoverCameraRig.Perspective.Free);
 
             SetBtnClass(btnCamFront, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Front);
             SetBtnClass(btnCamRear, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Rear);
             SetBtnClass(btnCamLeft, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Left);
             SetBtnClass(btnCamRight, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Right);
             SetBtnClass(btnCamTop, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Top);
+            SetBtnClass(btnCamFree, "segmented-active", currentCamPerspective == RoverCameraRig.Perspective.Free);
 
+            if (btnCamRear != null) btnCamRear.text = "Back";
             if (btnCamFront != null) btnCamFront.text = "Front";
-            if (btnCamRear != null) btnCamRear.text = "Rear";
             if (btnCamLeft != null) btnCamLeft.text = "Left";
             if (btnCamRight != null) btnCamRight.text = "Right";
-            if (btnCamTop != null) btnCamTop.text = "Free";
+            if (btnCamTop != null) btnCamTop.text = "Up";
+            if (btnCamFree != null) btnCamFree.text = "Free";
+        }
+
+        private void HandleCameraSpeedChanged(float speed)
+        {
+            if (sliderCamSpeed != null)
+            {
+                sliderCamSpeed.SetValueWithoutNotify(speed);
+            }
+            if (valCamSpeedHud != null)
+            {
+                valCamSpeedHud.text = $"{speed:F1} m/s";
+            }
         }
 
         // -------------------------------------------------------------
@@ -3520,6 +3555,7 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverActivated -= HandleRoverActivated;
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
+            RoverCameraRig.OnCameraSpeedChanged -= HandleCameraSpeedChanged;
             if (flowController != null)
             {
                 flowController.OnSimulationStateChanged -= HandleSimulationStateChanged;

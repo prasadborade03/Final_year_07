@@ -3,25 +3,54 @@ using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
+using ProjectName.VR;
 
 namespace ProjectName.Rover
 {
     /// <summary>
-    /// Production Jitter-Free Follow Camera for simulated planetary rovers.
+    /// Production Jitter-Free Follow & Perspective Camera Rig for simulated planetary rovers.
+    /// Supports both Flat/Desktop and VR (OpenXR / Meta Quest 2).
     /// 
     /// Key architectural guarantees:
     /// 1. LateUpdate synchronization: updates after ArticulationBody physics ticks, eliminating micro-stutter.
     /// 2. Horizontal heading-relative frame: projects target.forward onto the horizontal XZ plane
     ///    so chassis pitch and roll over rocky terrain do not induce camera horizon wobble.
     /// 3. Terrain collision clearance: samples terrain height and clamps elevation >= 0.5m above ground.
-    /// 4. 5 Presets (Rear, Left, Front, Right, Top) + Free flight toggle.
-    /// 5. Smooth orbit (RMB drag) and zoom (mouse scroll), with UI input guard.
-    /// 6. 'V' key cycles camera perspectives in sequence: Rear -> Left -> Front -> Right -> Top.
-    /// 7. Automatic compensation for child camera local offsets (e.g. XR Origin -> Camera Offset -> Main Camera).
+    /// 4. 5 Rover-relative Presets (Rear, Left, Front, Right, Top) + Free 6DOF Flight mode.
+    /// 5. Smooth cinematic blending (~0.5s) between perspectives with zero teleport snaps.
+    /// 6. Seamless Free-Fly handoff: entering Free preserves the exact current camera pose.
+    /// 7. VR safety: in VR, rig translates with rover while user's head rotation is controlled purely by HMD tracking.
+    /// 8. Camera speed tuner integration: shared speed setting across Flat and VR free camera.
+    /// 9. 'V' key cycles camera perspectives in sequence: Rear -> Left -> Front -> Right -> Top -> Free.
+    /// 10. 'F' key focuses on the active rover (smooth blend to Rear Follow).
     /// </summary>
     public class RoverCameraRig : MonoBehaviour
     {
-        public static RoverCameraRig Instance { get; private set; }
+        private static RoverCameraRig _instance;
+        public static RoverCameraRig Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = UnityEngine.Object.FindAnyObjectByType<RoverCameraRig>();
+                    if (_instance == null)
+                    {
+                        var origin = GameObject.Find("XR Origin");
+                        if (origin != null)
+                        {
+                            _instance = origin.AddComponent<RoverCameraRig>();
+                        }
+                        else if (Camera.main != null)
+                        {
+                            _instance = Camera.main.gameObject.AddComponent<RoverCameraRig>();
+                        }
+                    }
+                }
+                return _instance;
+            }
+            private set => _instance = value;
+        }
 
         public enum Perspective
         {
@@ -36,13 +65,18 @@ namespace ProjectName.Rover
         [Header("State & Perspective")]
         public Perspective currentPerspective = Perspective.Rear;
 
-        [Header("Smoothing")]
-        [Tooltip("Position damping time in seconds (SmoothDamp)")]
-        public float smoothTime = 0.12f;
-        [Tooltip("Rotation angular damping speed (Slerp factor)")]
-        public float rotationDamping = 10f;
+        [Header("Cinematic Transitions")]
+        [Tooltip("Smooth blending transition duration in seconds")]
+        [Range(0.2f, 1.5f)]
+        public float transitionDuration = 0.5f;
 
-        [Header("Controls Sensitivity")]
+        [Header("Follow Smoothing")]
+        [Tooltip("Position damping time in seconds (SmoothDamp)")]
+        public float smoothTime = 0.14f;
+        [Tooltip("Rotation angular damping speed (Slerp factor)")]
+        public float rotationDamping = 8f;
+
+        [Header("Controls Sensitivity (Follow Modes)")]
         public float orbitSensitivity = 3f;
         public float zoomSensitivity = 0.5f;
         public float minZoomScale = 0.4f;
@@ -53,32 +87,60 @@ namespace ProjectName.Rover
 
         // Events
         public static event Action<Perspective> OnPerspectiveChanged;
+        public static event Action<float> OnCameraSpeedChanged;
+
+        // Shared Free Fly Speed setting
+        private static float _freeFlySpeed = 12f;
+        public static float FreeFlySpeed
+        {
+            get => _freeFlySpeed;
+            set
+            {
+                _freeFlySpeed = Mathf.Clamp(value, 2f, 50f);
+                PlayerPrefs.SetFloat("CamFreeSpeed", _freeFlySpeed);
+                OnCameraSpeedChanged?.Invoke(_freeFlySpeed);
+            }
+        }
 
         // Target tracking
         private Transform targetTransform;
         private RoverProfile currentProfile;
         private Vector3 currentVelocity;
         private bool isTeleporting = false;
+        private bool isFollowingActive = false;
+
+        // Transition Blend State
+        private bool isBlending = false;
+        private float blendTimer = 0f;
+        private Vector3 blendStartPos;
+        private Quaternion blendStartRot;
 
         // Orbit & Zoom offsets
         private float orbitYaw = 0f;
         private float orbitPitch = 0f;
         private float zoomScale = 1.0f;
 
-        // FreeFlyCamera & Camera hierarchy references
-        private FreeFlyCamera freeFlyCamera;
+        // Camera hierarchy references
         private Camera targetCamera;
         private Vector3 childCameraOffset = Vector3.zero;
 
+        public bool IsFollowingActive => isFollowingActive;
+        public Transform TargetTransform => targetTransform;
+
         private void Awake()
         {
-            Instance = this;
-            freeFlyCamera = GetComponent<FreeFlyCamera>();
-            if (freeFlyCamera == null)
+            if (_instance == null)
             {
-                freeFlyCamera = GetComponentInChildren<FreeFlyCamera>();
+                _instance = this;
             }
 
+            _freeFlySpeed = PlayerPrefs.GetFloat("CamFreeSpeed", 12f);
+
+            ResolveTargetCamera();
+        }
+
+        private void ResolveTargetCamera()
+        {
             targetCamera = GetComponentInChildren<Camera>();
             if (targetCamera == null)
             {
@@ -93,6 +155,10 @@ namespace ProjectName.Rover
                 if (targetCamera.transform != transform)
                 {
                     childCameraOffset = transform.InverseTransformPoint(targetCamera.transform.position);
+                }
+                else
+                {
+                    childCameraOffset = Vector3.zero;
                 }
             }
         }
@@ -116,6 +182,11 @@ namespace ProjectName.Rover
 
         private void Start()
         {
+            if (targetCamera == null)
+            {
+                ResolveTargetCamera();
+            }
+
             if (targetTransform == null && ActiveRoverContext.HasActiveRover)
             {
                 HandleRoverActivated(ActiveRoverContext.Current);
@@ -124,22 +195,27 @@ namespace ProjectName.Rover
 
         private void Update()
         {
-            // 'V' key cycles presets: Rear -> Left -> Front -> Right -> Top
+            // Keyboard shortcut 'V' cycles perspectives in sequence
             bool cyclePressed = false;
+            bool focusPressed = false;
+
 #if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current != null && Keyboard.current.vKey.wasPressedThisFrame)
+            if (Keyboard.current != null)
             {
-                cyclePressed = true;
+                if (Keyboard.current.vKey.wasPressedThisFrame) cyclePressed = true;
+                if (Keyboard.current.fKey.wasPressedThisFrame) focusPressed = true;
             }
 #endif
-            if (!cyclePressed && Input.GetKeyDown(KeyCode.V))
-            {
-                cyclePressed = true;
-            }
+            if (!cyclePressed && Input.GetKeyDown(KeyCode.V)) cyclePressed = true;
+            if (!focusPressed && Input.GetKeyDown(KeyCode.F)) focusPressed = true;
 
             if (cyclePressed)
             {
                 CyclePerspective();
+            }
+            else if (focusPressed)
+            {
+                FocusActiveRover();
             }
 
             // Orbit & Zoom user input handling (only in follow modes, not in Free fly)
@@ -151,24 +227,22 @@ namespace ProjectName.Rover
 
         private void LateUpdate()
         {
+            // If desktop free-fly camera grab is currently active, do not overwrite transform
             if (DesktopFreeFlyCamera.IsFreeFlyGrabActive)
             {
                 return;
             }
 
+            // In Free mode, flight controllers own the transform
             if (currentPerspective == Perspective.Free)
             {
-                if (freeFlyCamera != null && !freeFlyCamera.enabled)
-                {
-                    freeFlyCamera.enabled = true;
-                }
                 return;
             }
 
-            // Ensure FreeFlyCamera is disabled during locked follow
-            if (freeFlyCamera != null && freeFlyCamera.enabled)
+            // During initial setup steps, do not pull camera away from setup framing
+            if (!isFollowingActive)
             {
-                freeFlyCamera.enabled = false;
+                return;
             }
 
             if (targetTransform == null)
@@ -188,18 +262,45 @@ namespace ProjectName.Rover
             // Compute rig root position compensating for child camera offset
             Vector3 desiredRigPos = desiredCamPos - (desiredCamRot * childCameraOffset);
 
-            // Instant snap if teleporting/spawning, otherwise smooth damp
+            bool vrMode = IsVRHeadsetActive();
+
             if (isTeleporting)
             {
                 transform.position = desiredRigPos;
-                transform.rotation = desiredCamRot;
+                if (!vrMode)
+                {
+                    transform.rotation = desiredCamRot;
+                }
                 currentVelocity = Vector3.zero;
                 isTeleporting = false;
+                isBlending = false;
+            }
+            else if (isBlending)
+            {
+                blendTimer += Time.deltaTime;
+                float progress = Mathf.Clamp01(blendTimer / Mathf.Max(0.01f, transitionDuration));
+                float smoothT = Mathf.SmoothStep(0f, 1f, progress);
+
+                transform.position = Vector3.Lerp(blendStartPos, desiredRigPos, smoothT);
+                if (!vrMode)
+                {
+                    transform.rotation = Quaternion.Slerp(blendStartRot, desiredCamRot, smoothT);
+                }
+
+                if (progress >= 1f)
+                {
+                    isBlending = false;
+                    currentVelocity = Vector3.zero;
+                }
             }
             else
             {
+                // Smooth follow damping
                 transform.position = Vector3.SmoothDamp(transform.position, desiredRigPos, ref currentVelocity, smoothTime);
-                transform.rotation = Quaternion.Slerp(transform.rotation, desiredCamRot, Time.deltaTime * rotationDamping);
+                if (!vrMode)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, desiredCamRot, Time.deltaTime * rotationDamping);
+                }
             }
         }
 
@@ -287,7 +388,7 @@ namespace ProjectName.Rover
                     break;
             }
 
-            // 4. Apply manual orbit rotation (if user has RMB-dragged)
+            // 4. Apply manual orbit rotation (if user has RMB-dragged in follow mode)
             if (Mathf.Abs(orbitYaw) > 0.01f || Mathf.Abs(orbitPitch) > 0.01f)
             {
                 Quaternion orbitRot = Quaternion.Euler(orbitPitch, orbitYaw, 0f);
@@ -312,7 +413,6 @@ namespace ProjectName.Rover
 
         private void HandleManualOrbitAndZoom()
         {
-            // UI input guard: do not orbit/zoom when mouse is hovering over interactive UI
             if (IsPointerOverUI()) return;
             if (DesktopFreeFlyCamera.IsFreeFlyGrabActive) return;
 
@@ -341,6 +441,11 @@ namespace ProjectName.Rover
             return false;
         }
 
+        /// <summary>
+        /// Transitions to the specified camera perspective.
+        /// Selecting Free preserves the current camera pose without snap/teleport.
+        /// Selecting a rover perspective starts a smooth cinematic blend toward the calculated pose.
+        /// </summary>
         public void SetPerspective(Perspective perspective, bool snapImmediate = false)
         {
             currentPerspective = perspective;
@@ -348,30 +453,84 @@ namespace ProjectName.Rover
             orbitPitch = 0f;
             zoomScale = 1.0f;
 
+            Vector3 currentPos = targetCamera != null ? targetCamera.transform.position : transform.position;
+            Quaternion currentRot = targetCamera != null ? targetCamera.transform.rotation : transform.rotation;
+
             if (perspective == Perspective.Free)
             {
-                if (freeFlyCamera != null)
+                // CRITICAL REQUIREMENT: Free camera preserves current camera pose!
+                isBlending = false;
+
+                if (DesktopFreeFlyCamera.Instance != null)
                 {
-                    freeFlyCamera.enabled = true;
+                    DesktopFreeFlyCamera.Instance.SyncPoseFromCurrent(currentPos, currentRot);
                 }
+
+                if (FreeFlyRigController.Instance != null)
+                {
+                    FreeFlyRigController.Instance.enabled = true;
+                }
+
+                Debug.Log($"[RoverCameraRig] Handed off to Free-Fly mode preserving pose: {currentPos}");
             }
             else
             {
-                if (freeFlyCamera != null)
+                // Returning to a rover follow perspective
+                if (DesktopFreeFlyCamera.Instance != null && DesktopFreeFlyCamera.Instance.isGrabActive)
                 {
-                    freeFlyCamera.enabled = false;
+                    DesktopFreeFlyCamera.Instance.EndGrabMode();
                 }
 
                 if (snapImmediate)
                 {
                     isTeleporting = true;
+                    isBlending = false;
+                }
+                else
+                {
+                    // Start smooth cinematic blend from current instantaneous pose
+                    blendStartPos = transform.position;
+                    blendStartRot = currentRot;
+                    blendTimer = 0f;
+                    isBlending = true;
                 }
             }
 
             OnPerspectiveChanged?.Invoke(currentPerspective);
-            Debug.Log($"[RoverCameraRig] Perspective set to: {currentPerspective}");
+            Debug.Log($"[RoverCameraRig] Perspective set to: {currentPerspective} (snap: {snapImmediate})");
         }
 
+        /// <summary>
+        /// Called when rover placement is finished and driving starts.
+        /// Transitions cleanly into default Rear Follow mode.
+        /// </summary>
+        public void StartFollowActiveRover()
+        {
+            isFollowingActive = true;
+            if (ActiveRoverContext.HasActiveRover)
+            {
+                HandleRoverActivated(ActiveRoverContext.Current);
+            }
+
+            SetPerspective(Perspective.Rear, snapImmediate: false);
+            Debug.Log("[RoverCameraRig] StartFollowActiveRover engaged -> Default Rear Follow activated.");
+        }
+
+        /// <summary>
+        /// Focuses on active rover (smooth blend to Rear Follow).
+        /// </summary>
+        public void FocusActiveRover()
+        {
+            if (ActiveRoverContext.HasActiveRover)
+            {
+                isFollowingActive = true;
+                SetPerspective(Perspective.Rear, snapImmediate: false);
+            }
+        }
+
+        /// <summary>
+        /// Cycles perspective presets in sequence: Rear -> Left -> Front -> Right -> Top -> Free -> Rear.
+        /// </summary>
         public void CyclePerspective()
         {
             Perspective next;
@@ -390,6 +549,9 @@ namespace ProjectName.Rover
                     next = Perspective.Top;
                     break;
                 case Perspective.Top:
+                    next = Perspective.Free;
+                    break;
+                case Perspective.Free:
                 default:
                     next = Perspective.Rear;
                     break;
@@ -404,8 +566,7 @@ namespace ProjectName.Rover
             {
                 targetTransform = handle.rootBody != null ? handle.rootBody.transform : handle.rootGameObject.transform;
                 currentProfile = handle.profile;
-                isTeleporting = true; // Snap immediately on rover spawn / swap
-                Debug.Log($"[RoverCameraRig] Bound target to active rover: {handle.profile.displayName}");
+                Debug.Log($"[RoverCameraRig] Bound target to active rover: {handle.profile?.displayName ?? handle.rootGameObject.name}");
             }
         }
 
@@ -413,7 +574,13 @@ namespace ProjectName.Rover
         {
             targetTransform = null;
             currentProfile = null;
-            Debug.Log("[RoverCameraRig] Active rover destroyed; camera holding position.");
+            isBlending = false;
+            Debug.Log("[RoverCameraRig] Active rover destroyed; camera holding position safely.");
+        }
+
+        public static bool IsVRHeadsetActive()
+        {
+            return DesktopFreeFlyCamera.IsVRHeadsetActive();
         }
     }
 }

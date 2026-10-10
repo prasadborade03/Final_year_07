@@ -281,6 +281,11 @@ public class SimulationFlowController : MonoBehaviour
         SetSimulationState(ProjectName.Core.SimulationState.ActiveSimulation);
         SetGuideText($"Active Mission! Drive: WASD / Thumbstick. Telemetry streaming live.");
         Log("Rover spawned -> Direct transition to State.ActiveSimulation (Driving)");
+
+        if (ProjectName.Rover.RoverCameraRig.Instance != null)
+        {
+            ProjectName.Rover.RoverCameraRig.Instance.StartFollowActiveRover();
+        }
     }
 
     /// <summary>
@@ -294,6 +299,11 @@ public class SimulationFlowController : MonoBehaviour
         SetSimulationState(ProjectName.Core.SimulationState.ActiveSimulation);
         SetGuideText($"Active Mission! Drive: WASD / Thumbstick. Telemetry streaming live.");
         Log("Active Mission started -> State.ActiveSimulation");
+
+        if (ProjectName.Rover.RoverCameraRig.Instance != null)
+        {
+            ProjectName.Rover.RoverCameraRig.Instance.StartFollowActiveRover();
+        }
     }
 
     // =========================================================================

@@ -2940,6 +2940,8 @@ GameObject:
   - component: {fileID: 8127428485076942894}
   - component: {fileID: 8821593979247426193}
   - component: {fileID: 8821593979247426194}
+  - component: {fileID: 8821593979247426196}
+  - component: {fileID: 8821593979247426195}
   m_Layer: 2
   m_Name: XR Origin
   m_TagString: Untagged
@@ -5101,6 +5103,7 @@ MonoBehaviour:
   moveSpeed: 12
   boostMultiplier: 2.5
   acceleration: 8
+  mouseSensitivity: 2.5
   isGrabActive: 0
 --- !u!1 &8538890364007020941
 GameObject:
@@ -5265,6 +5268,97 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverInputProvider
   deadzone: 0.15
   currentRegime: 3
+--- !u!114 &8821593979247426195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4019256039982671154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef592a8749f31774e84bf89ff2cb9545, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.VR.FreeFlyRigController
+  xrOriginTransform: {fileID: 4019256039982671153}
+  xrCamera: {fileID: 2310384545412611176}
+  snapTurnProvider: {fileID: 0}
+  flySpeed: 12
+  fastFlySpeed: 24
+  acceleration: 8
+  deceleration: 10
+  gripThreshold: 0.5
+  rightGripAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 2082dc49-b90b-4e86-87d6-b6fd0a2ede73
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  rightThumbstickAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 274a706d-1e1f-4c4d-a349-b35f89cdbd59
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  rightButtonBAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 2acd3412-4c6a-4e22-8d08-e45cb6d86758
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  rightButtonAAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 0329fbfd-0a2d-4e52-aec1-89d30239ab83
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  desktopGripKey: 103
+  isFlying: 0
+--- !u!114 &8821593979247426196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4019256039982671154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 011c20d1bc266e54d8e2b02909ecfd6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverCameraRig
+  currentPerspective: 0
+  transitionDuration: 0.5
+  smoothTime: 0.14
+  rotationDamping: 8
+  orbitSensitivity: 3
+  zoomSensitivity: 0.5
+  minZoomScale: 0.4
+  maxZoomScale: 2.5
+  minTerrainClearance: 0.5
 --- !u!4 &8829831596626522169
 Transform:
   m_ObjectHideFlags: 0
