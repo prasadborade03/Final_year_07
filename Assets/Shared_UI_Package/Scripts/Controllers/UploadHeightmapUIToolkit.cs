@@ -401,6 +401,7 @@ namespace ProjectName.Terrain
             if (root == null) return;
 
             root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
+            ProjectName.UI.UIClickAudio.RegisterVisualElement(root);
 
             // Roots & Layout Elements
             studioRoot = root.Q<VisualElement>("StudioRoot");

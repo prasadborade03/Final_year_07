@@ -23,6 +23,7 @@ namespace ProjectName.UI
         private void Awake()
         {
             EnsureUIDocumentSetup();
+            _ = UIClickAudio.Instance;
         }
 
         private void OnEnable()
@@ -61,12 +62,20 @@ namespace ProjectName.UI
 
             if (cardVR != null)
             {
-                cardVR.RegisterCallback<ClickEvent>(evt => SetVRMode(true));
+                cardVR.RegisterCallback<ClickEvent>(evt =>
+                {
+                    UIClickAudio.PlayClick();
+                    SetVRMode(true);
+                });
             }
 
             if (cardFlat != null)
             {
-                cardFlat.RegisterCallback<ClickEvent>(evt => SetVRMode(false));
+                cardFlat.RegisterCallback<ClickEvent>(evt =>
+                {
+                    UIClickAudio.PlayClick();
+                    SetVRMode(false);
+                });
             }
 
             if (btnStartSimulation != null)
@@ -84,6 +93,7 @@ namespace ProjectName.UI
 
         private void OnToggleVRChanged(ChangeEvent<bool> evt)
         {
+            UIClickAudio.PlayClick();
             SetVRMode(evt.newValue);
         }
 
@@ -130,12 +140,14 @@ namespace ProjectName.UI
 
         private void OnStartSimulationClicked()
         {
+            UIClickAudio.PlayClick();
             Debug.Log($"[MainMenu] Launch button clicked. VR Enabled: {isVREnabled}");
             SceneLoader.LoadSimulation();
         }
 
         private void OnQuitClicked()
         {
+            UIClickAudio.PlayClick();
             Debug.Log("[MainMenu] Quit button clicked.");
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;

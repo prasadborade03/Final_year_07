@@ -100,6 +100,7 @@ namespace ProjectName.UI
 
         public void SetModalVisible(bool visible)
         {
+            if (isOpen != visible) UIClickAudio.PlayClick();
             isOpen = visible;
             if (modalRoot != null)
             {
@@ -112,6 +113,7 @@ namespace ProjectName.UI
                 LoadProfiles();
                 PopulatePlanetList();
                 RefreshDiffInspector();
+                UIClickAudio.Instance?.ScanSelectables();
             }
         }
 
@@ -192,6 +194,7 @@ namespace ProjectName.UI
 
         public void SelectProfile(PlanetaryProfile profile)
         {
+            UIClickAudio.PlayClick();
             selectedProfile = profile;
             if (selectedProfile == null) return;
 
