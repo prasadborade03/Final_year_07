@@ -15,7 +15,7 @@ EditorBuildSettings:
     path: Assets/project/scenes/Simulation_Flat.unity
     guid: f2b3c4d5e6f7081928374650abcdef01
   - enabled: 1
-    path: Assets/project/scenes/VR_Module.unity
+    path: Assets/project/scenes/vr_module.unity
     guid: b1bae31750cbb38418b864af91ddabde
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

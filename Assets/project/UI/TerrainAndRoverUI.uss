@@ -1581,3 +1581,57 @@
     border-top-color: var(--border);
     padding-top: 12px;
 }
+
+/* =========================================================================
+   Custom Rover Runtime Import (+) Button & Row Styles
+   ========================================================================= */
+.btn-plus-header {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--r-sm);
+    background-color: var(--surface-2);
+    border-width: 1px;
+    border-color: var(--border);
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    transition: background-color 100ms ease-out, border-color 100ms ease-out;
+}
+
+.btn-plus-header:hover {
+    background-color: #16242B;
+    border-color: var(--accent);
+}
+
+.btn-plus-header:active {
+    background-color: #0E0E0E;
+}
+
+.btn-plus-header-text {
+    -unity-font: var(--font-heading);
+    -unity-font-definition: var(--font-heading);
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-center;
+}
+
+.rover-row-import {
+    border-color: rgba(0, 255, 224, 0.35);
+    background-color: rgba(22, 36, 43, 0.40);
+}
+
+.rover-row-import:hover {
+    background-color: #16242B;
+    border-color: var(--accent);
+}
+
+.status-badge-import {
+    color: var(--accent);
+    border-color: var(--accent);
+    background-color: rgba(0, 255, 224, 0.12);
+}
+

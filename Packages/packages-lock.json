@@ -16,6 +16,16 @@
         "com.unity.test-framework": "1.1.31"
       }
     },
+    "com.tomgit473.runtime-rover-importer": {
+      "version": "https://github.com/Tomgit473/unity-runtime-rover-importer.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.ugui": "2.0.0",
+        "com.unity.inputsystem": "1.7.0"
+      },
+      "hash": "c9d695aca46d9c418f99662240b9ffb1b378d304"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.13",
       "depth": 0,

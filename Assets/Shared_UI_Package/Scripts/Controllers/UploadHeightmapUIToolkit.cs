@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using SFB;
@@ -8,6 +9,7 @@ using ProjectName.Rover;
 using ProjectName.Planetary;
 using ProjectName.UI;
 using ProjectName.Core;
+using AutonomousRobotKit;
 
 namespace ProjectName.Terrain
 {
@@ -21,7 +23,7 @@ namespace ProjectName.Terrain
     /// Toggle seamlessly anytime via [Tab] or on-screen mode buttons.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
-    public class UploadHeightmapUIToolkit : MonoBehaviour
+    public partial class UploadHeightmapUIToolkit : MonoBehaviour
     {
         [Header("System References")]
         public TerrainGenerator terrainGenerator;
@@ -105,6 +107,13 @@ namespace ProjectName.Terrain
         private VisualElement roverEmptyStateBanner;
         private Button btnRoverHusky, btnRoverM20, btnRoverM2020;
         private Label tagHuskyActive, tagM20Active, tagM2020Active;
+
+        // UI Elements for Custom Rover Import
+        private Button btnImportRoverHeader;
+        private Button btnImportCustomRover;
+        private Label lblCustomRoverName;
+        private Label tagCustomRoverActive;
+        private GameObject currentCustomRoverObject;
 
         // HUD Visibility toggle
         private bool isHudHidden = false;
@@ -533,6 +542,8 @@ namespace ProjectName.Terrain
             if (btnRoverHusky != null) btnRoverHusky.clicked += () => DeployRover("husky");
             if (btnRoverM20 != null) btnRoverM20.clicked += () => DeployRover("m20");
             if (btnRoverM2020 != null) btnRoverM2020.clicked += () => DeployRover("m2020");
+
+            BindCustomRoverImportUI(root);
 
             var btnRelocate = root.Q<Button>("BtnRelocateRover");
             if (btnRelocate != null) btnRelocate.clicked += OnRelocateRoverClicked;
@@ -3381,6 +3392,150 @@ namespace ProjectName.Terrain
             UpdateTagClass(tagHuskyActive, hasRover && curId == "husky");
             UpdateTagClass(tagM20Active, hasRover && curId == "m20");
             UpdateTagClass(tagM2020Active, hasRover && curId == "m2020");
+
+            bool isCustomActive = hasRover && curId != "husky" && curId != "m20" && curId != "m2020" && (currentCustomRoverObject != null && ActiveRoverContext.Current.rootGameObject == currentCustomRoverObject);
+            SetBtnClass(btnImportCustomRover, "rover-active-row", isCustomActive);
+            if (tagCustomRoverActive != null)
+            {
+                tagCustomRoverActive.text = isCustomActive ? "ACTIVE" : "IMPORT";
+                tagCustomRoverActive.RemoveFromClassList(isCustomActive ? "status-badge-import" : "rover-active-tag");
+                tagCustomRoverActive.RemoveFromClassList("rover-idle-tag");
+                tagCustomRoverActive.AddToClassList(isCustomActive ? "rover-active-tag" : "status-badge-import");
+            }
+        }
+
+        private void BindCustomRoverImportUI(VisualElement root)
+        {
+            btnImportRoverHeader = root.Q<Button>("BtnImportRoverHeader");
+            btnImportCustomRover = root.Q<Button>("BtnImportCustomRover");
+            lblCustomRoverName = root.Q<Label>("LblCustomRoverName");
+            tagCustomRoverActive = root.Q<Label>("TagCustomRoverActive");
+
+            if (btnImportRoverHeader != null)
+                btnImportRoverHeader.clicked += OnImportCustomRoverClicked;
+
+            if (btnImportCustomRover != null)
+                btnImportCustomRover.clicked += OnImportCustomRoverClicked;
+        }
+
+        private void OnImportCustomRoverClicked()
+        {
+            var terrain = UnityEngine.Terrain.activeTerrain ?? FindAnyObjectByType<UnityEngine.Terrain>();
+            if (terrain == null)
+            {
+                ShowNotification("Generate planetary terrain first before deploying rovers.");
+                return;
+            }
+
+            string filePath = "";
+#if UNITY_EDITOR
+            filePath = UnityEditor.EditorUtility.OpenFilePanel("Select Custom Rover (.zip or .urdf)", "", "zip,urdf");
+#else
+            // Standalone runtime file browser fallback
+            var extensions = new[] { new ExtensionFilter("Robot Package (.zip, .urdf)", "zip", "urdf") };
+            string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Custom Rover (.zip or .urdf)", "", extensions, false);
+            if (paths != null && paths.Length > 0)
+            {
+                filePath = paths[0];
+            }
+#endif
+
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                return; // User canceled dialog
+            }
+
+            string robotName = Path.GetFileNameWithoutExtension(filePath);
+            ShowNotification($"Importing robot: {robotName}...");
+
+            RuntimeUrdfImporter.ImportRobot(
+                filePath,
+                onProgress: (progress, step) =>
+                {
+                    ShowNotification($"Importing: {step} ({Mathf.RoundToInt(progress * 100)}%)");
+                },
+                onSuccess: (roverObj) =>
+                {
+                    OnCustomRoverImportSuccess(roverObj, robotName);
+                },
+                onError: (err) =>
+                {
+                    ShowNotification($"<color=#FF5555>Import Error:</color> {err}");
+                    Debug.LogError($"[CustomRoverImport] {err}");
+                }
+            );
+        }
+
+        private void OnCustomRoverImportSuccess(GameObject roverObj, string robotName)
+        {
+            if (roverObj == null) return;
+
+            // 1. Destroy any previous rover in scene
+            if (RoverPlacementController.Instance != null)
+            {
+                RoverPlacementController.Instance.SendMessage("DestroyPreviousRovers", SendMessageOptions.DontRequireReceiver);
+            }
+            else
+            {
+                ActiveRoverContext.Unregister();
+                if (currentCustomRoverObject != null && currentCustomRoverObject != roverObj)
+                {
+                    Destroy(currentCustomRoverObject);
+                }
+            }
+            if (currentCustomRoverObject != null && currentCustomRoverObject != roverObj)
+            {
+                Destroy(currentCustomRoverObject);
+            }
+            currentCustomRoverObject = roverObj;
+
+            // 2. Identify ArticulationBody root
+            var allBodies = roverObj.GetComponentsInChildren<ArticulationBody>(true);
+            var rootBody = allBodies.FirstOrDefault(b => b.isRoot) ?? allBodies.FirstOrDefault();
+
+            // 3. Construct and register RoverHandle
+            var handle = new RoverHandle
+            {
+                rootGameObject = roverObj,
+                rootBody = rootBody,
+                profile = null,
+                wheelBodies = allBodies,
+                wheelDefs = null,
+                isFrozen = false
+            };
+
+            // 4. Attach RoverTelemetry for driving kinematics HUD
+            var telemetry = roverObj.GetComponent<RoverTelemetry>() ?? roverObj.AddComponent<RoverTelemetry>();
+            telemetry.Initialize(handle);
+            handle.telemetry = telemetry;
+
+            // 5. Register with ActiveRoverContext (Single Source of Truth)
+            ActiveRoverContext.Register(handle);
+
+            // 6. Update UI State & Badges
+            if (lblCustomRoverName != null) lblCustomRoverName.text = robotName;
+            if (tagCustomRoverActive != null)
+            {
+                tagCustomRoverActive.text = "ACTIVE";
+                tagCustomRoverActive.RemoveFromClassList("rover-idle-tag");
+                tagCustomRoverActive.RemoveFromClassList("status-badge-import");
+                tagCustomRoverActive.AddToClassList("rover-active-tag");
+            }
+
+            // De-highlight presets
+            UpdateTagClass(tagHuskyActive, false);
+            UpdateTagClass(tagM20Active, false);
+            UpdateTagClass(tagM2020Active, false);
+            SetBtnClass(btnRoverHusky, "rover-active-row", false);
+            SetBtnClass(btnRoverM20, "rover-active-row", false);
+            SetBtnClass(btnRoverM2020, "rover-active-row", false);
+
+            if (btnImportCustomRover != null)
+                btnImportCustomRover.AddToClassList("rover-active-row");
+
+            // Switch to Driving HUD mode
+            SetDrivingHudMode(true);
+            ShowNotification($"<color=#00FFE0>{robotName}</color> deployed successfully!");
         }
 
         private void UpdateTagClass(Label tag, bool isActive)

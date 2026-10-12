@@ -293,6 +293,9 @@
                 <ui:VisualElement name="CardDeployRover" class="panel-card">
                     <ui:VisualElement class="panel-header-row">
                         <ui:Label text="DEPLOY DIGITAL TWIN ROVER" class="panel-title" />
+                        <ui:Button name="BtnImportRoverHeader" class="btn-plus-header" tooltip="Import Custom Rover (.zip / .urdf)">
+                            <ui:Label text="+" class="btn-plus-header-text" />
+                        </ui:Button>
                     </ui:VisualElement>
 
                     <ui:VisualElement class="rover-list-group">
@@ -312,6 +315,12 @@
                             <ui:VisualElement class="icon-16 icon-robot tint-text-3" />
                             <ui:Label text="NASA Perseverance M2020" class="rover-row-title" />
                             <ui:Label name="TagM2020Active" text="DEPLOY" class="status-badge" />
+                        </ui:Button>
+
+                        <ui:Button name="BtnImportCustomRover" class="rover-row rover-row-import" tooltip="Import Custom URDF or ZIP Robot Archive">
+                            <ui:VisualElement class="icon-16 icon-robot tint-accent" />
+                            <ui:Label name="LblCustomRoverName" text="+ Import Custom Rover..." class="rover-row-title tint-accent" />
+                            <ui:Label name="TagCustomRoverActive" text="IMPORT" class="status-badge status-badge-import" />
                         </ui:Button>
                     </ui:VisualElement>
 
