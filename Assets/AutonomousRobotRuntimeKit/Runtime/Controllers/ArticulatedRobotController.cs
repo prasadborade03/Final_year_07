@@ -377,14 +377,15 @@ namespace AutonomousRobotKit
 
                 // Identify joint anatomical role
                 bool isAbduction = lower.Contains("abduction") || lower.Contains("_hx") || lower.Contains(".hx") || lower.Contains("haa") ||
-                                   lower.Contains("hipx") || (lower.Contains("hip") && (lower.Contains("roll") || lower.Contains("abd") || lower.EndsWith("_hip_joint") || lower.EndsWith("_hip")));
+                                   lower.Contains("_haa") || lower.Contains("hipx") || lower.Contains("hip_x") ||
+                                   (lower.Contains("hip") && (lower.Contains("roll") || lower.Contains("abd") || lower.EndsWith("_hip_joint") || lower.EndsWith("_hip")));
 
                 bool isThigh = !isAbduction && (lower.Contains("thigh") || lower.Contains("upper") || lower.Contains("femur") ||
-                               lower.Contains("hfe") || lower.Contains("hipy") || lower.Contains("_hy") || lower.Contains(".hy") ||
-                               (lower.Contains("hip") && lower.Contains("pitch")));
+                               lower.Contains("hfe") || lower.Contains("_hfe") || lower.Contains("hipy") || lower.Contains("hip_y") ||
+                               lower.Contains("_hy") || lower.Contains(".hy") || (lower.Contains("hip") && lower.Contains("pitch")));
 
                 bool isKnee = lower.Contains("calf") || lower.Contains("lower") || lower.Contains("knee") ||
-                              lower.Contains("tibia") || lower.Contains("kfe") || lower.Contains("_kn") || lower.Contains(".kn") ||
+                              lower.Contains("tibia") || lower.Contains("kfe") || lower.Contains("_kfe") || lower.Contains("_kn") || lower.Contains(".kn") ||
                               lower.Contains("shank");
 
                 var x = b.xDrive;
@@ -408,6 +409,70 @@ namespace AutonomousRobotKit
             Debug.Log($"[Articulated Robot Controller] Initialized {joints.Count} controllable joints on '{name}'.");
         }
 
+        private Coroutine _boostStanceCoroutine;
+
+        public void BoostStanceHold(float duration = 1.0f)
+        {
+            if (_boostStanceCoroutine != null) StopCoroutine(_boostStanceCoroutine);
+            _boostStanceCoroutine = StartCoroutine(BoostStanceHoldRoutine(duration));
+        }
+
+        private System.Collections.IEnumerator BoostStanceHoldRoutine(float duration)
+        {
+            float normalStiffness = jointStiffness;
+            float normalDamping = jointDamping;
+            float normalTorque = maxTorque;
+
+            float boostedStiffness = Mathf.Max(normalStiffness * 4.0f, 12000f);
+            float boostedDamping = Mathf.Max(normalDamping * 4.0f, 600f);
+            float boostedTorque = Mathf.Max(normalTorque * 3.0f, 3000f);
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.fixedDeltaTime;
+                for (int i = 0; i < joints.Count; i++)
+                {
+                    var j = joints[i];
+                    if (j.body == null) continue;
+                    if (j.body.xDrive.driveType == ArticulationDriveType.Velocity) continue;
+
+                    var drive = j.body.xDrive;
+                    drive.driveType = ArticulationDriveType.Target;
+                    drive.stiffness = boostedStiffness;
+                    drive.damping = boostedDamping;
+                    drive.forceLimit = boostedTorque;
+                    drive.target = j.targetAngleDeg;
+                    j.body.xDrive = drive;
+                }
+
+                if (_rootBody != null && !_rootBody.immovable)
+                {
+                    _rootBody.linearVelocity = Vector3.MoveTowards(_rootBody.linearVelocity, Vector3.zero, 15f * Time.fixedDeltaTime);
+                    _rootBody.angularVelocity = Vector3.MoveTowards(_rootBody.angularVelocity, Vector3.zero, 15f * Time.fixedDeltaTime);
+                }
+
+                yield return new WaitForFixedUpdate();
+            }
+
+            // Restore normal operating parameters
+            for (int i = 0; i < joints.Count; i++)
+            {
+                var j = joints[i];
+                if (j.body == null) continue;
+                if (j.body.xDrive.driveType == ArticulationDriveType.Velocity) continue;
+
+                var drive = j.body.xDrive;
+                drive.driveType = ArticulationDriveType.Target;
+                drive.stiffness = normalStiffness;
+                drive.damping = normalDamping;
+                drive.forceLimit = normalTorque;
+                drive.target = j.targetAngleDeg;
+                j.body.xDrive = drive;
+            }
+            _boostStanceCoroutine = null;
+        }
+
         [ContextMenu("Apply Stand Stance")]
         public void ApplyStandStance()
         {
@@ -415,12 +480,14 @@ namespace AutonomousRobotKit
             if (joints.Count == 0) InitializeJoints();
 
             string rootName = name.ToLowerInvariant();
-            bool isAnymal = rootName.Contains("anymal") || joints.Any(j => j.jointName.ToLowerInvariant().Contains("kfe"));
-            bool isM20 = (rootName.Contains("m20") && !rootName.Contains("m2020")) || joints.Any(j => j.jointName.ToLowerInvariant().Contains("hipx") || j.jointName.ToLowerInvariant().Contains("hipy"));
-            bool isGo = rootName.Contains("go2") || rootName.Contains("go1") || rootName.Contains("magicdog") || joints.Any(j => j.jointName.ToLowerInvariant().Contains("calf"));
-            bool isSpot = rootName.Contains("spot") || joints.Any(j => j.jointName.ToLowerInvariant().Contains(".hx") || j.jointName.ToLowerInvariant().Contains(".kn"));
-            bool isBarkour = rootName.Contains("barkour");
-            bool isUpkie = rootName.Contains("upkie");
+            var detectedModel = RoverAnalyzer.DetectModel(gameObject, null);
+
+            bool isAnymal = detectedModel == KnownRobotModel.AnymalD || rootName.Contains("anymal") || joints.Any(j => j.jointName.ToLowerInvariant().Contains("kfe"));
+            bool isM20 = detectedModel == KnownRobotModel.DeepRoboticsM20 || (rootName.Contains("m20") && !rootName.Contains("m2020")) || joints.Any(j => j.jointName.ToLowerInvariant().Contains("hipx") || j.jointName.ToLowerInvariant().Contains("hipy"));
+            bool isGo = detectedModel == KnownRobotModel.UnitreeGo1 || detectedModel == KnownRobotModel.UnitreeGo2 || detectedModel == KnownRobotModel.UnitreeGo2W || rootName.Contains("go2") || rootName.Contains("go1") || rootName.Contains("magicdog") || joints.Any(j => j.jointName.ToLowerInvariant().Contains("calf"));
+            bool isSpot = detectedModel == KnownRobotModel.BostonDynamicsSpot || rootName.Contains("spot") || joints.Any(j => j.jointName.ToLowerInvariant().Contains(".hx") || j.jointName.ToLowerInvariant().Contains(".kn") || j.jointName.ToLowerInvariant().Contains("hip_x"));
+            bool isBarkour = detectedModel == KnownRobotModel.GoogleBarkour || rootName.Contains("barkour") || joints.Any(j => j.jointName.ToLowerInvariant().Contains("torso_asm") || j.jointName.ToLowerInvariant().Contains("abduction_"));
+            bool isUpkie = detectedModel == KnownRobotModel.UpkieWheeledBiped || rootName.Contains("upkie");
 
             if (isM20)
             {
@@ -431,27 +498,27 @@ namespace AutonomousRobotKit
             }
             else if (isAnymal)
             {
-                jointStiffness = 2200f;
-                jointDamping = 150f;
-                maxTorque = 600f;
+                jointStiffness = 2500f;
+                jointDamping = 180f;
+                maxTorque = 900f;
             }
             else if (isSpot)
             {
-                jointStiffness = 2200f;
-                jointDamping = 150f;
-                maxTorque = 650f;
+                jointStiffness = 2500f;
+                jointDamping = 180f;
+                maxTorque = 900f;
             }
             else if (isGo)
             {
-                jointStiffness = 1800f;
-                jointDamping = 120f;
-                maxTorque = 500f;
+                jointStiffness = 2000f;
+                jointDamping = 140f;
+                maxTorque = 600f;
             }
             else if (isBarkour)
             {
-                jointStiffness = 1800f;
-                jointDamping = 120f;
-                maxTorque = 500f;
+                jointStiffness = 2000f;
+                jointDamping = 140f;
+                maxTorque = 600f;
             }
             else if (isUpkie)
             {
@@ -485,7 +552,11 @@ namespace AutonomousRobotKit
                 {
                     if (j.isAbduction) j.targetAngleDeg = 0f;
                     else if (j.isThigh) j.targetAngleDeg = 40f;
-                    else if (j.isKnee) j.targetAngleDeg = -70f;
+                    else if (j.isKnee)
+                    {
+                        // Spot knees flex backward (strictly negative angles e.g. -70 deg)
+                        j.targetAngleDeg = (j.maxLimitDeg <= 5f) ? -70f : 70f;
+                    }
                     else j.targetAngleDeg = j.defaultAngleDeg;
                 }
                 else if (isGo)
@@ -497,7 +568,7 @@ namespace AutonomousRobotKit
                 }
                 else if (isBarkour)
                 {
-                    // Barkour knee limits are strictly positive [0, 144 deg]. 57.3 deg = 1.0 rad (official standing pose)
+                    // Barkour knee limits are strictly positive [0, 140 deg]. 57.3 deg = 1.0 rad (official standing pose)
                     if (j.isAbduction) j.targetAngleDeg = 0f;
                     else if (j.isThigh) j.targetAngleDeg = 30f;
                     else if (j.isKnee) j.targetAngleDeg = 57.3f;
@@ -571,9 +642,19 @@ namespace AutonomousRobotKit
                     try
                     {
                         j.body.jointPosition = new ArticulationReducedSpace(j.targetAngleDeg * Mathf.Deg2Rad);
+                        j.body.jointVelocity = new ArticulationReducedSpace(0f);
                     }
                     catch { }
                 }
+            }
+
+            // Zero velocities across all bodies to prevent impulse kicks
+            var allBodies = GetComponentsInChildren<ArticulationBody>(true);
+            foreach (var b in allBodies)
+            {
+                if (b == null) continue;
+                b.linearVelocity = Vector3.zero;
+                b.angularVelocity = Vector3.zero;
             }
         }
 

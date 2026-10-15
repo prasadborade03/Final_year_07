@@ -89,6 +89,27 @@ namespace AutonomousRobotKit
                 }
             }
 
+            // Ensure all MeshCollider components are convex for PhysX ArticulationBody compatibility
+            var meshColliders = GetComponentsInChildren<MeshCollider>(true);
+            foreach (var mc in meshColliders)
+            {
+                if (mc == null) continue;
+                if (mc.sharedMesh == null)
+                {
+                    var mf = mc.GetComponent<MeshFilter>();
+                    if (mf != null && mf.sharedMesh != null)
+                    {
+                        mc.sharedMesh = mf.sharedMesh;
+                    }
+                    else
+                    {
+                        mc.enabled = false;
+                        continue;
+                    }
+                }
+                mc.convex = true;
+            }
+
             // 2. Tune ArticulationBodies & Condition Mass Hierarchy
             var bodies = GetComponentsInChildren<ArticulationBody>(true);
             stabilizedBodiesCount = bodies.Length;
@@ -96,7 +117,7 @@ namespace AutonomousRobotKit
 
             float totalMass = 0f;
             foreach (var b in bodies) if (b != null) totalMass += b.mass;
-            float minAllowedMass = Mathf.Max(0.25f, totalMass * 0.015f);
+            float minAllowedMass = Mathf.Max(0.05f, totalMass * 0.005f);
 
             // Calibrated physics materials:
             // - Wheels use Minimum combine mode and 0.40 friction so lateral skid-steering slips smoothly without chattering
@@ -199,6 +220,14 @@ namespace AutonomousRobotKit
                     body.linearLockX = ArticulationDofLock.LockedMotion;
                     body.linearLockY = ArticulationDofLock.LockedMotion;
                     body.linearLockZ = ArticulationDofLock.LockedMotion;
+                    body.swingYLock = ArticulationDofLock.LockedMotion;
+                    body.swingZLock = ArticulationDofLock.LockedMotion;
+                }
+                else if (body.jointType == ArticulationJointType.PrismaticJoint)
+                {
+                    body.linearLockY = ArticulationDofLock.LockedMotion;
+                    body.linearLockZ = ArticulationDofLock.LockedMotion;
+                    body.twistLock = ArticulationDofLock.LockedMotion;
                     body.swingYLock = ArticulationDofLock.LockedMotion;
                     body.swingZLock = ArticulationDofLock.LockedMotion;
                 }

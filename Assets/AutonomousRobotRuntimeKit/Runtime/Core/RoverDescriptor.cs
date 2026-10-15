@@ -5,8 +5,9 @@ namespace AutonomousRobotKit
 {
     public enum RobotArchitectureType
     {
-        WheeledMobile,      // Skid-steer / differential / rocker-bogie / steered rovers (>= 2 wheels)
-        ArticulatedLegged,  // Quadruped, Biped, Hexapod (hip, thigh, calf, knee, foot)
+        WheeledMobile,      // Skid-steer / differential / rocker-bogie / steered rovers (>= 2 wheels, 0 legs)
+        WheeledQuadruped,   // Wheeled quadrupeds & bipeds with drive wheels on articulated legs (M20, Go2-W, Upkie)
+        ArticulatedLegged,  // Pure Quadruped, Biped, Hexapod (Spot, ANYmal, Barkour, Go1/Go2)
         RoboticArm,         // Manipulator chains (shoulder, elbow, wrist, gripper)
         GeneralArticulated  // Any other multi-joint ArticulationBody tree
     }

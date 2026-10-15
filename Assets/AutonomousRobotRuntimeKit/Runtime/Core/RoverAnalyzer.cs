@@ -13,14 +13,12 @@ namespace AutonomousRobotKit
     public static class RoverAnalyzer
     {
         private static readonly string[] WheelKeywords = {
-            "wheel", "tire", "tyre", "track", "caster",
-            "left_front_link", "right_front_link", "left_back_link", "right_back_link",
-            "left_rear_link", "right_rear_link", "left_front", "right_front", "left_back", "right_back"
+            "wheel", "tire", "tyre", "track", "caster", "rotor"
         };
 
         private static readonly string[] LegKeywords = {
             "hip", "thigh", "calf", "knee", "foot", "shin", "ankle", "leg",
-            "abduction", "coxa", "femur", "tibia"
+            "abduction", "coxa", "femur", "tibia", "haa", "hfe", "kfe"
         };
 
         private static readonly string[] ArmKeywords = {
@@ -102,15 +100,14 @@ namespace AutonomousRobotKit
                 if (LegKeywords.Any(kw => lowerName.Contains(kw))) legKeywordHits++;
                 if (ArmKeywords.Any(kw => lowerName.Contains(kw))) armKeywordHits++;
 
-                bool hasWheelName = WheelKeywords.Any(kw => lowerName == kw || lowerName.EndsWith("_" + kw) || lowerName.StartsWith(kw + "_") || lowerName.Contains(kw));
-
                 // 1. FixedJoint Handling
                 if (body.jointType == ArticulationJointType.FixedJoint)
                 {
-                    bool isDirectFixedWheel = hasWheelName && body.transform.parent != null &&
+                    bool isDirectFixedWheel = WheelKeywords.Any(kw => lowerName.Contains(kw)) && body.transform.parent != null &&
                         (body.transform.parent.GetComponent<ArticulationBody>() == desc.Chassis ||
                          body.transform.parent.GetComponent<ArticulationBody>() == desc.RootArticulationBody ||
-                         body.transform.parent.name.ToLowerInvariant().Contains("base"));
+                         body.transform.parent.name.ToLowerInvariant().Contains("base") ||
+                         body.transform.parent.name.ToLowerInvariant().Contains("chassis"));
 
                     if (isDirectFixedWheel)
                     {
@@ -135,14 +132,17 @@ namespace AutonomousRobotKit
                     continue;
                 }
 
-                // 4. Wheeled quadruped foot wheels (Go2W, B2W: FL_foot, FR_foot with RevoluteJoint)
-                bool isFootWheel = lowerName.Contains("foot") && body.jointType == ArticulationJointType.RevoluteJoint;
+                // 4. Wheeled quadruped foot wheels (Go2W, B2W: continuous foot joint or explicit wheel)
+                bool isContinuous = body.jointType == ArticulationJointType.RevoluteJoint &&
+                    (Mathf.Approximately(body.xDrive.lowerLimit, 0f) && Mathf.Approximately(body.xDrive.upperLimit, 0f));
+                bool isFootWheel = (lowerName.Contains("wheel") || lowerName.Contains("tire")) ||
+                    (lowerName.Contains("foot") && isContinuous);
 
                 // 5. Upkie ankle rotor wheel
                 bool isAnkleWheel = lowerName.Contains("ankle") && lowerName.Contains("rotor") &&
                     body.GetComponentsInChildren<Transform>(true).Any(t => t.name.ToLowerInvariant().Contains("wheel_hub"));
 
-                // 6. Reject upper limb joints from being wheels
+                // 6. Upper limb joints - strictly not wheels
                 bool isUpperLimb = NonWheelKeywords.Any(kw => lowerName.Contains(kw));
                 if (isUpperLimb && !lowerName.Contains("wheel") && !lowerName.Contains("tire") && !isFootWheel && !isAnkleWheel)
                 {
@@ -150,6 +150,7 @@ namespace AutonomousRobotKit
                     continue;
                 }
 
+                bool hasWheelName = WheelKeywords.Any(kw => lowerName.Contains(kw));
                 if (hasWheelName || isFootWheel || isAnkleWheel)
                 {
                     namedWheels.Add(body);
@@ -167,49 +168,52 @@ namespace AutonomousRobotKit
             }
 
             // Architecture Classification
-            if (legKeywordHits >= 2 && namedWheels.Count >= 2)
+            int wheelCount = namedWheels.Count;
+            int legCount = legKeywordHits;
+            int armCount = armKeywordHits;
+            int nonWheelCount = nonWheelJoints.Count + candidateFreeDrives.Count;
+            string rootName = root.name.ToLowerInvariant();
+
+            if (wheelCount >= 2 && (legCount >= 4 || nonWheelCount >= 4))
             {
-                desc.RobotType = RobotArchitectureType.ArticulatedLegged;
+                // Architecture A: Wheeled Quadruped / Biped (M20, Go2-W, Upkie)
+                desc.RobotType = RobotArchitectureType.WheeledQuadruped;
                 desc.Wheels = namedWheels;
-                nonWheelJoints.AddRange(candidateFreeDrives);
+                desc.NonWheelJoints = nonWheelJoints.Concat(candidateFreeDrives).Distinct().ToList();
             }
-            else if (namedWheels.Count >= 2)
+            else if (wheelCount >= 2)
             {
+                // Architecture B: Pure Wheeled Mobile Rover (Husky, Perseverance, RB-Vogui)
                 desc.RobotType = RobotArchitectureType.WheeledMobile;
                 desc.Wheels = namedWheels;
-                nonWheelJoints.AddRange(candidateFreeDrives);
+                desc.NonWheelJoints = nonWheelJoints.Concat(candidateFreeDrives).Distinct().ToList();
             }
-            else if (candidateFreeDrives.Count >= 2 && legKeywordHits < 2 && armKeywordHits < 2)
+            else if (armCount > legCount || rootName.Contains("arm") || rootName.Contains("manipulator") || rootName.Contains("gripper") || rootName.Contains("arduinobot"))
             {
-                desc.RobotType = RobotArchitectureType.WheeledMobile;
-                desc.Wheels = candidateFreeDrives;
+                // Architecture D: Robotic Arm / Fixed Articulated Mechanism (Panda, UR5, Arduinobot)
+                desc.RobotType = RobotArchitectureType.RoboticArm;
+                desc.Wheels = new List<ArticulationBody>();
+                desc.NonWheelJoints = nonWheelJoints.Concat(candidateFreeDrives).Concat(namedWheels).Distinct().ToList();
             }
-            else if (legKeywordHits >= 2)
+            else if (legCount >= 4 || (legCount > 0 && nonWheelCount >= 6))
             {
+                // Architecture C: Pure Legged Quadruped / Multiped (Spot, ANYmal, Barkour, Go1/Go2)
                 desc.RobotType = RobotArchitectureType.ArticulatedLegged;
-                desc.Wheels = namedWheels;
-                nonWheelJoints.AddRange(candidateFreeDrives);
+                desc.Wheels = new List<ArticulationBody>();
+                desc.NonWheelJoints = nonWheelJoints.Concat(candidateFreeDrives).Concat(namedWheels).Distinct().ToList();
             }
-            else if (armKeywordHits >= 2)
+            else if (armCount >= 1 || nonWheelCount >= 1)
             {
                 desc.RobotType = RobotArchitectureType.RoboticArm;
                 desc.Wheels = new List<ArticulationBody>();
-                nonWheelJoints.AddRange(candidateFreeDrives);
-                nonWheelJoints.AddRange(namedWheels);
-            }
-            else if (nonWheelJoints.Count >= 1 || candidateFreeDrives.Count >= 1)
-            {
-                desc.RobotType = RobotArchitectureType.GeneralArticulated;
-                desc.Wheels = new List<ArticulationBody>();
-                nonWheelJoints.AddRange(candidateFreeDrives);
-                nonWheelJoints.AddRange(namedWheels);
+                desc.NonWheelJoints = nonWheelJoints.Concat(candidateFreeDrives).Concat(namedWheels).Distinct().ToList();
             }
             else
             {
                 desc.RobotType = RobotArchitectureType.GeneralArticulated;
             }
 
-            desc.NonWheelJoints = nonWheelJoints.Distinct().ToList();
+            desc.NonWheelJoints = desc.NonWheelJoints.Distinct().ToList();
 
             // Sort wheels front-to-back, left-to-right relative to chassis
             if (desc.Chassis != null && desc.Wheels.Count > 0)
@@ -224,11 +228,11 @@ namespace AutonomousRobotKit
             {
                 if (desc.Wheels.Count < 2)
                 {
-                    desc.Warnings.Add($"Only {desc.Wheels.Count} potential wheel(s) detected. Expected ≥ 2 for a mobile rover.");
+                    desc.Warnings.Add($"Only {desc.Wheels.Count} potential wheel(s) detected. Expected >= 2 for a mobile rover.");
                 }
                 else if (desc.Wheels.Count > 12)
                 {
-                    desc.Warnings.Add($"Unusually high number ({desc.Wheels.Count}) of wheel candidates detected – review hierarchy.");
+                    desc.Warnings.Add($"Unusually high number ({desc.Wheels.Count}) of wheel candidates detected - review hierarchy.");
                 }
             }
 
@@ -243,7 +247,11 @@ namespace AutonomousRobotKit
             string rootName = root.name.ToLowerInvariant();
             var allNames = desc != null && desc.AllBodies != null
                 ? desc.AllBodies.Select(b => b.name.ToLowerInvariant()).ToList()
-                : new List<string>();
+                : root.GetComponentsInChildren<ArticulationBody>(true).Select(b => b.name.ToLowerInvariant()).ToList();
+
+            int wheelCount = desc != null && desc.Wheels != null
+                ? desc.Wheels.Count
+                : allNames.Count(n => n.Contains("wheel") || n.Contains("tire"));
 
             if (rootName.Contains("husky") || allNames.Any(n => n.Contains("husky") || n.Contains("front_left_wheel_link")))
                 return KnownRobotModel.ClearpathHusky;
@@ -257,24 +265,26 @@ namespace AutonomousRobotKit
                 return KnownRobotModel.DeepRoboticsM20;
 
             if (rootName.Contains("go2w") || rootName.Contains("go2_w") || rootName.Contains("b2w") || rootName.Contains("b2_w") || rootName.Contains("magicdog") ||
-                ((rootName.Contains("go2") || rootName.Contains("b2") || allNames.Any(n => n.Contains("fl_calf") || n.Contains("fl_thigh"))) && desc != null && desc.Wheels.Count >= 2))
+                ((rootName.Contains("go2") || rootName.Contains("b2") || allNames.Any(n => n.Contains("fl_calf") || n.Contains("fl_thigh"))) && wheelCount >= 2))
                 return KnownRobotModel.UnitreeGo2W;
 
-            if (rootName.Contains("go2") || allNames.Any(n => n.StartsWith("fl_hip") || n.StartsWith("fl_thigh") || n.StartsWith("fl_calf")))
+            if (rootName.Contains("go2") || allNames.Any(n => n.Contains("go2") || n.StartsWith("fl_hip") || n.StartsWith("fl_thigh") || n.StartsWith("fl_calf")))
             {
-                if (desc != null && desc.Wheels.Count >= 2) return KnownRobotModel.UnitreeGo2W;
+                if (wheelCount >= 2) return KnownRobotModel.UnitreeGo2W;
                 return KnownRobotModel.UnitreeGo2;
             }
 
-            if (rootName.Contains("go1")) return KnownRobotModel.UnitreeGo1;
+            if (rootName.Contains("go1") || allNames.Any(n => n.Contains("go1"))) return KnownRobotModel.UnitreeGo1;
 
-            if (rootName.Contains("anymal") || allNames.Any(n => n.Contains("lf_kfe") || n.Contains("lh_kfe") || n.Contains("lf_haa")))
+            if (rootName.Contains("anymal") || allNames.Any(n => n.Contains("anymal") || n.Contains("lf_kfe") || n.Contains("lh_kfe") || n.Contains("lf_haa") || n.Contains("lf_hfe")))
                 return KnownRobotModel.AnymalD;
 
-            if (rootName.Contains("spot") || allNames.Any(n => n.Contains("fl.hx") || n.Contains("fl.hy") || n.Contains("fl.kn")))
+            if (rootName.Contains("spot") || allNames.Any(n => n.Contains("spot") || n.Contains("fl.hx") || n.Contains("fl.hy") || n.Contains("fl.kn") ||
+                (n.Contains("front_left_upper_leg") && allNames.Any(m => m.Contains("front_left_lower_leg")))))
                 return KnownRobotModel.BostonDynamicsSpot;
 
-            if (rootName.Contains("barkour")) return KnownRobotModel.GoogleBarkour;
+            if (rootName.Contains("barkour") || allNames.Any(n => n.Contains("barkour") || n.Contains("torso_asm") || (n.Contains("abduction_") && allNames.Any(m => m.Contains("upper_leg_")))))
+                return KnownRobotModel.GoogleBarkour;
 
             if (rootName.Contains("pickerbot") || rootName.Contains("mec_arm") ||
                 allNames.Any(n => n.Contains("arm_a_link") || n.Contains("left_front_link")))
@@ -287,6 +297,10 @@ namespace AutonomousRobotKit
                 return KnownRobotModel.UpkieWheeledBiped;
 
             if (desc != null && desc.RobotType == RobotArchitectureType.RoboticArm)
+                return KnownRobotModel.RoboticArm;
+
+            if (rootName.Contains("arm") || rootName.Contains("arduinobot") || rootName.Contains("manipulator") ||
+                allNames.Any(n => n.Contains("arduinobot") || n.Contains("shoulder_link") || n.Contains("elbow_link") || n.Contains("wrist_link") || n == "link1" || n == "link2"))
                 return KnownRobotModel.RoboticArm;
 
             return KnownRobotModel.Generic;

@@ -73,15 +73,13 @@ namespace AutonomousRobotKit
 
             if (rootBody != null)
             {
-                bool shouldBeImmovable = desc.RobotType == RobotArchitectureType.RoboticArm && MakeChassisImmovable;
-                rootBody.immovable = shouldBeImmovable;
-                rootBody.useGravity = true;
+                bool shouldBeImmovable = (desc.RobotType == RobotArchitectureType.RoboticArm) || MakeChassisImmovable;
+                if (shouldBeImmovable)
+                {
+                    rootBody.immovable = true;
+                }
                 rootBody.linearDamping = 0.5f;
                 rootBody.angularDamping = 0.5f;
-            }
-            if (desc.Chassis != null)
-            {
-                desc.Chassis.useGravity = true;
             }
 
             // 2. Remove / disable conflicting URDF Importer default controllers
@@ -136,37 +134,33 @@ namespace AutonomousRobotKit
             }
 
             // 4. Dynamic Kinematic & Architecture Generation
-            // Generates controllers universally based on detected anatomy, not hardcoded model names!
             bool hasWheels = desc.Wheels != null && desc.Wheels.Count >= 1;
             int nonWheelCount = desc.NonWheelJoints != null ? desc.NonWheelJoints.Count : 0;
 
             Debug.Log($"[Rover Compatibility] Dynamic Kinematic Generation for '{robotRoot.name}': " +
-                      $"Wheels={desc.Wheels.Count}, Steering={desc.SteeringJoints.Count}, Suspension={desc.SuspensionJoints.Count}, " +
+                      $"Architecture={desc.RobotType}, Wheels={desc.Wheels.Count}, Steering={desc.SteeringJoints.Count}, Suspension={desc.SuspensionJoints.Count}, " +
                       $"NonWheelJoints={nonWheelCount}, Mass={desc.TotalMass:F1}kg");
 
-            if (hasWheels && nonWheelCount >= 2)
+            if (desc.RobotType == RobotArchitectureType.WheeledQuadruped || (hasWheels && nonWheelCount >= 4))
             {
                 // Architecture A: Wheeled Quadruped / Wheeled Articulated Robot (e.g. M20, Go2-W, Upkie, mobile manipulator)
                 // RULE: Wheels perform 100% of locomotion via velocity drive.
-                // Articulated leg/arm joints hold firm stable stance. Strictly NO human-like leg trotting!
+                // Articulated leg/arm joints hold firm stable stance.
                 ConfigureGenericWheeledQuadruped(robotRoot, desc);
             }
-            else if (hasWheels)
+            else if (desc.RobotType == RobotArchitectureType.WheeledMobile || (hasWheels && nonWheelCount < 4))
             {
                 // Architecture B: Pure Wheeled Mobile Rover (e.g. 2, 4, 6, 8-wheel rovers, Rocker-Bogie, Ackermann/steered)
-                // Differential skid-steer or active corner steering with passive suspension.
                 ConfigureGenericWheeledRover(robotRoot, desc, profile, targetTorque, targetDamping);
             }
-            else if (nonWheelCount >= 8)
+            else if (desc.RobotType == RobotArchitectureType.ArticulatedLegged || nonWheelCount >= 8)
             {
                 // Architecture C: Legged Quadruped / Multiped (e.g. Go2, Go1, ANYmal, Spot, Barkour, Hexapod)
-                // True quadruped trotting gait with WASD and physical posture stabilization.
                 ConfigureGenericQuadruped(robotRoot, desc);
             }
             else
             {
                 // Architecture D: Robotic Arm / Fixed Articulated Mechanism (< 8 non-wheel joints, no wheels)
-                // Firm position holding across all articulated joints without trotting.
                 ConfigureGenericArticulated(robotRoot, desc, profile, targetTorque, targetDamping);
             }
         }
@@ -207,6 +201,7 @@ namespace AutonomousRobotKit
             controller.joints.RemoveAll(j => wheelInfos.Any(w => w.body == j.body));
             controller.currentPreset = ArticulatedRobotController.StancePreset.Stand;
             controller.ApplyStandStance();
+            controller.BoostStanceHold(1.0f);
 
             // Guarantee wheels remain pure velocity drives
             foreach (var w in wheelInfos)
@@ -235,6 +230,7 @@ namespace AutonomousRobotKit
             controller.InitializeJoints();
             controller.currentPreset = ArticulatedRobotController.StancePreset.Stand;
             controller.ApplyStandStance();
+            controller.BoostStanceHold(1.0f);
 
             var marker = GetOrAddComponent<RoverCompatibilityMarker>(robotRoot);
             marker.Stamp(desc.RobotType.ToString(), controller.joints.Count, 0, desc.Chassis != null ? desc.Chassis.name : "None", desc.TotalMass);
@@ -258,7 +254,6 @@ namespace AutonomousRobotKit
                 susp.linearLockX = ArticulationDofLock.LockedMotion;
                 susp.linearLockY = ArticulationDofLock.LockedMotion;
                 susp.linearLockZ = ArticulationDofLock.LockedMotion;
-                susp.useGravity = true;
             }
 
             foreach (var steer in desc.SteeringJoints)
@@ -275,7 +270,6 @@ namespace AutonomousRobotKit
                 steer.linearLockX = ArticulationDofLock.LockedMotion;
                 steer.linearLockY = ArticulationDofLock.LockedMotion;
                 steer.linearLockZ = ArticulationDofLock.LockedMotion;
-                steer.useGravity = true;
             }
 
             var wheelInfos = new List<WheelDriveInfo>();
@@ -335,7 +329,6 @@ namespace AutonomousRobotKit
                 drive.target = Mathf.Clamp(drive.target, drive.lowerLimit, drive.upperLimit);
 
                 body.xDrive = drive;
-                body.useGravity = true;
 
                 body.linearLockX = ArticulationDofLock.LockedMotion;
                 body.linearLockY = ArticulationDofLock.LockedMotion;
@@ -464,8 +457,6 @@ namespace AutonomousRobotKit
             drive.driveType = ArticulationDriveType.Velocity;
 
             SetDrive(wheel, axis, drive);
-
-            wheel.useGravity = true;
 
             // Ensure colliders on the wheel are convex (mandatory for PhysX ArticulationBody)
             // and assign an optimized PhysicMaterial for smooth skid-steering
