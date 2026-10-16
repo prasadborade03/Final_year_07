@@ -53,6 +53,30 @@
     display: none;
 }
 
+.mode-output #StudioMainGrid,
+.mode-output #ShellBottomLeft,
+.mode-output #ShellBottomRight,
+.mode-output #GuidedFlowContainer,
+.mode-output .studio-only,
+.mode-output .driving-only {
+    display: none;
+}
+
+.output-root {
+    display: none;
+    position: absolute;
+    top: 72px;
+    left: var(--screen-margin);
+    right: var(--screen-margin);
+    bottom: var(--screen-margin);
+    flex-direction: row;
+    gap: var(--panel-gap);
+}
+
+.mode-output .output-root {
+    display: flex;
+}
+
 /* -------------------------------------------------------------------------
    1. Floating Top Row Shell (Mode Switch, Planet Badge, Minimize)
    ------------------------------------------------------------------------- */
@@ -1634,4 +1658,300 @@
     border-color: var(--accent);
     background-color: rgba(0, 255, 224, 0.12);
 }
+
+/* -------------------------------------------------------------------------
+   Output Mode & Mission Recorder Styles
+   ------------------------------------------------------------------------- */
+.rec-chip {
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--surface-2);
+    border-color: var(--poor);
+    border-width: 1px;
+    border-radius: var(--r-pill);
+    height: var(--h-control-sm);
+    padding: 0 12px;
+    margin-left: 12px;
+    cursor: link;
+    display: none;
+}
+
+.rec-chip:hover {
+    background-color: rgba(255, 23, 68, 0.2);
+    border-color: #ff8a80;
+}
+
+.rec-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--poor);
+    margin-right: 8px;
+    opacity: 1;
+    transition: opacity 200ms ease;
+}
+
+.rec-chip-dot-pulse {
+    opacity: 0.2;
+}
+
+.rec-chip-text {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    -unity-font: var(--font-heading);
+    letter-spacing: 1px;
+}
+
+.output-col-left {
+    width: var(--side-col-width);
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.output-col-center {
+    flex-grow: 1;
+    flex-direction: column;
+    gap: var(--panel-gap);
+    min-width: 0;
+}
+
+.output-col-right {
+    width: 380px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.output-rec-stats {
+    margin-top: 10px;
+    margin-bottom: 12px;
+}
+
+.metric-value-sm {
+    font-size: 20px;
+    min-width: 40px;
+}
+
+.output-setting-group {
+    margin-bottom: 12px;
+}
+
+.rate-bar {
+    height: 36px;
+    margin-top: 4px;
+}
+
+.rate-item {
+    flex: 1;
+    height: 36px;
+    font-size: 13px;
+}
+
+.output-rec-btn-container {
+    margin-top: 12px;
+}
+
+.btn-rec-action {
+    height: var(--h-control);
+    font-size: 14px;
+}
+
+.output-rec-active-btns {
+    flex-direction: row;
+    gap: 8px;
+}
+
+.output-rec-hint {
+    font-size: 12px;
+    color: var(--fair);
+    margin-top: 6px;
+    min-height: 16px;
+}
+
+.rec-state-pill {
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+    border-width: 1px;
+    border-color: var(--border-subtle);
+}
+
+.rec-state-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--disabled-text);
+    margin-right: 6px;
+}
+
+.rec-state-label {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--text-2);
+}
+
+.output-trace-panel {
+    flex: 1.2;
+    margin-bottom: 0;
+    min-height: 220px;
+}
+
+.trace-window-pill {
+    font-size: 11px;
+    color: var(--text-2);
+    border-width: 1px;
+    border-color: var(--border-subtle);
+    padding: 2px 6px;
+    border-radius: var(--r-sm);
+}
+
+.trace-channel-chips {
+    flex-direction: row;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.output-trace-view {
+    flex-grow: 1;
+    min-height: 160px;
+    position: relative;
+    border-width: 1px;
+    border-color: var(--border-subtle);
+    background-color: rgba(2, 10, 20, 0.5);
+    border-radius: var(--r-inner);
+}
+
+.trace-empty-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    -unity-text-align: middle-center;
+    color: var(--disabled-text);
+    font-size: 14px;
+}
+
+.output-summary-panel {
+    flex: 0.9;
+    margin-bottom: 0;
+    min-height: 160px;
+}
+
+.output-summary-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px;
+    flex-grow: 1;
+}
+
+.summary-cell {
+    width: 15.5%;
+    min-width: 70px;
+}
+
+.output-status-line {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 6px;
+    min-height: 16px;
+    border-top-width: 1px;
+    border-top-color: var(--border-subtle);
+    padding-top: 4px;
+}
+
+.output-session-list {
+    flex-grow: 1;
+    min-height: 180px;
+    margin-bottom: 8px;
+    border-width: 1px;
+    border-color: var(--border-subtle);
+    background-color: rgba(2, 10, 20, 0.25);
+    border-radius: var(--r-inner);
+}
+
+.session-list-row {
+    padding: 8px 10px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border-subtle);
+    cursor: link;
+}
+
+.session-list-row:hover {
+    background-color: var(--surface-2);
+}
+
+.session-list-row.list-row-active {
+    background-color: var(--active-bg);
+    border-color: var(--accent);
+}
+
+.session-row-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-1);
+    -unity-font: var(--font-heading);
+}
+
+.session-incomplete-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+    margin-left: 6px;
+}
+
+.session-row-sub {
+    font-size: 11px;
+    color: var(--text-2);
+    margin-top: 2px;
+}
+
+.sessions-empty-label {
+    margin: 20px auto;
+    color: var(--disabled-text);
+    font-size: 13px;
+}
+
+.output-selected-session-box {
+    padding-top: 8px;
+    border-top-width: 1px;
+    border-top-color: var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.output-sel-name {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    margin-bottom: 2px;
+}
+
+.output-sel-meta {
+    font-size: 11px;
+    color: var(--text-2);
+    margin-bottom: 4px;
+}
+
+.output-sel-path {
+    font-size: 10px;
+    color: var(--disabled-text);
+    margin-bottom: 8px;
+    white-space: normal;
+}
+
+.output-sel-actions-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.output-sel-actions-grid .btn {
+    flex: 1;
+    min-width: 45%;
+    height: var(--h-control-sm);
+    font-size: 12px;
+}
+
 

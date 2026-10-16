@@ -120,3 +120,7 @@ final-year-prj/
 
 # Plastic SCM / Unity Version Control cache
 .plastic/
+
+# Mission Recorder outputs
+/Outputs/
+

@@ -10,6 +10,7 @@ using ProjectName.Planetary;
 using ProjectName.UI;
 using ProjectName.Core;
 using AutonomousRobotKit;
+using ProjectName.Output;
 
 namespace ProjectName.Terrain
 {
@@ -46,6 +47,7 @@ namespace ProjectName.Terrain
         // UI Element References: Roots & Layouts
         private VisualElement studioRoot;
         private VisualElement studioMainGrid;
+        private VisualElement outputRootElement;
         private VisualElement colLeft;
         private VisualElement colCenter;
         private VisualElement colRight;
@@ -57,8 +59,30 @@ namespace ProjectName.Terrain
         private Button btnToggleHUD;
 
         // Header & View Mode Switch
+        public enum StudioViewMode
+        {
+            Driving,
+            Studio,
+            Output
+        }
+
+        private static UploadHeightmapUIToolkit instance;
+        public static UploadHeightmapUIToolkit Instance
+        {
+            get
+            {
+                if (instance == null) instance = FindAnyObjectByType<UploadHeightmapUIToolkit>();
+                return instance;
+            }
+            private set => instance = value;
+        }
         private Button btnModeDriving;
         private Button btnModeStudio;
+        private Button btnModeOutput;
+        private OutputPanelController outputPanelController;
+        private StudioViewMode currentViewMode = StudioViewMode.Studio;
+        private StudioViewMode previousViewMode = StudioViewMode.Studio;
+
         private Label badgeStatus;
         private Button btnPlanetBadge;
         private Label badgeDriveMode;
@@ -310,6 +334,7 @@ namespace ProjectName.Terrain
 
         private void Awake()
         {
+            Instance = this;
             if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
             if (terrainGenerator == null) terrainGenerator = FindAnyObjectByType<TerrainGenerator>();
             if (flowController == null) flowController = FindAnyObjectByType<SimulationFlowController>();
@@ -415,6 +440,7 @@ namespace ProjectName.Terrain
             // Roots & Layout Elements
             studioRoot = root.Q<VisualElement>("StudioRoot");
             studioMainGrid = root.Q<VisualElement>("StudioMainGrid");
+            outputRootElement = root.Q<VisualElement>("OutputRoot");
             colLeft = root.Q<VisualElement>("ColLeft");
             colCenter = root.Q<VisualElement>("ColCenter");
             colRight = root.Q<VisualElement>("ColRight");
@@ -436,8 +462,10 @@ namespace ProjectName.Terrain
             // View Mode Switches
             btnModeDriving = root.Q<Button>("BtnModeDriving");
             btnModeStudio = root.Q<Button>("BtnModeStudio");
-            if (btnModeDriving != null) btnModeDriving.clicked += () => SetDrivingHudMode(true);
-            if (btnModeStudio != null) btnModeStudio.clicked += () => SetDrivingHudMode(false);
+            btnModeOutput = root.Q<Button>("BtnModeOutput");
+            if (btnModeDriving != null) btnModeDriving.clicked += () => SetViewMode(StudioViewMode.Driving);
+            if (btnModeStudio != null) btnModeStudio.clicked += () => SetViewMode(StudioViewMode.Studio);
+            if (btnModeOutput != null) btnModeOutput.clicked += () => SetViewMode(StudioViewMode.Output);
 
             // Header Pills
             badgeStatus = root.Q<Label>("BadgeStatus");
@@ -1227,6 +1255,8 @@ namespace ProjectName.Terrain
 
             if (btnModalApplyPlanet != null) btnModalApplyPlanet.clicked += () => ApplyModalPlanet(false);
             if (btnModalApplyAndRespawn != null) btnModalApplyAndRespawn.clicked += () => ApplyModalPlanet(true);
+
+            outputPanelController = new OutputPanelController(root);
         }
 
         private void HandleSimulationStateChanged(ProjectName.Core.SimulationState state)
@@ -1597,7 +1627,20 @@ namespace ProjectName.Terrain
             // [Tab] switches between Driving HUD and Full Studio view
             if (Input.GetKeyDown(KeyCode.Tab))
             {
-                SetDrivingHudMode(!isDrivingHudMode);
+                SetViewMode(currentViewMode == StudioViewMode.Driving ? StudioViewMode.Studio : StudioViewMode.Driving);
+            }
+
+            // [O] toggles Output view mode
+            if (Input.GetKeyDown(KeyCode.O) && !isTypingInUI)
+            {
+                if (currentViewMode == StudioViewMode.Output)
+                {
+                    SetViewMode(previousViewMode == StudioViewMode.Output ? StudioViewMode.Studio : previousViewMode);
+                }
+                else
+                {
+                    SetViewMode(StudioViewMode.Output);
+                }
             }
 
             // [U] or [F1] minimizes completely to floating pill dock
@@ -1618,10 +1661,21 @@ namespace ProjectName.Terrain
                 TogglePlanetModal();
             }
 
-            // [Escape] closes planet modal if open
-            if (Input.GetKeyDown(KeyCode.Escape) && isPlanetModalOpen)
+            // [Escape] closes modal if open, or leaves Output view
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                SetPlanetModalVisible(false);
+                if (isPlanetModalOpen)
+                {
+                    SetPlanetModalVisible(false);
+                }
+                else if (modalConfirmation != null && modalConfirmation.style.display == DisplayStyle.Flex)
+                {
+                    HideConfirmationModal();
+                }
+                else if (currentViewMode == StudioViewMode.Output)
+                {
+                    SetViewMode(previousViewMode == StudioViewMode.Output ? StudioViewMode.Studio : previousViewMode);
+                }
             }
 
             if (isStudioMinimized || isHudHidden) return;
@@ -1637,9 +1691,15 @@ namespace ProjectName.Terrain
             }
         }
 
-        public void SetDrivingHudMode(bool hudMode)
+        public void SetViewMode(StudioViewMode mode)
         {
-            isDrivingHudMode = hudMode;
+            if (currentViewMode != mode && currentViewMode != StudioViewMode.Output)
+            {
+                previousViewMode = currentViewMode;
+            }
+            currentViewMode = mode;
+            isDrivingHudMode = (mode == StudioViewMode.Driving);
+
             if (painterBrushCursor != null) painterBrushCursor.style.display = DisplayStyle.None;
 
             if (studioRoot == null && uiDocument != null && uiDocument.rootVisualElement != null)
@@ -1649,34 +1709,58 @@ namespace ProjectName.Terrain
 
             if (colCenter != null)
             {
-                colCenter.style.display = hudMode ? DisplayStyle.None : DisplayStyle.Flex;
+                colCenter.style.display = (mode == StudioViewMode.Driving || mode == StudioViewMode.Output) ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
             if (studioRoot != null)
             {
-                if (hudMode)
+                studioRoot.RemoveFromClassList("hud-mode-root");
+                studioRoot.RemoveFromClassList("mode-driving");
+                studioRoot.RemoveFromClassList("mode-studio");
+                studioRoot.RemoveFromClassList("mode-output");
+
+                switch (mode)
                 {
-                    studioRoot.AddToClassList("hud-mode-root");
-                    studioRoot.AddToClassList("mode-driving");
-                    studioRoot.RemoveFromClassList("mode-studio");
+                    case StudioViewMode.Driving:
+                        studioRoot.AddToClassList("hud-mode-root");
+                        studioRoot.AddToClassList("mode-driving");
+                        break;
+                    case StudioViewMode.Studio:
+                        studioRoot.AddToClassList("mode-studio");
+                        break;
+                    case StudioViewMode.Output:
+                        studioRoot.AddToClassList("mode-output");
+                        break;
                 }
-                else
-                {
-                    studioRoot.RemoveFromClassList("hud-mode-root");
-                    studioRoot.RemoveFromClassList("mode-driving");
-                    studioRoot.AddToClassList("mode-studio");
-                }
+            }
+
+            if (outputRootElement != null)
+            {
+                outputRootElement.style.display = (mode == StudioViewMode.Output) ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            if (studioMainGrid != null)
+            {
+                studioMainGrid.style.display = (mode == StudioViewMode.Output) ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
             if (btnToggleHUD != null)
             {
-                btnToggleHUD.text = hudMode ? "STUDIO [Tab]" : "HUD [Tab]";
+                btnToggleHUD.text = (mode == StudioViewMode.Driving) ? "STUDIO [Tab]" : "HUD [Tab]";
             }
 
-            SetBtnClass(btnModeDriving, "view-switch-active", hudMode);
-            SetBtnClass(btnModeStudio, "view-switch-active", !hudMode);
-            SetBtnClass(btnModeDriving, "segmented-active", hudMode);
-            SetBtnClass(btnModeStudio, "segmented-active", !hudMode);
+            SetBtnClass(btnModeDriving, "view-switch-active", mode == StudioViewMode.Driving);
+            SetBtnClass(btnModeStudio, "view-switch-active", mode == StudioViewMode.Studio);
+            SetBtnClass(btnModeOutput, "view-switch-active", mode == StudioViewMode.Output);
+            SetBtnClass(btnModeDriving, "segmented-active", mode == StudioViewMode.Driving);
+            SetBtnClass(btnModeStudio, "segmented-active", mode == StudioViewMode.Studio);
+            SetBtnClass(btnModeOutput, "segmented-active", mode == StudioViewMode.Output);
+
+            outputPanelController?.OnViewModeChanged(mode);
+        }
+
+        public void SetDrivingHudMode(bool hudMode)
+        {
+            SetViewMode(hudMode ? StudioViewMode.Driving : StudioViewMode.Studio);
         }
 
         public void SetStudioMinimized(bool minimized)
