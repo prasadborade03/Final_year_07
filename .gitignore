@@ -120,3 +120,7 @@ final-year-prj/
 
 # Plastic SCM / Unity Version Control cache
 .plastic/
+
+# Runtime imported rovers (temporary staging cache)
+/[Aa]ssets/ImportedRovers/
+/[Aa]ssets/ImportedRovers.meta

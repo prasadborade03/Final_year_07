@@ -350,6 +350,8 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged += HandleRigPerspectiveChanged;
             RoverCameraRig.OnCameraSpeedChanged += HandleCameraSpeedChanged;
+            RuntimeUrdfImporter.OnBeforeTemporaryRoverDestroyed -= HandleBeforeTemporaryRoverDestroyed;
+            RuntimeUrdfImporter.OnBeforeTemporaryRoverDestroyed += HandleBeforeTemporaryRoverDestroyed;
 
             var envCtrl = PlanetEnvironmentController.Instance ?? (PlanetEnvironmentController)FindAnyObjectByType<PlanetEnvironmentController>();
             if (envCtrl != null)
@@ -1531,6 +1533,9 @@ namespace ProjectName.Terrain
 
         private void SelectFlowRover(string roverId)
         {
+            // Clean up any temporary runtime imported rover when selecting another rover
+            CleanupCustomRover();
+
             flowSelectedRoverId = roverId.ToLowerInvariant();
             if (flowController != null) flowController.SelectRover(flowSelectedRoverId);
 
@@ -1884,6 +1889,14 @@ namespace ProjectName.Terrain
                 {
                     RoverPlacementController.Instance.ConfirmPlacementAtPoint(targetPoint, 0f, "husky");
                 }
+            }
+        }
+
+        private void HandleBeforeTemporaryRoverDestroyed(GameObject rover)
+        {
+            if (ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject == rover)
+            {
+                ActiveRoverContext.Unregister();
             }
         }
 
@@ -3355,6 +3368,9 @@ namespace ProjectName.Terrain
         // -------------------------------------------------------------
         private void DeployRover(string roverId)
         {
+            // Clean up any temporary runtime imported rover when selecting another rover
+            CleanupCustomRover();
+
             activeRoverId = roverId;
             UpdateRoverSelectionUI();
 
@@ -3466,28 +3482,78 @@ namespace ProjectName.Terrain
             );
         }
 
+        /// <summary>
+        /// Cleans up any active runtime custom rover from the scene hierarchy, UI state, and disk storage.
+        /// Ensures custom rovers imported at runtime remain strictly temporary to the system.
+        /// </summary>
+        public void CleanupCustomRover()
+        {
+            if (currentCustomRoverObject != null)
+            {
+                if (ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject == currentCustomRoverObject)
+                {
+                    ActiveRoverContext.Unregister();
+                }
+                Destroy(currentCustomRoverObject);
+                currentCustomRoverObject = null;
+            }
+
+            RuntimeUrdfImporter.CleanupTemporaryRover();
+
+            if (lblCustomRoverName != null) lblCustomRoverName.text = "Custom Rover";
+            if (tagCustomRoverActive != null)
+            {
+                tagCustomRoverActive.text = "IMPORT";
+                tagCustomRoverActive.RemoveFromClassList("rover-active-tag");
+                tagCustomRoverActive.RemoveFromClassList("rover-idle-tag");
+                tagCustomRoverActive.AddToClassList("status-badge-import");
+            }
+            if (btnImportCustomRover != null)
+            {
+                btnImportCustomRover.RemoveFromClassList("rover-active-row");
+            }
+        }
+
         private void OnCustomRoverImportSuccess(GameObject roverObj, string robotName)
         {
             if (roverObj == null) return;
 
-            // 1. Destroy any previous rover in scene
-            if (RoverPlacementController.Instance != null)
+            // 1. Destroy only PRESET rovers from scene (Husky, M20, Perseverance)
+            string[] presetRoverNames = new[] { "GeneratedHusky", "GeneratedM20", "GeneratedPerseverance_Fixed" };
+            foreach (var n in presetRoverNames)
             {
-                RoverPlacementController.Instance.SendMessage("DestroyPreviousRovers", SendMessageOptions.DontRequireReceiver);
-            }
-            else
-            {
-                ActiveRoverContext.Unregister();
-                if (currentCustomRoverObject != null && currentCustomRoverObject != roverObj)
+                var go = GameObject.Find(n);
+                if (go != null)
                 {
-                    Destroy(currentCustomRoverObject);
+                    Destroy(go);
                 }
             }
+
+            // 2. Destroy previous custom rover if different from the new one
             if (currentCustomRoverObject != null && currentCustomRoverObject != roverObj)
             {
                 Destroy(currentCustomRoverObject);
             }
+            if (ActiveRoverContext.HasActiveRover && ActiveRoverContext.Current.rootGameObject != roverObj)
+            {
+                if (ActiveRoverContext.Current.rootGameObject != null)
+                {
+                    Destroy(ActiveRoverContext.Current.rootGameObject);
+                }
+                ActiveRoverContext.Unregister();
+            }
+
             currentCustomRoverObject = roverObj;
+            RuntimeUrdfImporter.ActiveTemporaryRoverObject = roverObj;
+
+            // 3. Record placement pose for Respawn / Reset
+            if (RoverPlacementController.Instance != null)
+            {
+                RoverPlacementController.Instance.lastPlacementPoint = roverObj.transform.position;
+                RoverPlacementController.Instance.lastPlacementYaw = roverObj.transform.eulerAngles.y;
+                RoverPlacementController.Instance.lastPlacementRoverId = "custom";
+                RoverPlacementController.Instance.hasLastPlacementPose = true;
+            }
 
             // 2. Identify ArticulationBody root
             var allBodies = roverObj.GetComponentsInChildren<ArticulationBody>(true);
@@ -3514,6 +3580,7 @@ namespace ProjectName.Terrain
             RoverCameraRig.Instance?.FocusActiveRover();
 
             // 6. Update UI State & Badges
+            activeRoverId = "custom";
             if (lblCustomRoverName != null) lblCustomRoverName.text = robotName;
             if (tagCustomRoverActive != null)
             {
@@ -3656,6 +3723,7 @@ namespace ProjectName.Terrain
                     "Changing the terrain will reset the current simulation environment. The current rover placement and terrain will be cleared.",
                     () =>
                     {
+                        CleanupCustomRover();
                         if (flowController != null)
                         {
                             flowController.ResetSimulation();
@@ -3713,6 +3781,7 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
             RoverCameraRig.OnCameraSpeedChanged -= HandleCameraSpeedChanged;
+            RuntimeUrdfImporter.OnBeforeTemporaryRoverDestroyed -= HandleBeforeTemporaryRoverDestroyed;
             if (flowController != null)
             {
                 flowController.OnSimulationStateChanged -= HandleSimulationStateChanged;
