@@ -78,11 +78,21 @@ namespace AutonomousRobotKit
             steeringJoints = new List<ArticulationBody>(detectedSteeringJoints);
         }
 
+        private float _bufferedForward = 0f;
+        private float _bufferedTurn = 0f;
+
+        private void Update()
+        {
+            ReadInput(out _bufferedForward, out _bufferedTurn);
+        }
+
         private void FixedUpdate()
         {
             if (wheels == null || wheels.Count == 0) return;
 
             ReadInput(out float forward, out float turn);
+            if (Mathf.Approximately(forward, 0f)) forward = _bufferedForward;
+            if (Mathf.Approximately(turn, 0f)) turn = _bufferedTurn;
 
             if (useExternalInput)
             {
@@ -96,57 +106,98 @@ namespace AutonomousRobotKit
             if (invertForward) forward *= -1f;
             if (invertTurn) turn *= -1f;
 
+            float dt = Time.fixedDeltaTime;
+            bool hasSteering = steeringJoints != null && steeringJoints.Count > 0;
+            bool isMovingLongitudinal = Mathf.Abs(forward) > 0.05f;
+            bool isTurning = Mathf.Abs(turn) > 0.05f;
+            bool isPointTurn = hasSteering && !isMovingLongitudinal && isTurning;
+
+            // Target speeds
             float targetLongitudinal = forward * maxSpeed;
             float targetTurn = turn * maxSpeed * turnFactor;
 
-            float dt = Time.fixedDeltaTime;
             smoothedForwardVelocity = Mathf.MoveTowards(smoothedForwardVelocity, targetLongitudinal, acceleration * dt);
             smoothedTurnVelocity = Mathf.MoveTowards(smoothedTurnVelocity, targetTurn, acceleration * dt);
 
-            // Update active steering knuckle angles with smooth slew-rate limiting
-            if (steeringJoints != null && steeringJoints.Count > 0)
+            // 1. Steering Knuckle Kinematics
+            if (hasSteering)
             {
                 float targetAngle = currentTurnInput * maxSteerAngle;
-                smoothedSteerAngle = Mathf.MoveTowards(smoothedSteerAngle, targetAngle, 90f * dt);
+                smoothedSteerAngle = Mathf.MoveTowards(smoothedSteerAngle, isPointTurn ? 45f : targetAngle, 120f * dt);
+
                 for (int s = 0; s < steeringJoints.Count; s++)
                 {
                     var steer = steeringJoints[s];
                     if (steer == null) continue;
                     var drive = steer.xDrive;
-                    drive.target = GetSteerJointAngle(steer, smoothedSteerAngle);
+                    drive.driveType = ArticulationDriveType.Target;
+                    if (drive.stiffness <= 0f) drive.stiffness = 8000f;
+                    if (drive.damping <= 0f) drive.damping = 400f;
+                    if (drive.forceLimit <= 0f) drive.forceLimit = 8000f;
+                    drive.target = GetSteerJointAngle(steer, smoothedSteerAngle, isPointTurn, currentTurnInput);
                     steer.xDrive = drive;
                 }
             }
 
+            // 2. Wheel Drivetrain Velocity Control
             for (int i = 0; i < wheels.Count; i++)
             {
                 var info = wheels[i];
                 if (info == null || info.body == null) continue;
 
-                float targetVel = smoothedForwardVelocity;
+                float targetVel = 0f;
 
-                if (info.isRightSide)
+                if (hasSteering)
                 {
-                    targetVel -= smoothedTurnVelocity;
-                    if (invertRightSide) targetVel *= -1f;
+                    if (isPointTurn)
+                    {
+                        // Point-Turn / Zero-Radius Spin: all 4 wheels drive tangentially
+                        // Left wheels drive in turn direction, Right wheels drive opposite
+                        targetVel = info.isRightSide ? -smoothedTurnVelocity : smoothedTurnVelocity;
+                    }
+                    else
+                    {
+                        // Coordinated Driving Curve: all wheels drive longitudinally forward/reverse
+                        // Outer wheels rotate slightly faster, inner wheels slightly slower (Ackermann ratio)
+                        float speedDiff = 1f;
+                        if (isTurning)
+                        {
+                            bool isOuterWheel = (turn > 0f && !info.isRightSide) || (turn < 0f && info.isRightSide);
+                            speedDiff = isOuterWheel ? (1f + 0.25f * Mathf.Abs(turn)) : (1f - 0.25f * Mathf.Abs(turn));
+                        }
+                        targetVel = smoothedForwardVelocity * speedDiff;
+                    }
                 }
                 else
                 {
-                    targetVel += smoothedTurnVelocity;
-                    if (invertLeftSide) targetVel *= -1f;
+                    // Skid-Steer / Differential Drive (e.g. Husky, TurtleBot, M20)
+                    targetVel = smoothedForwardVelocity;
+                    if (info.isRightSide)
+                    {
+                        targetVel -= smoothedTurnVelocity;
+                        if (invertRightSide) targetVel *= -1f;
+                    }
+                    else
+                    {
+                        targetVel += smoothedTurnVelocity;
+                        if (invertLeftSide) targetVel *= -1f;
+                    }
                 }
+
+                // Apply physical spin direction multiplier derived from world axis orientation
+                targetVel *= info.driveMultiplier;
 
                 if (info.invertDirection)
                 {
                     targetVel *= -1f;
                 }
 
-                targetVel = Mathf.Clamp(targetVel, -maxSpeed, maxSpeed);
+                targetVel = Mathf.Clamp(targetVel, -maxSpeed * 1.3f, maxSpeed * 1.3f);
                 ApplyWheelVelocity(info, targetVel);
             }
         }
 
-        private float GetSteerJointAngle(ArticulationBody steer, float steerAngleDeg)
+        private float GetSteerJointAngle(ArticulationBody steer, float steerAngleDeg, bool isPointTurn, float turnInput)
         {
             if (steer == null) return 0f;
 
@@ -156,14 +207,33 @@ namespace AutonomousRobotKit
 
             bool isFront = localPos.z >= 0f;
             if (name.Contains("front") || name.Contains("_f") || name.StartsWith("f")) isFront = true;
-            else if (name.Contains("rear") || name.Contains("back") || name.Contains("_r") || name.Contains("_h")) isFront = false;
+            else if (name.Contains("rear") || name.Contains("back") || name.Contains("_r") || name.Contains("_h") || name.StartsWith("b")) isFront = false;
+
+            bool isRight = localPos.x >= 0f;
+            if (name.Contains("right") || name.Contains("_r") || name.StartsWith("r")) isRight = true;
+            else if (name.Contains("left") || name.Contains("_l") || name.StartsWith("l")) isRight = false;
 
             Vector3 worldAxis = steer.transform.rotation * steer.anchorRotation * Vector3.right;
             float upDot = Vector3.Dot(worldAxis, rootTransform.up);
-            float axisSign = upDot >= 0f ? 1f : -1f;
+            // Positive angle around +Up in Unity/PhysX is counter-clockwise (Left).
+            // To turn right (steerAngleDeg > 0), rotation around +Up must be clockwise (negative).
+            float axisSign = upDot >= 0f ? -1f : 1f;
 
-            float longitudinalSign = isFront ? 1f : -1f;
-            return steerAngleDeg * longitudinalSign * axisSign;
+            if (isPointTurn)
+            {
+                // In Point-Turn (zero-radius spin on the spot):
+                // Steering knuckles pivot into tangential circle angles:
+                // Front-Left and Rear-Right angle in one direction, Front-Right and Rear-Left angle opposite
+                float tangentAngle = (isFront == isRight) ? -45f : 45f;
+                return tangentAngle * axisSign;
+            }
+            else
+            {
+                // Coordinated Ackermann curve turn:
+                // Front wheels steer into turn, Rear wheels steer opposite (for 4-corner steered rovers)
+                float longitudinalSign = isFront ? 1f : -1f;
+                return steerAngleDeg * longitudinalSign * axisSign;
+            }
         }
 
         private void ApplyWheelVelocity(WheelDriveInfo info, float targetVel)
@@ -191,6 +261,13 @@ namespace AutonomousRobotKit
             RoverAutoConfigurator.SetDrive(info.body, info.axis, drive);
         }
 
+        public void SetDriveInput(float forward, float turn)
+        {
+            useExternalInput = true;
+            externalForwardInput = Mathf.Clamp(forward, -1f, 1f);
+            externalTurnInput = Mathf.Clamp(turn, -1f, 1f);
+        }
+
         private void ReadInput(out float forward, out float turn)
         {
             forward = 0f;
@@ -205,19 +282,22 @@ namespace AutonomousRobotKit
                 if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) turn -= 1f;
             }
 
-            try
+            if (Mathf.Approximately(forward, 0f) && Mathf.Approximately(turn, 0f))
             {
-                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) forward += 1f;
-                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) forward -= 1f;
-                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) turn += 1f;
-                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) turn -= 1f;
+                try
+                {
+                    if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) forward += 1f;
+                    if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) forward -= 1f;
+                    if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) turn += 1f;
+                    if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) turn -= 1f;
 
-                float v = Input.GetAxisRaw("Vertical");
-                float h = Input.GetAxisRaw("Horizontal");
-                if (Mathf.Abs(v) > Mathf.Abs(forward)) forward = v;
-                if (Mathf.Abs(h) > Mathf.Abs(turn)) turn = h;
+                    float v = Input.GetAxisRaw("Vertical");
+                    float h = Input.GetAxisRaw("Horizontal");
+                    if (Mathf.Abs(v) > Mathf.Abs(forward)) forward = v;
+                    if (Mathf.Abs(h) > Mathf.Abs(turn)) turn = h;
+                }
+                catch (InvalidOperationException) { }
             }
-            catch (InvalidOperationException) { }
 
             forward = Mathf.Clamp(forward, -1f, 1f);
             turn = Mathf.Clamp(turn, -1f, 1f);

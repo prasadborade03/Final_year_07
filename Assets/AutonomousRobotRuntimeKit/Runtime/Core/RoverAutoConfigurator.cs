@@ -93,6 +93,10 @@ namespace AutonomousRobotKit
             {
                 stabilizer = robotRoot.AddComponent<RobotPhysicsStabilizer>();
             }
+            if (stabilizer != null)
+            {
+                stabilizer.ApplyStabilization();
+            }
             // Determine mass-based torque and damping
             float targetTorque;
             float targetDamping;
@@ -114,18 +118,18 @@ namespace AutonomousRobotKit
                 default: // AutoDetect
                     if (desc.TotalMass > 150f)
                     {
-                        targetTorque = Mathf.Max(10000f, desc.TotalMass * 50f);
-                        targetDamping = Mathf.Max(1500f, desc.TotalMass * 10f);
+                        targetTorque = Mathf.Max(6000f, desc.TotalMass * 30f);
+                        targetDamping = Mathf.Clamp(desc.TotalMass * 1.5f, 200f, 600f);
                     }
                     else if (desc.TotalMass > 35f)
                     {
-                        targetTorque = 5000f;
-                        targetDamping = 500f;
+                        targetTorque = 4000f;
+                        targetDamping = 300f;
                     }
                     else if (desc.TotalMass >= 10f)
                     {
-                        targetTorque = 2500f;
-                        targetDamping = 250f;
+                        targetTorque = 2000f;
+                        targetDamping = 180f;
                     }
                     else
                     {
@@ -169,6 +173,10 @@ namespace AutonomousRobotKit
                 // Firm position holding across all articulated joints without trotting.
                 ConfigureGenericArticulated(robotRoot, desc, profile, targetTorque, targetDamping);
             }
+
+            // 5. Universal Ground Clearance Protection:
+            // Prevents chassis/battery/bracket colliders from protruding below wheels and beaching the rover.
+            EnsureWheelGroundClearance(robotRoot, desc);
         }
 
         #region Generic Physics-Driven Kinematic Configurations
@@ -184,8 +192,8 @@ namespace AutonomousRobotKit
                 WheelAxis axis = ResolveAndUnlockWheelDriveAxis(wheel);
                 ConfigureWheelDrivePhysics(wheel, axis, wheelTorque, wheelDamping);
                 bool isRight = RoverAnalyzer.IsRightSideWheel(wheel, desc.Chassis);
-                bool autoInvert = RoverAnalyzer.DetectWheelInversion(wheel, desc.Chassis);
-                wheelInfos.Add(new WheelDriveInfo(wheel, axis, isRight, autoInvert));
+                float driveMult = RoverAnalyzer.CalculateWheelDriveMultiplier(wheel, desc.Chassis);
+                wheelInfos.Add(new WheelDriveInfo(wheel, axis, isRight, false, driveMult));
             }
 
             var drive = GetOrAddComponent<SimpleDifferentialDrive>(robotRoot);
@@ -224,12 +232,13 @@ namespace AutonomousRobotKit
             RemoveComponentIfExists<SimpleDifferentialDrive>(robotRoot);
 
             var controller = GetOrAddComponent<ArticulatedRobotController>(robotRoot);
-            controller.jointStiffness = 3000f;
-            controller.jointDamping = 220f;
+            controller.jointStiffness = 2500f;
+            controller.jointDamping = 180f;
             controller.maxTorque = 1500f;
-            controller.stepAmplitudeDeg = 6.0f;
-            controller.gaitCycleSpeed = 2.0f;
-            controller.walkSpeed = 1.2f;
+            controller.stepAmplitudeDeg = 18.0f; // Realistic animal trotting amplitude
+            controller.gaitCycleSpeed = 1.8f;   // Natural ~1.8 Hz trotting frequency
+            controller.walkSpeed = 1.2f;        // 1.2 m/s forward walking speed
+            controller.turnSpeed = 60f;         // 60 deg/s yaw rate
             controller.enableInteractiveDrive = true;
             controller.enableKeyboardHotkeys = true;
             controller.InitializeJoints();
@@ -264,11 +273,13 @@ namespace AutonomousRobotKit
             foreach (var steer in desc.SteeringJoints)
             {
                 if (steer == null || steer.isRoot) continue;
+                float steerStiffness = Mathf.Max(6000f, desc.TotalMass * 25f);
+                float steerForce = Mathf.Max(6000f, desc.TotalMass * 25f);
                 var steerDrive = steer.xDrive;
                 steerDrive.driveType = ArticulationDriveType.Target;
-                steerDrive.stiffness = 5000f;
+                steerDrive.stiffness = steerStiffness;
                 steerDrive.damping = 400f;
-                steerDrive.forceLimit = 5000f;
+                steerDrive.forceLimit = steerForce;
                 steerDrive.target = 0f;
                 steer.xDrive = steerDrive;
                 steer.twistLock = ArticulationDofLock.LimitedMotion;
@@ -285,11 +296,11 @@ namespace AutonomousRobotKit
                 ConfigureWheelDrivePhysics(wheel, axis, targetTorque, targetDamping);
 
                 bool isRight = RoverAnalyzer.IsRightSideWheel(wheel, desc.Chassis);
-                bool autoInvert = RoverAnalyzer.DetectWheelInversion(wheel, desc.Chassis);
-                var info = new WheelDriveInfo(wheel, axis, isRight, autoInvert);
+                float driveMult = RoverAnalyzer.CalculateWheelDriveMultiplier(wheel, desc.Chassis);
+                var info = new WheelDriveInfo(wheel, axis, isRight, false, driveMult);
                 wheelInfos.Add(info);
 
-                Debug.Log($"[Rover Compatibility] Wheel '{wheel.name}' configured on Axis {axis} | Side: {(isRight ? "Right" : "Left")} | AutoInvert: {autoInvert}");
+                Debug.Log($"[Rover Compatibility] Wheel '{wheel.name}' configured on Axis {axis} | Side: {(isRight ? "Right" : "Left")} | DriveMult: {driveMult}");
             }
 
             if (wheelInfos.Count == 0)
@@ -512,7 +523,9 @@ namespace AutonomousRobotKit
             {
                 if (mb == null) continue;
                 string typeName = mb.GetType().Name;
-                if (typeName == "JointControl" || typeName == "Controller" || typeName == "FKRobot" ||
+                string typeNs = mb.GetType().Namespace ?? "";
+                if (typeNs == "RoverCompatibility" ||
+                    typeName == "JointControl" || typeName == "Controller" || typeName == "FKRobot" ||
                     typeName.StartsWith("RoverController_") || typeName.StartsWith("RoverImporter_"))
                 {
                     mb.enabled = false;
@@ -543,6 +556,68 @@ namespace AutonomousRobotKit
                 case WheelAxis.Y: body.yDrive = drive; break;
                 default: body.zDrive = drive; break;
             }
+        }
+
+        /// <summary>
+        /// Universally guarantees that wheel colliders form the lowest contact points of the robot.
+        /// If CAD collision hulls on the chassis underbelly, battery, or knuckle frames extend lower
+        /// than or flush with the wheels, they beach the vehicle (absorbing all normal force and leaving
+        /// spinning wheels with zero traction).
+        /// This method automatically detects any non-wheel colliders intruding into the ground contact plane
+        /// and lifts their collision hulls so the wheels maintain full physical traction with terrain.
+        /// </summary>
+        public static void EnsureWheelGroundClearance(GameObject robotRoot, RoverDescriptor desc)
+        {
+            if (robotRoot == null || desc == null || desc.Wheels == null || desc.Wheels.Count == 0) return;
+
+            // 1. Determine lowest point among all wheel colliders
+            float lowestWheelY = float.MaxValue;
+            var wheelColliders = new HashSet<Collider>();
+
+            foreach (var wheel in desc.Wheels)
+            {
+                if (wheel == null) continue;
+                var cols = wheel.GetComponentsInChildren<Collider>(true);
+                foreach (var c in cols)
+                {
+                    if (c == null) continue;
+                    wheelColliders.Add(c);
+                    if (c.bounds.min.y < lowestWheelY) lowestWheelY = c.bounds.min.y;
+                }
+            }
+
+            if (lowestWheelY == float.MaxValue) return;
+
+            // Frictionless low-friction material for non-wheel chassis parts so they slide smoothly over bumps
+            var slickMat = new PhysicsMaterial("ChassisUnderbellySlick")
+            {
+                dynamicFriction = 0.05f,
+                staticFriction = 0.05f,
+                frictionCombine = PhysicsMaterialCombine.Minimum,
+                bounciness = 0.0f,
+                bounceCombine = PhysicsMaterialCombine.Minimum
+            };
+
+            float minRequiredClearance = 0.02f; // Minimum 2 cm ground clearance for underbelly / brackets
+            var allColliders = robotRoot.GetComponentsInChildren<Collider>(true);
+
+            foreach (var col in allColliders)
+            {
+                if (col == null || wheelColliders.Contains(col)) continue;
+
+                // Assign low-friction material to chassis to eliminate high-centering drag
+                col.sharedMaterial = slickMat;
+
+                float clearance = col.bounds.min.y - lowestWheelY;
+                if (clearance < minRequiredClearance)
+                {
+                    float liftAmount = minRequiredClearance - clearance;
+                    col.transform.position += new Vector3(0f, liftAmount, 0f);
+                    Debug.Log($"[Rover Compatibility] Ground Clearance Auto-Heal: Lifted non-wheel collider '{col.name}' by {liftAmount * 100f:F1} cm to prevent vehicle high-centering.");
+                }
+            }
+
+            Physics.SyncTransforms();
         }
     }
 }

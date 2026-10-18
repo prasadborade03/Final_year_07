@@ -57,8 +57,8 @@ namespace AutonomousRobotKit
         [Tooltip("Enable keyboard trot / stepping when pressing W/A/S/D or Arrow keys (quadrupeds only).")]
         public bool enableInteractiveDrive = true;
 
-        [Range(0.5f, 5.0f)] public float gaitCycleSpeed = 2.0f;
-        [Range(2f, 15f)] public float stepAmplitudeDeg = 6.0f;
+        [Range(0.5f, 5.0f)] public float gaitCycleSpeed = 1.8f;
+        [Range(5f, 35f)] public float stepAmplitudeDeg = 18.0f;
 
         [Header("Active Upright Posture & Locomotion Stabilization")]
         [Tooltip("Actively levels roll and pitch to prevent quadrupeds from tipping over or falling off.")]
@@ -275,12 +275,12 @@ namespace AutonomousRobotKit
                         {
                             // In-place turn trot: left and right sides swing in opposite directions to step naturally in a circle
                             float sideDir = j.isRightSide ? -1f : 1f;
-                            pitchOffset = legOscillation * (stepAmplitudeDeg * 0.75f) * _currentTurn * sideDir;
+                            pitchOffset = legOscillation * (stepAmplitudeDeg * 0.85f) * _currentTurn * sideDir;
                         }
                         else
                         {
                             // Moving forward while turning: apply differential stride length (outside leg steps wider)
-                            float turnStrideMultiplier = j.isRightSide ? (1f - _currentTurn * 0.4f) : (1f + _currentTurn * 0.4f);
+                            float turnStrideMultiplier = j.isRightSide ? (1f - _currentTurn * 0.35f) : (1f + _currentTurn * 0.35f);
                             pitchOffset = legOscillation * stepAmplitudeDeg * _currentForward * turnStrideMultiplier;
                         }
 
@@ -291,11 +291,25 @@ namespace AutonomousRobotKit
                     }
                     else if (j.isKnee)
                     {
-                        // Lift knee during swing phase (vital during in-place turning to avoid dragging feet across floor!)
-                        float activity = isTurningInPlace ? Mathf.Abs(_currentTurn) * 0.8f : Mathf.Abs(_currentForward);
-                        float lift = Mathf.Max(0f, legOscillation) * (stepAmplitudeDeg * 0.9f) * activity;
-                        float liftOffset = j.targetAngleDeg >= 0f ? lift : -lift;
+                        // Dynamic Knee Flexion: Lift foot cleanly into the air during swing phase
+                        float activity = isTurningInPlace ? Mathf.Abs(_currentTurn) * 0.9f : Mathf.Abs(_currentForward);
+                        // Only flex during swing phase (legOscillation > 0); during stance phase foot bears weight on ground
+                        float swingLift = Mathf.Max(0f, legOscillation) * (stepAmplitudeDeg * 1.4f) * activity;
+                        // If knee stands negative (Go1, Go2, Spot), subtracting swingLift bends knee more negative (lifts foot)
+                        // If knee stands positive (Barkour), adding swingLift bends knee more positive (lifts foot)
+                        float liftOffset = j.targetAngleDeg >= 0f ? swingLift : -swingLift;
                         targetAngle = SafeClamp(j.targetAngleDeg + liftOffset, j.minLimitDeg, j.maxLimitDeg);
+                    }
+                    else if (j.isAbduction)
+                    {
+                        // Subtle hip abduction roll coordination during turning (widens support base on outside leg)
+                        float abdOffset = 0f;
+                        if (Mathf.Abs(_currentTurn) > 0.05f)
+                        {
+                            float sideSign = j.isRightSide ? 1f : -1f;
+                            abdOffset = _currentTurn * sideSign * 2.5f;
+                        }
+                        targetAngle = SafeClamp(j.targetAngleDeg + abdOffset, j.minLimitDeg, j.maxLimitDeg);
                     }
                 }
 
@@ -357,7 +371,8 @@ namespace AutonomousRobotKit
                 bool isExplicitRear = lower.Contains("rear") || lower.Contains("back") || lower.Contains("hind") ||
                                       lower.StartsWith("lh") || lower.StartsWith("rh") || lower.Contains("_lh") || lower.Contains("_rh") ||
                                       lower.StartsWith("hl") || lower.StartsWith("hr") || lower.Contains("_hl") || lower.Contains("_hr") ||
-                                      lower.Contains("rl_") || lower.Contains("rr_") || lower.StartsWith("rl") || lower.StartsWith("rr");
+                                      lower.Contains("rl_") || lower.Contains("rr_") || lower.StartsWith("rl") || lower.StartsWith("rr") ||
+                                      lower.Contains("_rl") || lower.Contains("_rr");
 
                 bool isExplicitFront = lower.Contains("front") ||
                                        lower.StartsWith("lf") || lower.StartsWith("rf") || lower.Contains("_lf") || lower.Contains("_rf") ||
@@ -367,11 +382,13 @@ namespace AutonomousRobotKit
 
                 bool isExplicitRight = lower.Contains("right") || lower.StartsWith("rf") || lower.StartsWith("rh") ||
                                        lower.Contains("_rf") || lower.Contains("_rh") || lower.StartsWith("fr") || lower.StartsWith("hr") ||
-                                       lower.Contains("_fr") || lower.Contains("_hr") || lower.Contains("rr_");
+                                       lower.Contains("_fr") || lower.Contains("_hr") || lower.Contains("rr_") || lower.StartsWith("rr") ||
+                                       lower.Contains("_rr") || lower.EndsWith("_r");
 
                 bool isExplicitLeft = lower.Contains("left") || lower.StartsWith("lf") || lower.StartsWith("lh") ||
                                       lower.Contains("_lf") || lower.Contains("_lh") || lower.StartsWith("fl") || lower.StartsWith("hl") ||
-                                      lower.Contains("_fl") || lower.Contains("_hl") || lower.Contains("rl_");
+                                      lower.Contains("_fl") || lower.Contains("_hl") || lower.Contains("rl_") || lower.StartsWith("rl") ||
+                                      lower.Contains("_rl") || lower.EndsWith("_l");
 
                 bool isRight = isExplicitRight || (!isExplicitLeft && localPos.x > 0.001f);
 
@@ -712,6 +729,13 @@ namespace AutonomousRobotKit
             return Mathf.Clamp(target, min, max);
         }
 
+        public void SetLocomotionInput(float forward, float turn)
+        {
+            useExternalInput = true;
+            externalForward = Mathf.Clamp(forward, -1f, 1f);
+            externalTurn = Mathf.Clamp(turn, -1f, 1f);
+        }
+
         private void ReadInput(out float forward, out float turn, out bool k1, out bool k2, out bool k3, out bool k0)
         {
             forward = 0f;
@@ -733,25 +757,28 @@ namespace AutonomousRobotKit
                 k0 = kb.digit0Key.wasPressedThisFrame || kb.numpad0Key.wasPressedThisFrame;
             }
 
-            // 2. Legacy Input Manager fallback
-            try
+            // 2. Legacy Input Manager fallback (only if keys not already handled)
+            if (Mathf.Approximately(forward, 0f) && Mathf.Approximately(turn, 0f))
             {
-                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) forward += 1f;
-                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) forward -= 1f;
-                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) turn += 1f;
-                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) turn -= 1f;
+                try
+                {
+                    if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) forward += 1f;
+                    if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) forward -= 1f;
+                    if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) turn += 1f;
+                    if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) turn -= 1f;
 
-                float v = Input.GetAxisRaw("Vertical");
-                float h = Input.GetAxisRaw("Horizontal");
-                if (Mathf.Abs(v) > Mathf.Abs(forward)) forward = v;
-                if (Mathf.Abs(h) > Mathf.Abs(turn)) turn = h;
+                    float v = Input.GetAxisRaw("Vertical");
+                    float h = Input.GetAxisRaw("Horizontal");
+                    if (Mathf.Abs(v) > Mathf.Abs(forward)) forward = v;
+                    if (Mathf.Abs(h) > Mathf.Abs(turn)) turn = h;
 
-                if (!k1) k1 = Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1);
-                if (!k2) k2 = Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2);
-                if (!k3) k3 = Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3);
-                if (!k0) k0 = Input.GetKeyDown(KeyCode.Alpha0) || Input.GetKeyDown(KeyCode.Keypad0);
+                    if (!k1) k1 = Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1);
+                    if (!k2) k2 = Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2);
+                    if (!k3) k3 = Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3);
+                    if (!k0) k0 = Input.GetKeyDown(KeyCode.Alpha0) || Input.GetKeyDown(KeyCode.Keypad0);
+                }
+                catch (InvalidOperationException) { }
             }
-            catch (InvalidOperationException) { }
 
             forward = Mathf.Clamp(forward, -1f, 1f);
             turn = Mathf.Clamp(turn, -1f, 1f);

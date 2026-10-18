@@ -102,14 +102,30 @@ namespace AutonomousRobotKit
                 GameObject editorRover = null;
                 try
                 {
-                    var importerType = Type.GetType("RoverCompatibility.Editor.RoverContextMenuImporter, RoverCompatibility.Editor");
+                    Type importerType = null;
+                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        importerType = asm.GetType("RoverCompatibility.Editor.RoverContextMenuImporter");
+                        if (importerType != null) break;
+                    }
+
                     if (importerType != null)
                     {
                         var method = importerType.GetMethod("ImportRoverAtPath", BindingFlags.Public | BindingFlags.Static);
                         if (method != null)
                         {
-                            editorRover = (GameObject)method.Invoke(null, new object[] { filePath, RoverMassProfile.AutoDetect, null });
+                            var pars = method.GetParameters();
+                            object massProfileArg = 0;
+                            if (pars.Length > 1 && pars[1].ParameterType.IsEnum)
+                            {
+                                massProfileArg = Enum.ToObject(pars[1].ParameterType, 0);
+                            }
+                            editorRover = (GameObject)method.Invoke(null, new object[] { filePath, massProfileArg, null });
                         }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[RuntimeUrdfImporter] RoverContextMenuImporter type not found in AppDomain.");
                     }
                 }
                 catch (Exception ex)
@@ -122,14 +138,21 @@ namespace AutonomousRobotKit
                     onProgress?.Invoke(0.80f, "Stabilizing physics & setting up drivetrain...");
                     yield return null;
 
-                    // Ensure all materials are upgraded to active pipeline (Standard / URP / HDRP)
-                    UpgradeMaterialsToActivePipeline(editorRover);
+                    try
+                    {
+                        // Ensure all materials are upgraded to active pipeline (Standard / URP / HDRP)
+                        UpgradeMaterialsToActivePipeline(editorRover);
 
-                    // Physics stabilization & stance setup
-                    StabilizeImportedRobot(editorRover);
-                    ConfigureRobotControls(editorRover);
-                    PositionRobotOnGround(editorRover);
-                    HookIntoSimulation(editorRover);
+                        // Physics stabilization & stance setup
+                        StabilizeImportedRobot(editorRover);
+                        ConfigureRobotControls(editorRover);
+                        PositionRobotOnGround(editorRover);
+                        HookIntoSimulation(editorRover);
+                    }
+                    catch (Exception postEx)
+                    {
+                        Debug.LogWarning("[RuntimeUrdfImporter] Post-import setup notice: " + postEx.Message);
+                    }
 
                     onProgress?.Invoke(1.0f, "Ready!");
                     yield return new WaitForSeconds(0.2f);
@@ -727,6 +750,23 @@ namespace AutonomousRobotKit
 
         private static void ConfigureRobotControls(GameObject robotRoot)
         {
+            // Strip any conflicting legacy RoverCompatibility or external package components
+            var oldComps = robotRoot.GetComponentsInChildren<MonoBehaviour>(true);
+            foreach (var mb in oldComps)
+            {
+                if (mb == null) continue;
+                string ns = mb.GetType().Namespace ?? "";
+                if (ns == "RoverCompatibility")
+                {
+                    mb.enabled = false;
+#if UNITY_EDITOR
+                    UnityEngine.Object.DestroyImmediate(mb);
+#else
+                    UnityEngine.Object.Destroy(mb);
+#endif
+                }
+            }
+
             // Run AutoConfigurator (model-specific physics, joints, and controllers)
             try
             {
@@ -745,25 +785,83 @@ namespace AutonomousRobotKit
             stabilizer.ApplyStabilization();
         }
 
+        public static void CleanPreviousImportedRobots(GameObject currentRobot = null)
+        {
+#if UNITY_6000_0_OR_NEWER
+            var rootTransforms = GameObject.FindObjectsByType<Transform>(FindObjectsInactive.Include)
+#elif UNITY_2023_1_OR_NEWER
+            var rootTransforms = GameObject.FindObjectsByType<Transform>(FindObjectsSortMode.None)
+#else
+            var rootTransforms = GameObject.FindObjectsOfType<Transform>()
+#endif
+                .Where(t => t != null && t.parent == null && (currentRobot == null || t.gameObject != currentRobot))
+                .Where(t => t.GetComponent<SimpleDifferentialDrive>() != null || 
+                            t.GetComponent<ArticulatedRobotController>() != null || 
+                            t.GetComponent<Unity.Robotics.UrdfImporter.UrdfRobot>() != null ||
+                            t.GetComponent<RoverCompatibilityMarker>() != null)
+                .Select(t => t.gameObject)
+                .Distinct()
+                .ToList();
+
+            foreach (var old in rootTransforms)
+            {
+                Debug.Log($"[RuntimeUrdfImporter] Cleaning up previous robot '{old.name}' from scene.");
+                if (Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(old);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(old);
+                }
+            }
+        }
+
         private static void PositionRobotOnGround(GameObject robotRoot)
         {
+            CleanPreviousImportedRobots(robotRoot);
+
             var allBodies = robotRoot.GetComponentsInChildren<ArticulationBody>(true);
             var rootBody = allBodies != null ? allBodies.FirstOrDefault(b => b.isRoot) : null;
 
-            // Calculate robot bottom bounding box from colliders
-            var colliders = robotRoot.GetComponentsInChildren<Collider>(true);
+            // Calculate robot bottom bounding box from colliders (prefer wheel/running gear for ground mobile robots)
+            var desc = RoverAnalyzer.Analyze(robotRoot);
             float lowestY = float.MaxValue;
-            if (colliders != null && colliders.Length > 0)
+            if (desc.Wheels != null && desc.Wheels.Count > 0)
             {
-                foreach (var c in colliders)
+                foreach (var w in desc.Wheels)
                 {
-                    if (c != null && c.enabled && c.bounds.min.y < lowestY) lowestY = c.bounds.min.y;
+                    if (w == null) continue;
+                    var wCols = w.GetComponentsInChildren<Collider>(true);
+                    foreach (var c in wCols)
+                    {
+                        if (c != null && c.enabled && c.bounds.min.y < lowestY) lowestY = c.bounds.min.y;
+                    }
+                }
+            }
+
+            if (lowestY == float.MaxValue)
+            {
+                var colliders = robotRoot.GetComponentsInChildren<Collider>(true);
+                if (colliders != null && colliders.Length > 0)
+                {
+                    foreach (var c in colliders)
+                    {
+                        if (c != null && c.enabled && c.bounds.min.y < lowestY) lowestY = c.bounds.min.y;
+                    }
                 }
             }
 
             float referenceY = rootBody != null ? rootBody.transform.position.y : robotRoot.transform.position.y;
-            float pivotToBottom = (lowestY != float.MaxValue) ? (referenceY - lowestY) : 0.35f;
-            if (pivotToBottom < 0.05f || pivotToBottom > 2.5f) pivotToBottom = 0.35f;
+            float pivotToBottom = 0.25f;
+            if (lowestY != float.MaxValue && lowestY < referenceY)
+            {
+                pivotToBottom = Mathf.Clamp(referenceY - lowestY, 0.02f, 2.5f);
+            }
+            else if (lowestY != float.MaxValue && lowestY >= referenceY)
+            {
+                pivotToBottom = 0.05f;
+            }
 
             // Determine safe spawn location: prefer Active Terrain surface
             Vector3 targetPosition = Vector3.zero;
@@ -871,7 +969,7 @@ namespace AutonomousRobotKit
             }
 
             // Offset above surface to rest gently without collider interpenetration
-            targetPosition.y += (pivotToBottom + 0.05f);
+            targetPosition.y += (pivotToBottom + 0.02f);
 
             // 1. Position parent container GameObject
             robotRoot.transform.position = targetPosition;
@@ -907,29 +1005,38 @@ namespace AutonomousRobotKit
             var rootBody = allBodies != null ? allBodies.FirstOrDefault(b => b.isRoot) : null;
             Transform trackTransform = (rootBody != null) ? rootBody.transform : robotRoot.transform;
 
-            // 1. Camera focus with Chase perspective
+            // 1. Camera focus with Rear perspective
             var mainCam = Camera.main;
             if (mainCam != null)
             {
-                var camMono = mainCam.GetComponent("FreeFlyCamera");
-                if (camMono != null)
+                try
                 {
-                    camMono.SendMessage("SetTargetRover", trackTransform, SendMessageOptions.DontRequireReceiver);
-                    var method = camMono.GetType().GetMethod("SetCameraPerspective");
-                    if (method != null)
+                    var camMono = mainCam.GetComponent("FreeFlyCamera");
+                    if (camMono != null)
                     {
-                        var enumType = camMono.GetType().GetNestedType("CameraPerspective");
-                        if (enumType != null)
+                        camMono.SendMessage("SetTargetRover", trackTransform, SendMessageOptions.DontRequireReceiver);
+                        var method = camMono.GetType().GetMethod("SetCameraPerspective");
+                        if (method != null)
                         {
-                            var chaseVal = Enum.Parse(enumType, "Chase");
-                            method.Invoke(camMono, new object[] { chaseVal });
+                            var enumType = camMono.GetType().GetNestedType("CameraPerspective");
+                            if (enumType != null)
+                            {
+                                object perspectiveVal = Enum.IsDefined(enumType, "Rear")
+                                    ? Enum.Parse(enumType, "Rear")
+                                    : (Enum.IsDefined(enumType, "Chase") ? Enum.Parse(enumType, "Chase") : Enum.GetValues(enumType).GetValue(0));
+                                method.Invoke(camMono, new object[] { perspectiveVal });
+                            }
                         }
                     }
+                }
+                catch (Exception camEx)
+                {
+                    Debug.LogWarning("[RuntimeUrdfImporter] Camera focus notice: " + camEx.Message);
                 }
             }
 
             // 2. SimulationFlowController integration
-            var allMono = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            var allMono = UnityEngine.Object.FindObjectsByType<MonoBehaviour>();
             foreach (var m in allMono)
             {
                 if (m != null && m.GetType().Name == "SimulationFlowController")

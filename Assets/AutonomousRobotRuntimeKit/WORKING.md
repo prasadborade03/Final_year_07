@@ -65,23 +65,17 @@ The system inspects degrees of freedom (DOF), link positions, parent-child hiera
 
 ## 3. Universal Drivetrain & Controller Systems
 
-### A. Steered & Differential Mobile Rovers ([`SimpleDifferentialDrive.cs`](file:///d:/Final_Year_Shyt_Unity/Final_year_shit/Assets/AutonomousRobotRuntimeKit/Runtime/Controllers/SimpleDifferentialDrive.cs))
-- **Smooth Acceleration Delivery**: Applies `Mathf.MoveTowards` on longitudinal and turn velocities, eliminating tipping and wheel chattering.
-- **Heading-Aware Steering Knuckle Angle Resolution**:
-  ```csharp
-  // Automatically detects knuckle longitudinal placement and rotation axis in world coordinates:
-  bool isFront = localPos.z >= 0f;
-  float upDot = Vector3.Dot(worldAxis, rootTransform.up);
-  float axisSign = upDot >= 0f ? 1f : -1f;
-  float longitudinalSign = isFront ? 1f : -1f;
-  targetKnuckleAngle = steerAngleDeg * longitudinalSign * axisSign;
-  ```
-  - Front-left ($+$) and Front-right ($-$) turn in the same physical direction.
-  - Rear-left ($-$) and Rear-right ($+$) counter-steer to follow the turning radius.
-  - Wheels never turn inward against each other ("pigeon-toed") and never fight the ground.
-- **Differential Speed Clamping**: Clamps final wheel angular velocities to `[-maxSpeed, maxSpeed]`, preventing outer wheels from over-revving during turns.
+### A. Steered & Differential Mobile Rovers ([`SimpleDifferentialDrive.cs`](file:///d:/Final_year_07-main/Assets/AutonomousRobotRuntimeKit/Runtime/Controllers/SimpleDifferentialDrive.cs))
+- **Automatic Physical Spin Direction Derivation**:
+  - Uses the 3D cross product and dot product $\vec{\omega}_{axis} \cdot \hat{right}$ to compute the physical forward drive multiplier (`+1.0f` or `-1.0f`) for every wheel. Wheels never spin backwards or fight each other regardless of mirrored CAD origins or flipped URDF joint definitions.
+- **Coordinated Curve Driving & Ackermann Speed Differential**:
+  - Longitudinal velocity drives all wheels smoothly. On curves, outer wheels rotate faster ($1 + 0.25 |S|$) and inner wheels slower ($1 - 0.25 |S|$), eliminating lateral tire drag along the arc.
+- **Zero-Radius Point-Turn Kinematics**:
+  - When stationary ($T = 0, S \ne 0$), 4-corner steered rovers (RB-Vogui, Perseverance, Curiosity) angle all 4 steering knuckles tangentially into the turning circle ($\pm 45^\circ$) and spin left/right wheels in opposite directions, pivoting on the spot with zero tire scrub.
+- **Skid-Steer Differential Fallback**:
+  - Rovers without steering knuckles (Husky, Pioneer, TurtleBot) use proportional skid-steering with velocity clamping and PhysX damping braking.
 
-### B. Dynamic Articulated Quadrupeds ([`ArticulatedRobotController.cs`](file:///d:/Final_Year_Shyt_Unity/Final_year_shit/Assets/AutonomousRobotRuntimeKit/Runtime/Controllers/ArticulatedRobotController.cs))
+### B. Dynamic Articulated Quadrupeds ([`ArticulatedRobotController.cs`](file:///d:/Final_year_07-main/Assets/AutonomousRobotRuntimeKit/Runtime/Controllers/ArticulatedRobotController.cs))
 - **Orientation-Invariant Upright Posture Stabilizer**:
   Traditional controllers compute pitch and roll from global Euler angles (`euler.x`, `euler.z`), which cross-talks pitch into roll whenever the robot turns away from world North ($0^\circ$). This system computes stabilization using the 3D cross product:
   ```csharp
@@ -92,11 +86,16 @@ The system inspects degrees of freedom (DOF), link positions, parent-child hiera
   _rootBody.angularVelocity = uprightAngularVel + (Vector3.up * _smoothedTurnAv);
   ```
   `uprightAngularVel` is strictly horizontal; `yawAngularVel` is strictly vertical. **Zero gyroscopic cross-talk at any heading angle ($0^\circ$ to $360^\circ$).**
-- **Diagonal Trot Gait with Knee Clearance**:
-  - Diagonal leg pairs (`FL+RR` vs `FR+RL`) oscillate in antiphase ($\pi$).
-  - Knees actively bend during swing phase to lift feet off the ground, preventing foot-dragging and lateral tripping during in-place turning.
+- **Dynamic Diagonal Trot Gait with Knee Swing Clearance**:
+  - Diagonal leg pairs (`FL+RR` vs `FR+RL`) oscillate in antiphase ($\pi$) at natural $\sim 1.8\text{ Hz}$ frequency.
+  - Active knee flexion lifts swing feet $5\text{ cm} - 8\text{ cm}$ into the air ($18^\circ - 25^\circ$ lift amplitude), ensuring clean ground clearance with zero dragging.
+  - Hip abduction flare ($2.5^\circ$) widens the base of support into turns, preventing tripping.
+  - In-place turning steps left and right sides in opposite directions, turning naturally like an animal on the spot.
 - **Calibrated Stance Management**:
-  Supports instant runtime transitions between `Stand`, `Crouch`, `Sit`, and `Zero` postures with critically damped PD springs.
+  Supports instant runtime transitions between `Stand` (<kbd>1</kbd>), `Crouch` (<kbd>2</kbd>), `Sit` (<kbd>3</kbd>), and `Zero` (<kbd>0</kbd>) postures with critically damped PD springs.
+
+### C. Wheeled Quadrupeds ([`RoverAutoConfigurator.cs`](file:///d:/Final_year_07-main/Assets/AutonomousRobotRuntimeKit/Runtime/Core/RoverAutoConfigurator.cs))
+- Wheeled quadrupeds (Unitree Go2-W, Deep Robotics M20) automatically drive 100% of locomotion via wheel velocity drive (`SimpleDifferentialDrive`), while leg joints maintain a firm, shock-absorbing stance (`ArticulatedRobotController` with trotting disabled). Legs do not walk like a dog while wheels roll.
 
 ---
 

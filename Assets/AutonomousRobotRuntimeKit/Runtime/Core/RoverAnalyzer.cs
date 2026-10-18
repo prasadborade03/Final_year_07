@@ -321,6 +321,25 @@ namespace AutonomousRobotKit
             return Vector3.Dot(wheelSpinAxisWorld, chassisRight) < -0.3f;
         }
 
+        /// <summary>
+        /// Calculates the exact physical sign (+1.0 or -1.0) needed for forward wheel drive.
+        /// In Unity PhysX ArticulationBody coordinate convention:
+        /// When the joint's spin axis points to the vehicle's right side (dot >= 0), positive targetVelocity
+        /// rotates the wheel forward along the vehicle's forward vector (+1f).
+        /// When the joint's spin axis points to the vehicle's left side (dot < 0), negative targetVelocity
+        /// rotates the wheel forward (-1f).
+        /// </summary>
+        public static float CalculateWheelDriveMultiplier(ArticulationBody wheel, ArticulationBody chassis)
+        {
+            if (wheel == null || chassis == null) return 1f;
+
+            Vector3 wheelSpinAxisWorld = wheel.transform.rotation * wheel.anchorRotation * Vector3.right;
+            Vector3 chassisRight = chassis.transform.right;
+
+            float dot = Vector3.Dot(wheelSpinAxisWorld, chassisRight);
+            return dot >= 0f ? 1f : -1f;
+        }
+
         private static bool IsDriveFree(ArticulationBody body)
         {
             if (body.twistLock == ArticulationDofLock.FreeMotion ||

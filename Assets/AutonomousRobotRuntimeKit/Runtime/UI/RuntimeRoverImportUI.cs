@@ -591,7 +591,7 @@ namespace AutonomousRobotKit
                 return;
             }
 
-            var allMono = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            var allMono = FindObjectsByType<MonoBehaviour>();
             foreach (var m in allMono)
             {
                 if (m != null && m.GetType().Name == "SimulationFlowController")
@@ -614,7 +614,17 @@ namespace AutonomousRobotKit
 
         private void UpdateHudState()
         {
-            if (_activeArticulatedCtrl != null && _hudInstructionText != null && _isHudExpanded)
+            if (_activeDiffDrive != null && _activeArticulatedCtrl != null && _hudInstructionText != null && _isHudExpanded)
+            {
+                float speed = _activeDiffDrive.SmoothedForwardVelocity;
+                float turnSpeed = _activeDiffDrive.CurrentTurnInput;
+                string moveStatus = Mathf.Abs(speed) > 5f || Mathf.Abs(turnSpeed) > 0.1f 
+                    ? $"<color=#00FF88>WHEELS DRIVING: {speed:F0} deg/s</color>" 
+                    : "WHEELS STOPPED / BRAKING";
+                string stance = _activeArticulatedCtrl.currentPreset.ToString().ToUpper();
+                _hudInstructionText.text = $"Stance: <b>{stance}</b> | Drivetrain: <b>{moveStatus}</b> ({_activeDiffDrive.wheels.Count} Wheels)\nDrive: [W/A/S/D] | Stances: [1] Stand [2] Crouch [3] Sit [0] Zero";
+            }
+            else if (_activeArticulatedCtrl != null && _hudInstructionText != null && _isHudExpanded)
             {
                 string stance = _activeArticulatedCtrl.currentPreset.ToString().ToUpper();
                 bool moving = _activeArticulatedCtrl.IsMoving;
@@ -624,7 +634,10 @@ namespace AutonomousRobotKit
             else if (_activeDiffDrive != null && _hudInstructionText != null && _isHudExpanded)
             {
                 float speed = _activeDiffDrive.SmoothedForwardVelocity;
-                string moveStatus = Mathf.Abs(speed) > 5f ? $"<color=#00FF88>DRIVING: {speed:F0} deg/s</color>" : "STOPPED / BRAKING";
+                float turn = _activeDiffDrive.CurrentTurnInput;
+                string moveStatus = Mathf.Abs(speed) > 5f 
+                    ? $"<color=#00FF88>DRIVING: {speed:F0} deg/s</color>" 
+                    : (Mathf.Abs(turn) > 0.1f ? "<color=#00FF88>TURNING / PIVOTING</color>" : "STOPPED / BRAKING");
                 _hudInstructionText.text = $"Drivetrain: <b>{moveStatus}</b> ({_activeDiffDrive.wheels.Count} Wheels Active)\nDrive with W/A/S/D or Arrow keys";
             }
         }
@@ -715,30 +728,29 @@ namespace AutonomousRobotKit
             var mainCam = Camera.main;
             if (mainCam != null)
             {
-                var camMono = mainCam.GetComponent("FreeFlyCamera");
-                if (camMono != null)
+                try
                 {
-                    camMono.SendMessage("SetTargetRover", targetT, SendMessageOptions.DontRequireReceiver);
-                    var method = camMono.GetType().GetMethod("SetCameraPerspective");
-                    if (method != null)
+                    var camMono = mainCam.GetComponent("FreeFlyCamera");
+                    if (camMono != null)
                     {
-                        var enumType = camMono.GetType().GetNestedType("CameraPerspective");
-                        if (enumType != null)
+                        camMono.SendMessage("SetTargetRover", targetT, SendMessageOptions.DontRequireReceiver);
+                        var method = camMono.GetType().GetMethod("SetCameraPerspective");
+                        if (method != null)
                         {
-                            try
+                            var enumType = camMono.GetType().GetNestedType("CameraPerspective");
+                            if (enumType != null)
                             {
-                                object targetVal = null;
-                                if (Enum.IsDefined(enumType, "Chase"))
-                                    targetVal = Enum.Parse(enumType, "Chase");
-                                else if (Enum.IsDefined(enumType, "Rear"))
-                                    targetVal = Enum.Parse(enumType, "Rear");
-
-                                if (targetVal != null)
-                                    method.Invoke(camMono, new object[] { targetVal });
+                                object perspectiveVal = Enum.IsDefined(enumType, "Rear")
+                                    ? Enum.Parse(enumType, "Rear")
+                                    : (Enum.IsDefined(enumType, "Chase") ? Enum.Parse(enumType, "Chase") : Enum.GetValues(enumType).GetValue(0));
+                                method.Invoke(camMono, new object[] { perspectiveVal });
                             }
-                            catch { }
                         }
                     }
+                }
+                catch (Exception camEx)
+                {
+                    Debug.LogWarning("[RuntimeRoverImportUI] Camera focus notice: " + camEx.Message);
                 }
             }
         }
@@ -796,10 +808,15 @@ namespace AutonomousRobotKit
             StartImport(selectedFile);
         }
 
-        public void StartImport(string filePath)
+        private void StartImport(string filePath)
         {
             SetButtonInteractable(false);
             ShowToast("IMPORTING ROBOT", "Reading " + Path.GetFileName(filePath) + "...", 0.05f, accentCyan);
+
+            RuntimeUrdfImporter.CleanPreviousImportedRobots();
+            _activeRobot = null;
+            _activeArticulatedCtrl = null;
+            _activeDiffDrive = null;
 
             RuntimeUrdfImporter.ImportRobot(
                 filePath,
@@ -988,7 +1005,7 @@ namespace AutonomousRobotKit
 
         public void SpawnOrSelectHusky()
         {
-            var existing = FindObjectsByType<ArticulationBody>(FindObjectsSortMode.None)
+            var existing = FindObjectsByType<ArticulationBody>()
                 .Where(b => b.isRoot && b.name.ToLowerInvariant().Contains("husky"))
                 .Select(b => b.gameObject)
                 .FirstOrDefault();
@@ -1017,7 +1034,7 @@ namespace AutonomousRobotKit
 
         public void SpawnOrSelectPerseverance()
         {
-            var existing = FindObjectsByType<ArticulationBody>(FindObjectsSortMode.None)
+            var existing = FindObjectsByType<ArticulationBody>()
                 .Where(b => b.isRoot && (b.name.ToLowerInvariant().Contains("perseverance") || b.name.ToLowerInvariant().Contains("m2020")))
                 .Select(b => b.gameObject)
                 .FirstOrDefault();
@@ -1046,7 +1063,7 @@ namespace AutonomousRobotKit
 
         public void SpawnOrSelectGo2()
         {
-            var existing = FindObjectsByType<ArticulationBody>(FindObjectsSortMode.None)
+            var existing = FindObjectsByType<ArticulationBody>()
                 .Where(b => b.isRoot && (b.name.ToLowerInvariant().Contains("go2") || b.name.ToLowerInvariant().Contains("go1")))
                 .Select(b => b.gameObject)
                 .FirstOrDefault();
@@ -1078,7 +1095,7 @@ namespace AutonomousRobotKit
             if (targetRobot == null) return;
 
             // Pause / disable driving on all other robots in the scene so only active robot moves
-            var allDiffs = FindObjectsByType<SimpleDifferentialDrive>(FindObjectsSortMode.None);
+            var allDiffs = FindObjectsByType<SimpleDifferentialDrive>();
             foreach (var d in allDiffs)
             {
                 if (d != null && d.gameObject != targetRobot)
@@ -1087,7 +1104,7 @@ namespace AutonomousRobotKit
                 }
             }
 
-            var allArtCtrls = FindObjectsByType<ArticulatedRobotController>(FindObjectsSortMode.None);
+            var allArtCtrls = FindObjectsByType<ArticulatedRobotController>();
             foreach (var a in allArtCtrls)
             {
                 if (a != null && a.gameObject != targetRobot)
