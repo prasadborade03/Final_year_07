@@ -350,6 +350,8 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged += HandleRigPerspectiveChanged;
             RoverCameraRig.OnCameraSpeedChanged += HandleCameraSpeedChanged;
+            RuntimeUrdfImporter.OnBeforeTemporaryRoverDestroyed -= HandleBeforeTemporaryRoverDestroyed;
+            RuntimeUrdfImporter.OnBeforeTemporaryRoverDestroyed += HandleBeforeTemporaryRoverDestroyed;
 
             var envCtrl = PlanetEnvironmentController.Instance ?? (PlanetEnvironmentController)FindAnyObjectByType<PlanetEnvironmentController>();
             if (envCtrl != null)
@@ -1887,6 +1889,14 @@ namespace ProjectName.Terrain
                 {
                     RoverPlacementController.Instance.ConfirmPlacementAtPoint(targetPoint, 0f, "husky");
                 }
+            }
+        }
+
+        private void HandleBeforeTemporaryRoverDestroyed(GameObject rover)
+        {
+            if (ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject == rover)
+            {
+                ActiveRoverContext.Unregister();
             }
         }
 
@@ -3742,6 +3752,7 @@ namespace ProjectName.Terrain
             ActiveRoverContext.OnRoverDestroyed -= HandleRoverDestroyed;
             RoverCameraRig.OnPerspectiveChanged -= HandleRigPerspectiveChanged;
             RoverCameraRig.OnCameraSpeedChanged -= HandleCameraSpeedChanged;
+            RuntimeUrdfImporter.OnBeforeTemporaryRoverDestroyed -= HandleBeforeTemporaryRoverDestroyed;
             if (flowController != null)
             {
                 flowController.OnSimulationStateChanged -= HandleSimulationStateChanged;

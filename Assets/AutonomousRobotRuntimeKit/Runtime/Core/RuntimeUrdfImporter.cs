@@ -59,6 +59,12 @@ namespace AutonomousRobotKit
         public static GameObject ActiveTemporaryRoverObject { get; set; }
 
         /// <summary>
+        /// Optional event invoked just before a temporary rover GameObject is destroyed,
+        /// allowing external systems (like ActiveRoverContext) to unregister without assembly coupling.
+        /// </summary>
+        public static event Action<GameObject> OnBeforeTemporaryRoverDestroyed;
+
+        /// <summary>
         /// Cleans up any runtime temporary rover from both the scene (hierarchy) and disk (storage).
         /// Ensures runtime imported rovers remain purely temporary and do not pollute the project.
         /// </summary>
@@ -69,10 +75,7 @@ namespace AutonomousRobotKit
             {
                 try
                 {
-                    if (ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject == target)
-                    {
-                        ActiveRoverContext.Unregister();
-                    }
+                    OnBeforeTemporaryRoverDestroyed?.Invoke(target);
                     Destroy(target);
                 }
                 catch (Exception ex)
