@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using AutonomousRobotKit;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactors.Casters;
@@ -766,6 +767,7 @@ namespace ProjectName.Rover
         private void DestroyPreviousRovers()
         {
             ActiveRoverContext.DestroyActiveRover();
+            RuntimeUrdfImporter.CleanupTemporaryRover();
 
             string[] roverNames = new[] { "GeneratedHusky", "GeneratedM20", "GeneratedPerseverance_Fixed" };
             foreach (var n in roverNames)

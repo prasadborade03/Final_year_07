@@ -55,6 +55,83 @@ namespace AutonomousRobotKit
             }
         }
 
+        public static string ActiveTemporaryRoverDirectory { get; private set; }
+        public static GameObject ActiveTemporaryRoverObject { get; set; }
+
+        /// <summary>
+        /// Cleans up any runtime temporary rover from both the scene (hierarchy) and disk (storage).
+        /// Ensures runtime imported rovers remain purely temporary and do not pollute the project.
+        /// </summary>
+        public static void CleanupTemporaryRover(GameObject roverToDestroy = null)
+        {
+            GameObject target = roverToDestroy != null ? roverToDestroy : ActiveTemporaryRoverObject;
+            if (target != null)
+            {
+                try
+                {
+                    if (ActiveRoverContext.Current != null && ActiveRoverContext.Current.rootGameObject == target)
+                    {
+                        ActiveRoverContext.Unregister();
+                    }
+                    Destroy(target);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[RuntimeUrdfImporter] Notice destroying temporary rover GameObject: " + ex.Message);
+                }
+                if (ActiveTemporaryRoverObject == target)
+                {
+                    ActiveTemporaryRoverObject = null;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(ActiveTemporaryRoverDirectory) && Directory.Exists(ActiveTemporaryRoverDirectory))
+            {
+                try
+                {
+#if UNITY_EDITOR
+                    if (Application.isEditor)
+                    {
+                        string projectPath = Application.dataPath.Replace('\\', '/');
+                        string normDir = Path.GetFullPath(ActiveTemporaryRoverDirectory).Replace('\\', '/');
+                        if (normDir.StartsWith(projectPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            string relPath = "Assets" + normDir.Substring(projectPath.Length);
+                            UnityEditor.AssetDatabase.DeleteAsset(relPath);
+                            UnityEditor.AssetDatabase.Refresh();
+                        }
+                        else
+                        {
+                            Directory.Delete(ActiveTemporaryRoverDirectory, true);
+                        }
+                    }
+                    else
+#endif
+                    {
+                        Directory.Delete(ActiveTemporaryRoverDirectory, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[RuntimeUrdfImporter] Notice cleaning up temporary folder: " + ex.Message);
+                }
+                ActiveTemporaryRoverDirectory = null;
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            CleanupTemporaryRover();
+        }
+
+        private void OnDestroy()
+        {
+            if (Application.isPlaying)
+            {
+                CleanupTemporaryRover();
+            }
+        }
+
         /// <summary>
         /// Entry point to import a robot from a .zip or .urdf file path asynchronously.
         /// </summary>
@@ -85,6 +162,9 @@ namespace AutonomousRobotKit
                 onError?.Invoke("Unsupported file format: " + ext + ". Please select a .zip or .urdf file.");
                 yield break;
             }
+
+            // Clean up any previously imported temporary rover first
+            CleanupTemporaryRover();
 
             // ----------------------------------------------------
             // Path A: In Unity Editor (Play Mode & Edit Mode)
@@ -153,6 +233,9 @@ namespace AutonomousRobotKit
                     {
                         Debug.LogWarning("[RuntimeUrdfImporter] Post-import setup notice: " + postEx.Message);
                     }
+
+                    ActiveTemporaryRoverDirectory = Path.Combine(Application.dataPath, "ImportedRovers", Path.GetFileNameWithoutExtension(filePath));
+                    ActiveTemporaryRoverObject = editorRover;
 
                     onProgress?.Invoke(1.0f, "Ready!");
                     yield return new WaitForSeconds(0.2f);
@@ -325,6 +408,9 @@ namespace AutonomousRobotKit
             PositionRobotOnGround(robotObject);
 
             HookIntoSimulation(robotObject);
+
+            ActiveTemporaryRoverDirectory = workingDir;
+            ActiveTemporaryRoverObject = robotObject;
 
             onProgress?.Invoke(1.0f, "Ready!");
             yield return new WaitForSeconds(0.2f);

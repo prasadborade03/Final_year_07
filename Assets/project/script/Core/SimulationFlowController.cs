@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using AutonomousRobotKit;
 using UnityEngine.EventSystems;
 using TMPro;
 using ProjectName.Rover;
@@ -317,6 +318,7 @@ public class SimulationFlowController : MonoBehaviour
     {
         DisableAllRovers();
         ActiveRoverContext.DestroyActiveRover();
+        RuntimeUrdfImporter.CleanupTemporaryRover();
         activeSpawnedRover = null;
         pendingRobot = null;
 
