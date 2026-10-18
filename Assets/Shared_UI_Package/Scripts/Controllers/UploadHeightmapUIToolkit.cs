@@ -3511,6 +3511,7 @@ namespace ProjectName.Terrain
 
             // 5. Register with ActiveRoverContext (Single Source of Truth)
             ActiveRoverContext.Register(handle);
+            RoverCameraRig.Instance?.FocusActiveRover();
 
             // 6. Update UI State & Badges
             if (lblCustomRoverName != null) lblCustomRoverName.text = robotName;
