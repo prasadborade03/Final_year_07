@@ -93,7 +93,7 @@ namespace AutonomousRobotKit
                 try
                 {
 #if UNITY_EDITOR
-                    if (Application.isEditor)
+                    if (Application.isEditor && !Application.isPlaying)
                     {
                         string projectPath = Application.dataPath.Replace('\\', '/');
                         string normDir = Path.GetFullPath(ActiveTemporaryRoverDirectory).Replace('\\', '/');
@@ -101,7 +101,6 @@ namespace AutonomousRobotKit
                         {
                             string relPath = "Assets" + normDir.Substring(projectPath.Length);
                             UnityEditor.AssetDatabase.DeleteAsset(relPath);
-                            UnityEditor.AssetDatabase.Refresh();
                         }
                         else
                         {
@@ -112,6 +111,11 @@ namespace AutonomousRobotKit
 #endif
                     {
                         Directory.Delete(ActiveTemporaryRoverDirectory, true);
+                        string metaFile = ActiveTemporaryRoverDirectory.TrimEnd('/', '\\') + ".meta";
+                        if (File.Exists(metaFile))
+                        {
+                            File.Delete(metaFile);
+                        }
                     }
                 }
                 catch (Exception ex)

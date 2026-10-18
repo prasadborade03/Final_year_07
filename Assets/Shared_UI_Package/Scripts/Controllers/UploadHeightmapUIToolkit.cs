@@ -3518,14 +3518,42 @@ namespace ProjectName.Terrain
         {
             if (roverObj == null) return;
 
-            // 1. Destroy any previous rover in scene and clean up previous temporary rover
-            if (RoverPlacementController.Instance != null)
+            // 1. Destroy only PRESET rovers from scene (Husky, M20, Perseverance)
+            string[] presetRoverNames = new[] { "GeneratedHusky", "GeneratedM20", "GeneratedPerseverance_Fixed" };
+            foreach (var n in presetRoverNames)
             {
-                RoverPlacementController.Instance.SendMessage("DestroyPreviousRovers", SendMessageOptions.DontRequireReceiver);
+                var go = GameObject.Find(n);
+                if (go != null)
+                {
+                    Destroy(go);
+                }
             }
-            CleanupCustomRover();
+
+            // 2. Destroy previous custom rover if different from the new one
+            if (currentCustomRoverObject != null && currentCustomRoverObject != roverObj)
+            {
+                Destroy(currentCustomRoverObject);
+            }
+            if (ActiveRoverContext.HasActiveRover && ActiveRoverContext.Current.rootGameObject != roverObj)
+            {
+                if (ActiveRoverContext.Current.rootGameObject != null)
+                {
+                    Destroy(ActiveRoverContext.Current.rootGameObject);
+                }
+                ActiveRoverContext.Unregister();
+            }
+
             currentCustomRoverObject = roverObj;
             RuntimeUrdfImporter.ActiveTemporaryRoverObject = roverObj;
+
+            // 3. Record placement pose for Respawn / Reset
+            if (RoverPlacementController.Instance != null)
+            {
+                RoverPlacementController.Instance.lastPlacementPoint = roverObj.transform.position;
+                RoverPlacementController.Instance.lastPlacementYaw = roverObj.transform.eulerAngles.y;
+                RoverPlacementController.Instance.lastPlacementRoverId = "custom";
+                RoverPlacementController.Instance.hasLastPlacementPose = true;
+            }
 
             // 2. Identify ArticulationBody root
             var allBodies = roverObj.GetComponentsInChildren<ArticulationBody>(true);
@@ -3552,6 +3580,7 @@ namespace ProjectName.Terrain
             RoverCameraRig.Instance?.FocusActiveRover();
 
             // 6. Update UI State & Badges
+            activeRoverId = "custom";
             if (lblCustomRoverName != null) lblCustomRoverName.text = robotName;
             if (tagCustomRoverActive != null)
             {

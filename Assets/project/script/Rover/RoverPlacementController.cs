@@ -802,6 +802,13 @@ namespace ProjectName.Rover
                 lastPlacementPoint.y = terrain.SampleHeight(lastPlacementPoint) + terrain.transform.position.y;
             }
 
+            // If active rover is custom, reposition directly without needing a preset importer
+            if (rId == "custom" && ActiveRoverContext.HasActiveRover)
+            {
+                TeleportActiveRover(lastPlacementPoint);
+                return;
+            }
+
             ConfirmPlacementAtPoint(lastPlacementPoint, lastPlacementYaw, rId);
         }
 
