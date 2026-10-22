@@ -27,7 +27,7 @@
 
         <!-- 2. Floating Top Row Shell -->
         <ui:VisualElement name="ShellTopRow" class="shell-top-row" picking-mode="Ignore">
-            <!-- Mode Switch Pill (Driving HUD vs Full Studio) -->
+            <!-- Mode Switch Pill (Driving HUD vs Full Studio vs Output) -->
             <ui:VisualElement name="ModeToggleBar" class="segmented-bar mode-toggle-bar hud-interactive" picking-mode="Position">
                 <ui:Button name="BtnModeDriving" class="segmented-item mode-toggle-item" tooltip="Unobstructed 3D view for driving [Tab]">
                     <ui:VisualElement class="icon-14 icon-steering-wheel tint-text-2" />
@@ -37,7 +37,17 @@
                     <ui:VisualElement class="icon-14 icon-mountains" />
                     <ui:Label text="Full Studio" class="segmented-text" />
                 </ui:Button>
+                <ui:Button name="BtnModeOutput" class="segmented-item mode-toggle-item" tooltip="Mission recorder, output log and export [O]">
+                    <ui:VisualElement class="icon-14 icon-waveform tint-text-2" />
+                    <ui:Label text="Output" class="segmented-text" />
+                </ui:Button>
             </ui:VisualElement>
+
+            <!-- Rec Chip (Visible when recording/paused) -->
+            <ui:Button name="RecChip" class="rec-chip hud-interactive" tooltip="Recording in progress - Click to view Output [O]" picking-mode="Position">
+                <ui:VisualElement name="RecChipDot" class="rec-chip-dot" />
+                <ui:Label name="LblRecChip" text="REC 00:00" class="rec-chip-text" />
+            </ui:Button>
 
             <!-- Actions & Menu Group -->
             <ui:VisualElement class="top-right-group hud-interactive" picking-mode="Position">
@@ -829,6 +839,230 @@
             </ui:VisualElement>
 
 
+        </ui:VisualElement>
+
+        <!-- 3. Output Mode View (Mission Recorder & Telemetry Logs) -->
+        <ui:VisualElement name="OutputRoot" class="output-root hud-interactive" picking-mode="Position">
+            <!-- Left Column: Recorder Card -->
+            <ui:VisualElement class="output-col-left panel-card">
+                <ui:VisualElement class="panel-header-row">
+                    <ui:Label text="MISSION RECORDER" class="panel-title" />
+                    <ui:VisualElement class="rec-state-pill status-badge">
+                        <ui:VisualElement name="RecStateDot" class="rec-state-dot" />
+                        <ui:Label name="LblRecState" text="IDLE" class="rec-state-label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="metric-grid-2x2 output-rec-stats">
+                    <ui:VisualElement class="metric-cell">
+                        <ui:Label text="ELAPSED" class="metric-label" />
+                        <ui:Label name="LblRecElapsed" text="00:00:00" class="metric-value metric-value-sm" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="metric-cell">
+                        <ui:Label text="SAMPLES" class="metric-label" />
+                        <ui:Label name="LblRecSamples" text="0" class="metric-value metric-value-sm" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="metric-cell">
+                        <ui:Label text="FILE SIZE" class="metric-label" />
+                        <ui:Label name="LblRecSize" text="0 KB" class="metric-value metric-value-sm" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Rate Selector -->
+                <ui:VisualElement class="output-setting-group">
+                    <ui:Label text="SAMPLE RATE" class="metric-label" />
+                    <ui:VisualElement class="segmented-bar rate-bar">
+                        <ui:Button name="BtnRate5" text="5 Hz" class="segmented-item rate-item" />
+                        <ui:Button name="BtnRate10" text="10 Hz" class="segmented-item rate-item segmented-active" />
+                        <ui:Button name="BtnRate20" text="20 Hz" class="segmented-item rate-item" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Toggles -->
+                <ui:VisualElement class="output-setting-group">
+                    <ui:VisualElement class="toggle-switch-row">
+                        <ui:Label text="Auto-start on movement" class="metric-label" />
+                        <ui:Toggle name="TglAutoStart" class="custom-toggle" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="toggle-switch-row">
+                        <ui:Label text="Include wheel data" class="metric-label" />
+                        <ui:Toggle name="TglWheelData" value="true" class="custom-toggle" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- State-Aware Buttons -->
+                <ui:VisualElement class="output-rec-btn-container">
+                    <ui:Button name="BtnRecStart" class="btn btn-primary btn-rec-action">
+                        <ui:Label text="● START RECORDING" class="btn-text" />
+                    </ui:Button>
+                    <ui:VisualElement class="output-rec-active-btns" style="display: none;">
+                        <ui:Button name="BtnRecPause" class="btn btn-secondary btn-rec-action" style="flex: 1;">
+                            <ui:Label text="❚❚ PAUSE" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button name="BtnRecResume" class="btn btn-primary btn-rec-action" style="flex: 1; display: none;">
+                            <ui:Label text="► RESUME" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button name="BtnRecStop" class="btn btn-confirm btn-rec-action" style="flex: 1;">
+                            <ui:Label text="■ STOP &amp; SAVE" class="btn-text" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="LblRecHint" text="" class="output-rec-hint" />
+            </ui:VisualElement>
+
+            <!-- Center Column: Live Trace & Summary Grid -->
+            <ui:VisualElement class="output-col-center">
+                <!-- Live Trace Panel -->
+                <ui:VisualElement class="output-trace-panel panel-card">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="LIVE TELEMETRY TRACE" class="panel-title" />
+                        <ui:Label text="WINDOW: 60s" class="trace-window-pill" />
+                    </ui:VisualElement>
+
+                    <!-- Channel Chips Multi-Select -->
+                    <ui:VisualElement name="TraceChannelRow" class="trace-channel-chips">
+                        <ui:Button name="ChipSpeed" text="SPEED" class="material-chip material-chip-active" />
+                        <ui:Button name="ChipSlope" text="SLOPE" class="material-chip material-chip-active" />
+                        <ui:Button name="ChipSlip" text="SLIP" class="material-chip material-chip-active" />
+                        <ui:Button name="ChipPower" text="POWER" class="material-chip" />
+                        <ui:Button name="ChipBattery" text="BATT" class="material-chip" />
+                        <ui:Button name="ChipTemp" text="TEMP" class="material-chip" />
+                    </ui:VisualElement>
+
+                    <!-- Trace Canvas Container -->
+                    <ui:VisualElement name="TraceView" class="output-trace-view">
+                        <ui:Label name="LblTraceEmpty" text="No data. Start recording." class="trace-empty-label" style="display: none;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Summary Grid Panel -->
+                <ui:VisualElement class="output-summary-panel panel-card">
+                    <ui:VisualElement class="panel-header-row">
+                        <ui:Label text="SESSION SUMMARY (LIVE / SELECTED)" class="panel-title" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="SummaryGrid" class="output-summary-grid">
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="DIST" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumDist" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="m" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="AVG V" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumAvgV" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="m/s" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="MAX V" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumMaxV" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="m/s" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="ENERGY" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumEnergy" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="Wh" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="Wh/m" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumWhPerM" text="—" class="metric-value metric-value-sm" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="SLIP" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumSlip" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="avg %" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="SLOPE" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumSlope" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="max °" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="PITCH" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumPitch" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="max °" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="ROLL" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumRoll" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="max °" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="G-LOAD" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumG" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="G" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="BATT" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumBatt" text="—" class="metric-value metric-value-sm" />
+                                <ui:Label text="%" class="metric-unit" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="metric-cell summary-cell">
+                            <ui:Label text="WARN" class="metric-label" />
+                            <ui:VisualElement class="metric-value-row">
+                                <ui:Label name="SumWarn" text="—" class="metric-value metric-value-sm" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label name="LblOutputStatus" text="Ready" class="output-status-line" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Right Column: Saved Sessions & Export -->
+            <ui:VisualElement class="output-col-right panel-card">
+                <ui:VisualElement class="panel-header-row">
+                    <ui:Label text="SAVED SESSIONS" class="panel-title" />
+                    <ui:Button name="BtnExportAll" class="btn btn-secondary action-pill" tooltip="Export all sessions into a single zip archive">
+                        <ui:Label text="EXPORT ALL (.ZIP)" class="btn-text" />
+                    </ui:Button>
+                </ui:VisualElement>
+
+                <ui:ScrollView name="SessionList" class="output-session-list">
+                    <ui:Label name="LblSessionsEmpty" text="No sessions yet." class="sessions-empty-label" />
+                </ui:ScrollView>
+
+                <!-- Selected Session Details & Action Dock -->
+                <ui:VisualElement class="output-selected-session-box">
+                    <ui:Label name="LblSelName" text="Select a session" class="output-sel-name" />
+                    <ui:Label name="LblSelMeta" text="—" class="output-sel-meta" />
+                    <ui:Label name="LblSelPath" text="" class="output-sel-path" />
+
+                    <ui:VisualElement class="output-sel-actions-grid">
+                        <ui:Button name="BtnOpenFolder" class="btn btn-secondary" tooltip="Reveal folder in file explorer">
+                            <ui:Label text="OPEN FOLDER" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button name="BtnCopyPath" class="btn btn-secondary" tooltip="Copy full path to clipboard">
+                            <ui:Label text="COPY PATH" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button name="BtnExportZip" class="btn btn-primary" tooltip="Export session folder as a standalone .zip">
+                            <ui:Label text="EXPORT .ZIP" class="btn-text" />
+                        </ui:Button>
+                        <ui:Button name="BtnDeleteSession" class="btn btn-danger" tooltip="Permanently delete this session and its files">
+                            <ui:Label text="DELETE" class="btn-text" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- 6. Confirmation Modal Overlay -->

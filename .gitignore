@@ -124,3 +124,6 @@ final-year-prj/
 # Runtime imported rovers (temporary staging cache)
 /[Aa]ssets/ImportedRovers/
 /[Aa]ssets/ImportedRovers.meta
+
+# Mission Recorder outputs
+/Outputs/
