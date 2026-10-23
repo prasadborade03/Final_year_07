@@ -283,10 +283,10 @@ The project follows a strict **Single Source of Truth (SSoT)** architectural pri
 | Wheel diameter | 0.527 m | NASA JPL (52.7 cm wheels) |
 | Max speed | ~0.152 m/s (auto-nav) | NASA JPL |
 | Battery capacity | 4,000 Wh (two MMRTG at ~110W each) | NASA JPL |
-| Drive modes | Ackermann, Point Turn, Crab, Tank | RoverController_m2020.cs |
+| Drive modes | Double Ackermann, Point Turn, Crab, Tank Drive | RoverController_m2020.cs |
 | In-sim tag | `m2020` | RoverProfile.id |
 
-**Engineering notes**: The rocker-bogie suspension passively keeps all 6 wheels on the ground over obstacles up to 25 cm. The 4 drive modes give a realistic feel of how mission planners choose manoeuvres. On the Moon (low gravity), the M2020's large footprint gives excellent stability.
+**Engineering notes**: The rocker-bogie suspension passively keeps all 6 wheels on the ground over obstacles up to 25 cm. The 4 drive modes give a realistic feel of how mission planners choose manoeuvres: Double Ackermann allows smooth turning with counter-steered rear wheels and differential radial wheel RPMs; Point Turn allows 360° zero-radius spins using tangent toe-in wheel angles; Crab steering allows pure diagonal obstacle avoidance without heading change; and Tank drive provides classic skid-steer navigation. On the Moon (low gravity), the M2020's large footprint gives excellent stability. Full mathematical derivations and acceptance data are documented in [Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md).
 
 ---
 
@@ -464,6 +464,24 @@ Added `public float massKg = 50f;` field with `[Header("Subsystems & Power")]` a
 
 ---
 
+### Phase 7 — NASA Perseverance (M2020) Mobility & Multi-Mode Kinematics Overhaul
+
+**Goal**: Deliver authentic physical kinematics for the M2020 rover across all 4 drive modes, eliminating sign inversion bugs, dynamic wheelbase/track calculation, and ensuring input parity between desktop keyboard and VR 6-DoF controllers.
+
+#### 7.1 Elimination of the Right-Side Inversion Bug
+- In earlier builds, `invertRightSideDrives = true` caused forward throttle (<kbd>W</kbd>) to spin the rover in place and steer (<kbd>D</kbd>) to drive forward.
+- Root cause: All 6 drive wheels in the URDF/prefab share an identical anchor rotation `(0, 0, 180)`. Removing `invertRightSideDrives` restored uniform forward drive velocities for all 6 wheels.
+- Steer joints share `anchorRot = (0, 0, 270)`, where positive drive target rotates wheels clockwise / right (`steerSign = +1.0f`).
+
+#### 7.2 Dynamic Geometry & Multi-Mode Kinematics
+- Wheel positions in chassis space ($x$ forward, $y$ left) are extracted dynamically upon spawn rather than hardcoded.
+- Implemented **Double Ackermann** (counter-steering front/rear wheels with turn center on the middle axle, differential radius RPM scaling), **Point Turn** (in-place zero-radius spin with tangent toe-in angles), **Crab Steering** (parallel corner steering with unsteered middle wheels taking forward component), and **Tank Drive** (skid-steer differential).
+- Added smooth servo slewing rate ($90^\circ/\text{s}$) to prevent physics instability when switching modes.
+- Fixed UI Toolkit HUD bug in `UploadHeightmapUIToolkit.cs` where the M2020 drive mode handler called `m20.SetDriveMode()` instead of `m2020.SetDriveMode()`.
+- Verified with rigorous 12-case empirical acceptance testing. See [Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md).
+
+---
+
 ## 7. Key Algorithms & Mathematical Models
 
 ### 7.1 Slip Ratio (ISO 3450 Definition)
@@ -533,6 +551,33 @@ Where $\vec{N}$ is the surface normal (estimated with a 3×3 Sobel kernel on the
 | **Valles Marineris** | Sinusoidal trough (canyon valley) crossing the heightmap with branching tributaries |
 | **Plains** | Flat base + low-amplitude Perlin noise (σ ≈ 0.03) |
 | **Fractal** | Diamond-square midpoint displacement algorithm; roughness controlled by `roughness` parameter |
+
+### 7.7 NASA Perseverance (M2020) Multi-Mode Kinematics
+
+The 6-wheel rocker-bogie rover features 4 corner steerable wheels and 2 fixed middle wheels. Dynamics are computed relative to the middle axle line ($x = 0$):
+
+1. **Double Ackermann Counter-Steering:**
+   - Signed Instantaneous Center of Rotation (ICR) lateral distance:
+     $$R = \frac{L_c}{\tan(\delta_{\text{cmd}})}, \quad L_c = \frac{x_F - x_R}{2}$$
+   - Corner steer angles ($\delta_{\text{inner}} > \delta_{\text{outer}}$, front/rear counter-steering):
+     $$\delta_i = \text{atan2}(x_i,\, y_i - R) \cdot \text{sgn}(R)$$
+   - Individual wheel speed scaling eliminates tire scrub:
+     $$v_i = v_{\text{base}} \cdot \frac{\sqrt{x_i^2 + (y_i - R)^2}}{|R|}$$
+
+2. **Point Turn (In-Place Zero-Radius Spin):**
+   - Corner wheel tangent toe-in angles ($\approx \pm 48^\circ$ front, $\pm 45^\circ$ rear):
+     $$\theta_i = \text{atan2}(x_i,\, -y_i) + \frac{\pi}{2}$$
+   - Opposite side velocities scaled by radial distance $d_i = \sqrt{x_i^2 + y_i^2}$ (middle wheels spin slower at $\sim 66\%$ corner speed).
+
+3. **Crab Steering (Diagonal Translation):**
+   - All 4 corner wheels set to identical crab angle $\delta_{\text{crab}}$.
+   - Middle wheels stay straight and receive only the longitudinal forward component:
+     $$v_{\text{middle}} = v_{\text{corner}} \cdot \cos(\delta_{\text{crab}})$$
+
+4. **Tank Drive (Differential Skid-Steer):**
+   - Steer angles locked at $0^\circ$; differential speeds $v_{\text{left}} = T + S$, $v_{\text{right}} = T - S$.
+
+Full mathematical derivations and kinematic diagrams are detailed in [Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md).
 
 ---
 
@@ -810,6 +855,26 @@ Mars test (driving at 0.5 m/s, 60 seconds):
 - Ambient: −60°C
 - Steady-state prediction: $T_{ss} = -60 + 8 × 0.8 = -53.6°C$
 - Observed: motor temp stabilises near −52°C ✅
+
+### 12.3 NASA Perseverance (M2020) Kinematic Acceptance Results
+
+Physical measurements recorded on flat terrain in `Test_TerrainAndRover.unity` across 2.0 s active drive intervals in CRUISE mode ($v_{\text{max}} = 240^\circ/\text{s}$):
+
+| Drive Mode | Input Action | Disp. FRONT | Disp. RIGHT | Signed Yaw | Acceptance Verification |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Ackermann** | <kbd>W</kbd> (Forward) | **+2.1273 m** | +0.0027 m | +0.10° | ✅ Pure forward translation |
+| **Ackermann** | <kbd>S</kbd> (Reverse) | **-2.1387 m** | +0.0081 m | -0.23° | ✅ Pure reverse translation |
+| **Ackermann** | <kbd>W</kbd>+<kbd>D</kbd> (Curve Right) | **+1.8732 m** | **+0.7679 m** | **+44.96°** | ✅ Smooth curve right, counter-steering |
+| **Ackermann** | <kbd>W</kbd>+<kbd>A</kbd> (Curve Left) | **+1.8740 m** | **-0.7656 m** | **-44.76°** | ✅ Smooth curve left, counter-steering |
+| **Point Turn** | <kbd>D</kbd> (Spin CW) | -0.0134 m | +0.0612 m | **+73.44°** | ✅ Pure zero-radius CW spin ($<1.5\text{ cm}$ drift) |
+| **Point Turn** | <kbd>A</kbd> (Spin CCW) | -0.0135 m | -0.0605 m | **-73.94°** | ✅ Pure zero-radius CCW spin ($<1.5\text{ cm}$ drift) |
+| **Crab** | <kbd>W</kbd>+<kbd>D</kbd> (Diag Right) | **+1.5514 m** | **+1.0429 m** | **+2.72°** | ✅ Diagonal translation without turning |
+| **Crab** | <kbd>W</kbd>+<kbd>A</kbd> (Diag Left) | **+1.5450 m** | **-1.0586 m** | **-1.78°** | ✅ Diagonal translation without turning |
+| **Tank Drive** | <kbd>W</kbd> (Forward) | **+2.1191 m** | +0.0009 m | +0.06° | ✅ Pure forward translation |
+| **Tank Drive** | <kbd>S</kbd> (Reverse) | **-2.1424 m** | +0.0043 m | -0.16° | ✅ Pure reverse translation |
+| **Tank Drive** | <kbd>D</kbd> (Pivot Right) | -0.4568 m | -0.5288 m | **+39.36°** | ✅ Differential pivot right |
+| **Tank Drive** | <kbd>A</kbd> (Pivot Left) | -0.3078 m | +0.2520 m | **-46.18°** | ✅ Differential pivot left |
+| **VR Parity** | **XR Left Thumbstick** | — | — | — | ✅ Verified identical to desktop inputs |
 
 ---
 

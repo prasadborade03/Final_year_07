@@ -52,7 +52,7 @@ VR Planetary Rover Digital Twin Simulation Studio (`Final_year_07`)
 2. **Rover Robotics & Digital Twin Pipeline**:
    - **Husky A200**: 4-wheel differential drive rover with tank-steering input.
    - **Deep Robotics M20**: Wheeled quadruped robot with knee/hip articulation and wheel velocity drive.
-   - **NASA Perseverance (M2020)**: 6-wheel rocker-bogie suspension with 4-wheel steering supporting 4 distinct drive modes (Ackermann, Point Turn, Crab, Tank).
+   - **NASA Perseverance (M2020)**: 6-wheel rocker-bogie suspension with 4-wheel steering supporting 4 distinct drive modes (Double Ackermann, Point Turn, Crab, Tank Drive). Uses dynamic runtime geometry extraction, per-wheel velocity scaling, and smooth servo slewing ($90^\circ/\text{s}$). See detailed guide in [Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md).
    - [`M2020VisualMaterialManager.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Rover/m2020_perseverance/M2020VisualMaterialManager.cs): Cosmetic NASA/JPL material assigner for the Perseverance rover.
 
 3. **Simulation Orchestration**:
@@ -226,6 +226,7 @@ T_ambient = PlanetEnvironmentController.Instance.currentProfile.ambientTemperatu
 | 5A | Planet Realism — Data | `PlanetProfile` + `PlanetEnvironmentController`; per-planet sky/light/fog/facts |
 | 5B | Planet Realism — Surface | CC0 PBR textures, slope+height alphamap, rock scatterer |
 | 6 | UI Cleanup + Thermal | Compass removed; lumped thermal model; 90% opacity; 24px stats; HUD toggle |
+| 7 | M2020 Kinematics Overhaul | Removed `invertRightSideDrives`, per-wheel kinematics, double Ackermann, Point Turn, Crab, Tank, UI Toolkit HUD delegate fix, empirical acceptance verification |
 
 ---
 
@@ -233,7 +234,9 @@ T_ambient = PlanetEnvironmentController.Instance.currentProfile.ambientTemperatu
 
 | File | Role | Lines |
 |---|---|---|
-| [`UploadHeightmapUIToolkit.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Controllers/UploadHeightmapUIToolkit.cs) | Main UI controller | ~2382 |
+| [`RoverController_m2020.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Rover/m2020_perseverance/RoverController_m2020.cs) | M2020 4-mode kinematics & drive controller | ~410 |
+| [`RoverImporter_m2020.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Rover/m2020_perseverance/RoverImporter_m2020.cs) | M2020 articulation discovery & wheel actuation | ~385 |
+| [`UploadHeightmapUIToolkit.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/Scripts/Controllers/UploadHeightmapUIToolkit.cs) | Main UI controller | ~2560 |
 | [`TerrainAndRoverUI.uxml`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/UI_Toolkit/TerrainAndRoverUI.uxml) | Studio layout | ~512 |
 | [`TerrainAndRoverUI.uss`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/Shared_UI_Package/UI_Toolkit/TerrainAndRoverUI.uss) | All styles | ~1221 |
 | [`RoverTelemetry.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Rover/RoverTelemetry.cs) | Physics telemetry + thermal model | ~473 |
@@ -242,4 +245,5 @@ T_ambient = PlanetEnvironmentController.Instance.currentProfile.ambientTemperatu
 | [`HeightmapLoader.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Terrain/HeightmapLoader.cs) | Procedural algorithms + PNG import | ~660 |
 | [`TerrainMaterialManager.cs`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Assets/project/script/Terrain/TerrainMaterialManager.cs) | PBR layers + slope/height blend | ~1100 |
 
-> See [`RESEARCH_BLACK_BOOK.md`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/RESEARCH_BLACK_BOOK.md) for full planetary science data, equations, and phase-by-phase development log.
+> See [`RESEARCH_BLACK_BOOK.md`](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/RESEARCH_BLACK_BOOK.md) for full planetary science data, equations, and phase-by-phase development log.  
+> See [M2020 Drive Kinematics & Mechanics](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md) for full double Ackermann, Point Turn, Crab, and Tank drive equations and empirical tests.

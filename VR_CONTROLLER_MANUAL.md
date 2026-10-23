@@ -106,8 +106,14 @@ VR_Module.unity
 
 ### 3. Continuous Analog Joystick Rover Driving
 - All three rovers (Husky A200, Deep Robotics M20, NASA Perseverance M2020) read driving input via an analog virtual joystick (`Vector2 virtualJoystick`) with smooth acceleration ramps (`joystickRampSpeed = 6.0f`).
-- Input is seamlessly shared between desktop WASD / arrow keys, Gamepad Left Stick, and programmatic VR commands.
-- Speed regimes (<kbd>1</kbd>=Stop 0%, <kbd>2</kbd>=Precision 25%, <kbd>3</kbd>=Explore 60%, <kbd>4</kbd>=Cruise 100%) scale wheel velocity limits on the fly.
+- Input is seamlessly shared between desktop WASD / arrow keys, XR Left Thumbstick, and programmatic VR commands with identical deadzone (0.15) and sign mapping.
+- **NASA Perseverance (M2020)**: The Left Thumbstick maps directly to all 4 steering modes:
+  - **Double Ackermann**: Thumbstick $Y$ is forward/reverse throttle, $X$ steers front and counter-steers rear wheels.
+  - **Point Turn**: Thumbstick $X$ spins the rover in place clockwise/counter-clockwise with tangent toe-in wheel angles; $Y$ throttle is safely ignored.
+  - **Crab**: Thumbstick $X$ sets crab angle ($\pm 40^\circ$), $Y$ drives along heading; unsteered middle wheels take longitudinal velocity component.
+  - **Tank Drive**: Thumbstick $Y$ drives, $X$ applies differential speed across left/right wheels.
+  - See [M2020 Drive Kinematics & Mechanics Guide](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md) for complete details.
+- Speed regimes (<kbd>1</kbd>=Stop 0%, <kbd>2</kbd>=Precision 25%, <kbd>3</kbd>=Explore 60%, <kbd>4</kbd>=Cruise 100%, or VR <kbd>A</kbd>/<kbd>X</kbd> button) scale wheel velocity limits on the fly.
 - When desktop camera grab is active, driving inputs are paused to prevent accidental rover movement while translating the camera.
 
 ### 4. Eliminated "Sticky Visor" Effect

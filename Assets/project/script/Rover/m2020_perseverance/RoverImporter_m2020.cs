@@ -1,19 +1,19 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
 using ProjectName.Rover;
 using System.Linq;
 
 /// <summary>
-/// FIXED Perseverance M2020 Importer – ArticulationBody Rocker-Bogie System.
-/// Key Fixes:
-/// 1. Converts Radians -> Degrees for ArticulationDrive.target (fixes steering scale).
+/// Production Perseverance M2020 Importer – ArticulationBody Rocker-Bogie System.
+/// Key Features:
+/// 1. Converts Radians/Degrees for ArticulationDrive.target.
 /// 2. Scales suspension stiffness (1800 N·m/deg) & neutral target to keep chassis elevated.
-/// 3. Removes jointPosition target override in velocity drives.
-/// 4. Auto-ignores internal collisions between wheel / bogie / chassis colliders.
-/// 5. Includes invert option for right-side wheel revolute axes.
-/// 6. Registers into ActiveRoverContext with 6-wheel telemetry.
+/// 3. Individual 6-wheel velocity drive control (no right-side inversion).
+/// 4. Individual 4-corner steer drive position control (steer targets in degrees).
+/// 5. Measures wheel geometry at runtime in rover frame (X forward, Y left).
+/// 6. Auto-ignores internal collisions between wheel / bogie / chassis colliders.
+/// 7. Registers into ActiveRoverContext with 6-wheel telemetry.
 /// </summary>
 public class RoverImporter_m2020 : MonoBehaviour
 {
@@ -30,7 +30,6 @@ public class RoverImporter_m2020 : MonoBehaviour
     [Header("Wheel Drive")]
     public float wheelDamping = 2500f;
     public float wheelForceLimit = 2500f;
-    public bool invertRightSideDrives = true; // URDF joint axis correction
 
     [Header("Steer Drive (Position Controlled)")]
     public float steerStiffness = 5000f;
@@ -48,15 +47,31 @@ public class RoverImporter_m2020 : MonoBehaviour
     [Header("Safety & Collision")]
     public bool ignoreInternalCollisions = true;
 
-    private GameObject currentRoverObject;
-    private readonly List<ArticulationBody> leftWheels = new List<ArticulationBody>();
-    private readonly List<ArticulationBody> rightWheels = new List<ArticulationBody>();
-
-    private ArticulationBody steerLF, steerLR, steerRF, steerRR;
-    private float lastLeftSpeed, lastRightSpeed;
-    private float lastSteerAngle; // in radians
-
+    [Header("Runtime Spawn State")]
     public bool autoSpawnOnStart = false;
+
+    // Active rover object
+    private GameObject currentRoverObject;
+
+    // 6 Drive Wheels
+    public ArticulationBody wLF, wRF, wLM, wRM, wLR, wRR;
+
+    // 4 Corner Steer Actuators
+    public ArticulationBody steerLF, steerRF, steerLR, steerRR;
+
+    // Measured wheel positions in rover frame (X forward, Y left, relative to middle axle)
+    [Header("Dynamic Wheel Geometry (Rover Frame: X forward, Y left)")]
+    public Vector2 posLF = new Vector2(1.19f, 1.06f);
+    public Vector2 posRF = new Vector2(1.19f, -1.06f);
+    public Vector2 posLM = new Vector2(0.00f, 1.18f);
+    public Vector2 posRM = new Vector2(0.00f, -1.18f);
+    public Vector2 posLR = new Vector2(-1.07f, 1.06f);
+    public Vector2 posRR = new Vector2(-1.07f, -1.06f);
+    public bool isRoverReady = false;
+
+    // Per-wheel commands (velocities in deg/s, steer in degrees)
+    private float speedLF, speedRF, speedLM, speedRM, speedLR, speedRR;
+    private float steerDegLF, steerDegRF, steerDegLR, steerDegRR;
 
     void Start()
     {
@@ -70,6 +85,7 @@ public class RoverImporter_m2020 : MonoBehaviour
         {
             ActiveRoverContext.Unregister();
             Destroy(currentRoverObject);
+            isRoverReady = false;
         }
 
         if (profile == null)
@@ -149,9 +165,6 @@ public class RoverImporter_m2020 : MonoBehaviour
         yield return new WaitForFixedUpdate();
         yield return new WaitForFixedUpdate();
 
-        leftWheels.Clear();
-        rightWheels.Clear();
-
         foreach (var body in allBodies)
         {
             string n = body.name;
@@ -160,16 +173,12 @@ public class RoverImporter_m2020 : MonoBehaviour
             if (n.StartsWith("Body_Wheel") && !body.isRoot && body.dofCount >= 1)
             {
                 ConfigureVelocityDrive(body);
-                if (n.Contains("Left"))
-                {
-                    leftWheels.Add(body);
-                    Debug.Log($"[M2020] Connected LEFT drive: {n}");
-                }
-                else if (n.Contains("Right"))
-                {
-                    rightWheels.Add(body);
-                    Debug.Log($"[M2020] Connected RIGHT drive: {n}");
-                }
+                if (n == "Body_WheelLeftFront") wLF = body;
+                else if (n == "Body_WheelRightFront") wRF = body;
+                else if (n == "Body_WheelLeftMiddle") wLM = body;
+                else if (n == "Body_WheelRightMiddle") wRM = body;
+                else if (n == "Body_WheelLeftRear") wLR = body;
+                else if (n == "Body_WheelRightRear") wRR = body;
                 continue;
             }
 
@@ -189,16 +198,33 @@ public class RoverImporter_m2020 : MonoBehaviour
             }
         }
 
-        Debug.Log($"[M2020] Setup Complete: Drive Left={leftWheels.Count}, Right={rightWheels.Count} | Steers LF={steerLF!=null} LR={steerLR!=null} RF={steerRF!=null} RR={steerRR!=null}");
+        // Measure wheel positions dynamically from actual spawned transforms in rover frame (X forward, Y left)
+        if (wLF != null && wRF != null && wLM != null && wRM != null && wLR != null && wRR != null)
+        {
+            Vector3 roverUp = Vector3.up;
+            Vector3 frontMid = (wLF.transform.position + wRF.transform.position) * 0.5f;
+            Vector3 rearMid = (wLR.transform.position + wRR.transform.position) * 0.5f;
+            Vector3 frontDir = Vector3.ProjectOnPlane(frontMid - rearMid, roverUp).normalized;
+            Vector3 leftDir = -Vector3.Cross(roverUp, frontDir).normalized;
+            Vector3 midAxle = (wLM.transform.position + wRM.transform.position) * 0.5f;
+
+            posLF = new Vector2(Vector3.Dot(wLF.transform.position - midAxle, frontDir), Vector3.Dot(wLF.transform.position - midAxle, leftDir));
+            posRF = new Vector2(Vector3.Dot(wRF.transform.position - midAxle, frontDir), Vector3.Dot(wRF.transform.position - midAxle, leftDir));
+            posLM = new Vector2(Vector3.Dot(wLM.transform.position - midAxle, frontDir), Vector3.Dot(wLM.transform.position - midAxle, leftDir));
+            posRM = new Vector2(Vector3.Dot(wRM.transform.position - midAxle, frontDir), Vector3.Dot(wRM.transform.position - midAxle, leftDir));
+            posLR = new Vector2(Vector3.Dot(wLR.transform.position - midAxle, frontDir), Vector3.Dot(wLR.transform.position - midAxle, leftDir));
+            posRR = new Vector2(Vector3.Dot(wRR.transform.position - midAxle, frontDir), Vector3.Dot(wRR.transform.position - midAxle, leftDir));
+            isRoverReady = true;
+
+            Debug.Log($"[M2020] Measured Wheel Geometry (Rover Frame: X forward, Y left):\n" +
+                      $"  LF: {posLF:F3} | RF: {posRF:F3}\n" +
+                      $"  LM: {posLM:F3} | RM: {posRM:F3}\n" +
+                      $"  LR: {posLR:F3} | RR: {posRR:F3}");
+        }
+
+        Debug.Log($"[M2020] Setup Complete: Steers LF={steerLF!=null} LR={steerLR!=null} RF={steerRF!=null} RR={steerRR!=null}");
 
         // Rule R2: Order wheels for telemetry: FL, FR, ML, MR, RL, RR
-        ArticulationBody wLF = allBodies.FirstOrDefault(b => b.name == "Body_WheelLeftFront");
-        ArticulationBody wRF = allBodies.FirstOrDefault(b => b.name == "Body_WheelRightFront");
-        ArticulationBody wLM = allBodies.FirstOrDefault(b => b.name == "Body_WheelLeftMiddle");
-        ArticulationBody wRM = allBodies.FirstOrDefault(b => b.name == "Body_WheelRightMiddle");
-        ArticulationBody wLR = allBodies.FirstOrDefault(b => b.name == "Body_WheelLeftRear");
-        ArticulationBody wRR = allBodies.FirstOrDefault(b => b.name == "Body_WheelRightRear");
-
         var orderedWheels = new ArticulationBody[] { wLF, wRF, wLM, wRM, wLR, wRR };
 
         var handle = new RoverHandle
@@ -252,37 +278,60 @@ public class RoverImporter_m2020 : MonoBehaviour
     }
 
     /// <summary>
-    /// Set drive wheel angular speeds in deg/sec.
+    /// Set individual 6-wheel drive velocities in deg/sec.
+    /// All wheel joints share the same anchor rotation, so positive velocity drives every wheel forward.
     /// </summary>
-    public void SetWheelSpeeds(float leftSpeed, float rightSpeed)
+    public void SetWheelSpeeds(float vLF, float vRF, float vLM, float vRM, float vLR, float vRR)
     {
-        lastLeftSpeed = leftSpeed;
-        lastRightSpeed = rightSpeed;
+        speedLF = vLF; speedRF = vRF;
+        speedLM = vLM; speedRM = vRM;
+        speedLR = vLR; speedRR = vRR;
     }
 
     /// <summary>
-    /// Set 4-wheel steering angle in RADIANS. (Converted to Degrees internally!)
+    /// Backward-compatible overload for 2-side speed commands.
+    /// </summary>
+    public void SetWheelSpeeds(float leftSpeed, float rightSpeed)
+    {
+        SetWheelSpeeds(leftSpeed, rightSpeed, leftSpeed, rightSpeed, leftSpeed, rightSpeed);
+    }
+
+    /// <summary>
+    /// Set individual 4-corner steer angles in DEGREES.
+    /// Logical positive angle (+deg) steers clockwise / right.
+    /// </summary>
+    public void SetSteerAnglesDeg(float degLF, float degRF, float degLR, float degRR)
+    {
+        steerDegLF = degLF;
+        steerDegRF = degRF;
+        steerDegLR = degLR;
+        steerDegRR = degRR;
+    }
+
+    /// <summary>
+    /// Backward-compatible overload for steer angle in RADIANS.
     /// </summary>
     public void SetSteerAngle(float angleRad)
     {
-        lastSteerAngle = angleRad;
+        float deg = angleRad * Mathf.Rad2Deg;
+        SetSteerAnglesDeg(deg, deg, deg, deg);
     }
 
     void FixedUpdate()
     {
-        foreach (var w in leftWheels)
-            ApplyVelocity(w, lastLeftSpeed);
+        // Drive velocity applied directly to all 6 wheels with consistent forward sign
+        ApplyVelocity(wLF, speedLF);
+        ApplyVelocity(wRF, speedRF);
+        ApplyVelocity(wLM, speedLM);
+        ApplyVelocity(wRM, speedRM);
+        ApplyVelocity(wLR, speedLR);
+        ApplyVelocity(wRR, speedRR);
 
-        float rightSpeedToApply = invertRightSideDrives ? -lastRightSpeed : lastRightSpeed;
-        foreach (var w in rightWheels)
-            ApplyVelocity(w, rightSpeedToApply);
-
-        // Standard 4-wheel pivot steering:
-        // LF and RR steer +angle, RF and LR steer -angle
-        ApplySteer(steerLF,  lastSteerAngle);
-        ApplySteer(steerRF, -lastSteerAngle);
-        ApplySteer(steerLR, -lastSteerAngle);
-        ApplySteer(steerRR,  lastSteerAngle);
+        // Position steer drive applied in degrees
+        ApplySteerDeg(steerLF, steerDegLF);
+        ApplySteerDeg(steerRF, steerDegRF);
+        ApplySteerDeg(steerLR, steerDegLR);
+        ApplySteerDeg(steerRR, steerDegRR);
     }
 
     private void ApplyVelocity(ArticulationBody body, float speedDegPerSec)
@@ -297,16 +346,14 @@ public class RoverImporter_m2020 : MonoBehaviour
         body.xDrive = drive;
     }
 
-    private void ApplySteer(ArticulationBody body, float angleRad)
+    private void ApplySteerDeg(ArticulationBody body, float targetDeg)
     {
         if (body == null || body.dofCount < 1) return;
         var drive = body.xDrive;
         drive.stiffness = steerStiffness;
         drive.damping = steerDamping;
         drive.forceLimit = steerForceLimit;
-        
-        // FIX: Convert input Radians to Degrees for Unity ArticulationDrive.target!
-        drive.target = angleRad * Mathf.Rad2Deg; 
+        drive.target = targetDeg; 
         drive.targetVelocity = 0f;
         body.xDrive = drive;
     }
@@ -317,6 +364,7 @@ public class RoverImporter_m2020 : MonoBehaviour
     public void AdjustGroundClearance(float elevationOffsetDeg)
     {
         suspTargetElevationDeg = elevationOffsetDeg;
+        if (currentRoverObject == null) return;
         var allBodies = currentRoverObject.GetComponentsInChildren<ArticulationBody>(true);
         foreach (var body in allBodies)
         {

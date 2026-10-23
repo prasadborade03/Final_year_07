@@ -281,13 +281,15 @@ Both `Simulation_VR` and `Simulation_Flat` share the identical underlying logic,
 - <kbd>E</kbd> (Hold): **Knee Lower (-)** — Lowers the knee joints down to -2.5 rad.
 
 #### NASA Perseverance M2020
-- <kbd>M</kbd>: **Toggle Steering Mode** — Rotates between:
-  1. **Ackermann** (Smooth curved steering with differential wheel RPMs).
-  2. **Point Turn** (Zero-radius pivot in place).
-  3. **Crab Steering** (Diagonal parallel wheel translation).
-  4. **Tank Drive** (Skid-steer mode).
-- Keys <kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd>, <kbd>4</kbd> on M2020 directly select these 4 steering modes.
+- <kbd>M</kbd>: **Toggle Steering Mode** — Rotates sequentially between:
+  1. **Double Ackermann** (Smooth curved steering with front/rear counter-steering and differential wheel RPMs).
+  2. **Point Turn** (Zero-radius in-place 360° spin via tangent toe-in wheel angles).
+  3. **Crab Steering** (Diagonal parallel wheel translation with unsteered middle wheels).
+  4. **Tank Drive** (Skid-steer mode with wheels straight).
+- Keys <kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd>, <kbd>4</kbd> select Speed Regimes: **STOP** (1), **PRECISION 25%** (2), **EXPLORE 60%** (3), **CRUISE 100%** (4).
+- Mode can also be toggled directly via the HUD UI Toolkit Steering Mode buttons.
 - <kbd>Space</kbd>: **Chassis Clearance Lift** — Toggles the rocker-bogie suspension lift angle ($0^\circ \leftrightarrow 8^\circ$).
+- *Full Kinematics Guide:* See [Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md](file:///c:/Users/PRASAD%20BORADE/unity/Final_year_shit/Docs/M2020_Perseverance/M2020_DRIVE_KINEMATICS_THEORY.md).
 
 ---
 

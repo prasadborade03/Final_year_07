@@ -2542,7 +2542,7 @@ namespace ProjectName.Terrain
                 if (m20 != null) m20.SetDriveMode(currentDriveMode);
 
                 var m2020 = (handle.rootGameObject != null ? handle.rootGameObject.GetComponent<RoverController_m2020>() : null) ?? FindAnyObjectByType<RoverController_m2020>();
-                if (m2020 != null) m20.SetDriveMode(currentDriveMode);
+                if (m2020 != null) m2020.SetDriveMode(currentDriveMode);
             }
 
             UpdateDriveModeUI();

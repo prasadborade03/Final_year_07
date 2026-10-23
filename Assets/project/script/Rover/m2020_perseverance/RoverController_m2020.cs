@@ -7,10 +7,10 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Production Perseverance M2020 Rover Controller.
 /// Pairs with RoverImporter_m2020 to provide multiple steering modes:
-/// 1. Ackermann 4-Wheel Turn (Smooth curved paths with speed differential)
-/// 2. Point Turn / Pivot In-Place (Zero radius 360 spin)
-/// 3. Crab Steering (Diagonal translation)
-/// 4. Differential / Tank Drive
+/// 1. Ackermann 4-Wheel Turn (Smooth curved paths with individual speed/geometry differential)
+/// 2. Point Turn / Pivot In-Place (Zero radius 360 spin with geometric toe-in)
+/// 3. Crab Steering (Diagonal translation with straight middle wheels)
+/// 4. Differential / Tank Drive (Fixed straight wheels, differential velocity)
 /// Supports VR Left Stick, Desktop WASD/Arrows, and Gamepad.
 /// </summary>
 public class RoverController_m2020 : MonoBehaviour
@@ -23,6 +23,21 @@ public class RoverController_m2020 : MonoBehaviour
         TankDrive = 3
     }
 
+    public struct WheelCommands
+    {
+        public float steerLF; // in degrees
+        public float steerRF;
+        public float steerLR;
+        public float steerRR;
+
+        public float speedLF; // in deg/s
+        public float speedRF;
+        public float speedLM;
+        public float speedRM;
+        public float speedLR;
+        public float speedRR;
+    }
+
     [Header("Importer Reference")]
     public RoverImporter_m2020 importer;
 
@@ -33,10 +48,11 @@ public class RoverController_m2020 : MonoBehaviour
     public float maxSpeedDegPerSec = 240f; // Wheel rotation velocity in deg/s
     public float maxSteerAngleDeg = 40f;   // Max steer angle in degrees
     public float inputSmoothing = 8f;      // Smooth acceleration ramps
+    public float steerSlewRateDegPerSec = 90f; // Smooth steer servo transitions
 
-    [Header("Dimensions for Ackermann Math (Meters)")]
-    public float wheelBase = 2.2f;  // Distance between front & rear wheel axles
-    public float trackWidth = 2.0f; // Distance between left & right wheels
+    [Header("Dimensions for Ackermann Math (Fallback, Meters)")]
+    public float wheelBase = 2.2f;  // Fallback distance between front & rear wheel axles
+    public float trackWidth = 2.0f; // Fallback distance between left & right wheels
 
     [Header("Keyboard / Input Mapping")]
     public string throttleAxis = "Vertical";
@@ -47,14 +63,16 @@ public class RoverController_m2020 : MonoBehaviour
     [Header("Input Blocking (UI Focus)")]
     public bool isInputBlocked = false;
 
-    [Header("Overrides (Automation / Testing)")]
-    public float overrideThrottle = 0f;
-    public float overrideSteer = 0f;
-
     // Smoothed inputs
     private float currentThrottle = 0f;
     private float currentSteering = 0f;
     private bool isChassisLifted = false;
+
+    // Active smoothed steer targets (degrees)
+    private float activeSteerLF = 0f;
+    private float activeSteerRF = 0f;
+    private float activeSteerLR = 0f;
+    private float activeSteerRR = 0f;
 
     private void OnEnable()
     {
@@ -119,13 +137,13 @@ public class RoverController_m2020 : MonoBehaviour
         {
             currentThrottle = Mathf.Lerp(currentThrottle, 0f, Time.deltaTime * inputSmoothing);
             currentSteering = Mathf.Lerp(currentSteering, 0f, Time.deltaTime * inputSmoothing);
-            importer.SetWheelSpeeds(0f, 0f);
+            importer.SetWheelSpeeds(0f, 0f, 0f, 0f, 0f, 0f);
             return;
         }
 
         Vector2 driveInput = RoverInputProvider.GetDriveInput();
-        float rawThrottle = Mathf.Clamp(driveInput.y + overrideThrottle, -1f, 1f);
-        float rawSteer = Mathf.Clamp(driveInput.x + overrideSteer, -1f, 1f);
+        float rawThrottle = driveInput.y;
+        float rawSteer = driveInput.x;
         bool modeToggled = false;
         bool liftToggled = false;
 
@@ -175,66 +193,204 @@ public class RoverController_m2020 : MonoBehaviour
     {
         if (importer == null) return;
 
-        float targetSteerRad = 0f;
-        float leftSpeed = 0f;
-        float rightSpeed = 0f;
+        WheelCommands targetCmd;
+        ComputeWheelCommands(driveMode, currentThrottle, currentSteering, out targetCmd);
 
-        switch (driveMode)
+        // Smoothly slew steer angles to eliminate physical jerk and prevent jumps across mode changes
+        float step = steerSlewRateDegPerSec * Time.deltaTime;
+        activeSteerLF = Mathf.MoveTowards(activeSteerLF, targetCmd.steerLF, step);
+        activeSteerRF = Mathf.MoveTowards(activeSteerRF, targetCmd.steerRF, step);
+        activeSteerLR = Mathf.MoveTowards(activeSteerLR, targetCmd.steerLR, step);
+        activeSteerRR = Mathf.MoveTowards(activeSteerRR, targetCmd.steerRR, step);
+
+        importer.SetSteerAnglesDeg(activeSteerLF, activeSteerRF, activeSteerLR, activeSteerRR);
+        importer.SetWheelSpeeds(
+            targetCmd.speedLF, targetCmd.speedRF,
+            targetCmd.speedLM, targetCmd.speedRM,
+            targetCmd.speedLR, targetCmd.speedRR
+        );
+    }
+
+    /// <summary>
+    /// Student Reference: Computes per-wheel steering angles (degrees) and wheel velocities (deg/s)
+    /// based on the selected DriveMode and driver inputs (throttle, steer).
+    /// Rover Coordinate Frame: X forward, Y left.
+    /// Logical Steering Convention: +steer = right / clockwise turn from above.
+    /// </summary>
+    private void ComputeWheelCommands(DriveMode mode, float throttle, float steer, out WheelCommands cmd)
+    {
+        cmd = new WheelCommands();
+
+        // Dynamic wheel positions measured directly from transforms (or fallback defaults)
+        Vector2 pLF = importer != null && importer.isRoverReady ? importer.posLF : new Vector2(1.19f, 1.06f);
+        Vector2 pRF = importer != null && importer.isRoverReady ? importer.posRF : new Vector2(1.19f, -1.06f);
+        Vector2 pLM = importer != null && importer.isRoverReady ? importer.posLM : new Vector2(0.00f, 1.18f);
+        Vector2 pRM = importer != null && importer.isRoverReady ? importer.posRM : new Vector2(0.00f, -1.18f);
+        Vector2 pLR = importer != null && importer.isRoverReady ? importer.posLR : new Vector2(-1.07f, 1.06f);
+        Vector2 pRR = importer != null && importer.isRoverReady ? importer.posRR : new Vector2(-1.07f, -1.06f);
+
+        switch (mode)
         {
+            // -----------------------------------------------------------------
+            // 1. ACKERMANN 4-WHEEL COUNTER-STEER (Default)
+            // -----------------------------------------------------------------
+            // Front wheels turn toward the turn (+steer = turn right); rear wheels counter-steer.
+            // Turn center lies on the middle axle line (x = 0).
+            // Inner wheel turns sharper than outer wheel.
+            // Each wheel's rolling speed is proportional to its distance from the instantaneous turn center.
             case DriveMode.Ackermann:
-                targetSteerRad = currentSteering * (maxSteerAngleDeg * Mathf.Deg2Rad);
-                
-                // Calculate speed differential for inner and outer wheels
-                if (Mathf.Abs(currentSteering) > 0.05f)
+            {
+                if (Mathf.Abs(steer) < 0.01f)
                 {
-                    float turnRadius = (wheelBase / 2f) / Mathf.Tan(Mathf.Abs(targetSteerRad) + 0.001f);
-                    float speedInner = currentThrottle * maxSpeedDegPerSec * ((turnRadius - trackWidth/2f) / turnRadius);
-                    float speedOuter = currentThrottle * maxSpeedDegPerSec * ((turnRadius + trackWidth/2f) / turnRadius);
+                    // Pure straight driving
+                    cmd.steerLF = 0f;
+                    cmd.steerRF = 0f;
+                    cmd.steerLR = 0f;
+                    cmd.steerRR = 0f;
 
-                    if (currentSteering > 0) // Turning Right
-                    {
-                        leftSpeed = speedOuter;
-                        rightSpeed = speedInner;
-                    }
-                    else // Turning Left
-                    {
-                        leftSpeed = speedInner;
-                        rightSpeed = speedOuter;
-                    }
+                    float straightSpeed = throttle * maxSpeedDegPerSec;
+                    cmd.speedLF = straightSpeed;
+                    cmd.speedRF = straightSpeed;
+                    cmd.speedLM = straightSpeed;
+                    cmd.speedRM = straightSpeed;
+                    cmd.speedLR = straightSpeed;
+                    cmd.speedRR = straightSpeed;
                 }
                 else
                 {
-                    leftSpeed = currentThrottle * maxSpeedDegPerSec;
-                    rightSpeed = currentThrottle * maxSpeedDegPerSec;
+                    float s = Mathf.Clamp(steer, -1f, 1f);
+                    float absS = Mathf.Abs(s);
+                    float steerSign = Mathf.Sign(s); // +1 = turn right, -1 = turn left
+
+                    // Inner track distance along Y
+                    float yInner = (s > 0f) ? Mathf.Abs(pRF.y) : Mathf.Abs(pLF.y);
+                    float xFront = pLF.x;
+
+                    // Compute turn radius from rover centerline to ensure innermost wheel reaches maxSteerAngleDeg at |steer| = 1
+                    float maxSteerRad = maxSteerAngleDeg * Mathf.Deg2Rad;
+                    float R_turn = (xFront / Mathf.Tan(absS * maxSteerRad)) + yInner;
+
+                    // In rover frame (Y left): turning right (+steer) places the turn center to the right (negative Y)
+                    float R_center = -R_turn * steerSign;
+
+                    // Per-wheel steer angles from instantaneous center of curvature (0, R_center)
+                    // steerLF, steerRF (front): turn toward curve (+ for right turn)
+                    // steerLR, steerRR (rear): counter-steer opposite (- for right turn)
+                    cmd.steerLF = Mathf.Atan2(pLF.x, Mathf.Abs(pLF.y - R_center)) * steerSign * Mathf.Rad2Deg;
+                    cmd.steerRF = Mathf.Atan2(pRF.x, Mathf.Abs(pRF.y - R_center)) * steerSign * Mathf.Rad2Deg;
+                    cmd.steerLR = Mathf.Atan2(pLR.x, Mathf.Abs(pLR.y - R_center)) * steerSign * Mathf.Rad2Deg;
+                    cmd.steerRR = Mathf.Atan2(pRR.x, Mathf.Abs(pRR.y - R_center)) * steerSign * Mathf.Rad2Deg;
+
+                    // Per-wheel speed proportional to distance from turn center
+                    float dLF = Mathf.Sqrt(pLF.x * pLF.x + (pLF.y - R_center) * (pLF.y - R_center));
+                    float dRF = Mathf.Sqrt(pRF.x * pRF.x + (pRF.y - R_center) * (pRF.y - R_center));
+                    float dLM = Mathf.Sqrt(pLM.x * pLM.x + (pLM.y - R_center) * (pLM.y - R_center));
+                    float dRM = Mathf.Sqrt(pRM.x * pRM.x + (pRM.y - R_center) * (pRM.y - R_center));
+                    float dLR = Mathf.Sqrt(pLR.x * pLR.x + (pLR.y - R_center) * (pLR.y - R_center));
+                    float dRR = Mathf.Sqrt(pRR.x * pRR.x + (pRR.y - R_center) * (pRR.y - R_center));
+
+                    float baseVel = throttle * maxSpeedDegPerSec;
+                    cmd.speedLF = baseVel * (dLF / R_turn);
+                    cmd.speedRF = baseVel * (dRF / R_turn);
+                    cmd.speedLM = baseVel * (dLM / R_turn);
+                    cmd.speedRM = baseVel * (dRM / R_turn);
+                    cmd.speedLR = baseVel * (dLR / R_turn);
+                    cmd.speedRR = baseVel * (dRR / R_turn);
                 }
                 break;
+            }
 
+            // -----------------------------------------------------------------
+            // 2. POINT TURN (In-Place 360 Spin)
+            // -----------------------------------------------------------------
+            // All 4 corner wheels align with the tangent of the circle about rover center (toe-in ~45-48 deg).
+            // Throttle is ignored. D spins clockwise, A spins counter-clockwise.
+            // Speed is proportional to radius from rover center (corner wheels faster than middle wheels).
             case DriveMode.PointTurn:
-                // Corner wheels set to ~45 degrees (0.785 rad)
-                targetSteerRad = 45f * Mathf.Deg2Rad;
-                
-                // Drive wheels in opposite directions to spin in place
-                leftSpeed = currentSteering * maxSpeedDegPerSec;
-                rightSpeed = -currentSteering * maxSpeedDegPerSec;
-                break;
+            {
+                float thetaLF = Mathf.Atan2(Mathf.Abs(pLF.x), Mathf.Abs(pLF.y)) * Mathf.Rad2Deg;
+                float thetaRF = Mathf.Atan2(Mathf.Abs(pRF.x), Mathf.Abs(pRF.y)) * Mathf.Rad2Deg;
+                float thetaLR = Mathf.Atan2(Mathf.Abs(pLR.x), Mathf.Abs(pLR.y)) * Mathf.Rad2Deg;
+                float thetaRR = Mathf.Atan2(Mathf.Abs(pRR.x), Mathf.Abs(pRR.y)) * Mathf.Rad2Deg;
 
+                // Point-turn tangent toe-in geometry: LF +, RF -, LR -, RR +
+                cmd.steerLF =  thetaLF;
+                cmd.steerRF = -thetaRF;
+                cmd.steerLR = -thetaLR;
+                cmd.steerRR =  thetaRR;
+
+                // Distances from center (0, 0)
+                float rCorner = Mathf.Sqrt(pLF.x * pLF.x + pLF.y * pLF.y);
+                float rMid = Mathf.Abs(pLM.y);
+                float kMid = rCorner > 0.001f ? (rMid / rCorner) : 0.74f;
+
+                // Left side drives forward (+steer), Right side drives backward (-steer) to spin clockwise
+                float vCorner = steer * maxSpeedDegPerSec;
+                float vMid = vCorner * kMid;
+
+                cmd.speedLF =  vCorner;
+                cmd.speedLM =  vMid;
+                cmd.speedLR =  vCorner;
+
+                cmd.speedRF = -vCorner;
+                cmd.speedRM = -vMid;
+                cmd.speedRR = -vCorner;
+                break;
+            }
+
+            // -----------------------------------------------------------------
+            // 3. CRAB STEERING (Diagonal Translation)
+            // -----------------------------------------------------------------
+            // All four corner wheels turn parallel to the steer heading (A/D).
+            // W/S drives along that heading.
+            // Middle wheels stay straight (0 deg) and receive only the forward cosine component.
             case DriveMode.Crab:
-                // All wheels turn in parallel direction
-                targetSteerRad = currentSteering * (maxSteerAngleDeg * Mathf.Deg2Rad);
-                leftSpeed = currentThrottle * maxSpeedDegPerSec;
-                rightSpeed = currentThrottle * maxSpeedDegPerSec;
-                break;
+            {
+                float crabAngleDeg = steer * maxSteerAngleDeg;
 
+                cmd.steerLF = crabAngleDeg;
+                cmd.steerRF = crabAngleDeg;
+                cmd.steerLR = crabAngleDeg;
+                cmd.steerRR = crabAngleDeg;
+
+                float vCorner = throttle * maxSpeedDegPerSec;
+                float vForward = vCorner * Mathf.Cos(crabAngleDeg * Mathf.Deg2Rad);
+
+                cmd.speedLF = vCorner;
+                cmd.speedRF = vCorner;
+                cmd.speedLM = vForward;
+                cmd.speedRM = vForward;
+                cmd.speedLR = vCorner;
+                cmd.speedRR = vCorner;
+                break;
+            }
+
+            // -----------------------------------------------------------------
+            // 4. TANK DRIVE (Skid Steer)
+            // -----------------------------------------------------------------
+            // All corner steer wheels fixed at 0 deg.
+            // Left = throttle + steer, Right = throttle - steer.
+            // Same sign convention on both sides: positive velocity = forward.
             case DriveMode.TankDrive:
-                targetSteerRad = 0f; // Fixed straight wheels
-                leftSpeed = (currentThrottle + currentSteering) * maxSpeedDegPerSec;
-                rightSpeed = (currentThrottle - currentSteering) * maxSpeedDegPerSec;
-                break;
-        }
+            {
+                cmd.steerLF = 0f;
+                cmd.steerRF = 0f;
+                cmd.steerLR = 0f;
+                cmd.steerRR = 0f;
 
-        // Send commands to importer
-        importer.SetSteerAngle(targetSteerRad);
-        importer.SetWheelSpeeds(leftSpeed, rightSpeed);
+                float vLeft = Mathf.Clamp(throttle + steer, -1f, 1f) * maxSpeedDegPerSec;
+                float vRight = Mathf.Clamp(throttle - steer, -1f, 1f) * maxSpeedDegPerSec;
+
+                cmd.speedLF = vLeft;
+                cmd.speedLM = vLeft;
+                cmd.speedLR = vLeft;
+
+                cmd.speedRF = vRight;
+                cmd.speedRM = vRight;
+                cmd.speedRR = vRight;
+                break;
+            }
+        }
     }
 
     /// <summary>
