@@ -31,9 +31,9 @@ namespace ProjectName.Planetary
         public PlanetProfile currentProfile;
 
         [Header("Master Skybox Configuration (Realism Rule)")]
-        [Tooltip("Skybox material with HDR_multi_nebulae_2.hdr applied to every celestial body except Earth")]
+        [Tooltip("Skybox material with NightSkyHDRI008_8K_HDR.exr applied to every celestial body except Earth")]
         public Material nebulaeSkyboxMaterial;
-        [Tooltip("Terrestrial skybox material applied exclusively to Earth")]
+        [Tooltip("Terrestrial skybox material with EveningSkyHDRI005B_8K_HDR.exr applied exclusively to Earth")]
         public Material earthSkyboxMaterial;
 
         private static PlanetEnvironmentController _instance;
@@ -262,7 +262,7 @@ namespace ProjectName.Planetary
         private void ApplyAtmosphereAndSky(PlanetProfile profile)
         {
             // 1. Realistic Skybox Rule:
-            // Apply Assets/project/materials/HDR_multi_nebulae_2.hdr for EVERY planet EXCEPT Earth.
+            // Apply Assets/project/materials/NightSkyHDRI008_8K_HDR.exr for EVERY planet EXCEPT Earth.
             // Earth uses its realistic terrestrial Rayleigh skybox.
             bool isEarth = string.Equals(profile.planetName, "Earth", StringComparison.OrdinalIgnoreCase);
 
@@ -289,8 +289,12 @@ namespace ProjectName.Planetary
                 }
 
                 // Custom HDR cubemap reflection texture to eliminate daylight blue sky leaks (Commit 5532ee2)
-                Cubemap hdrCubemap = Resources.Load<Cubemap>("HDR_multi_nebulae_2");
+                Cubemap hdrCubemap = Resources.Load<Cubemap>("NightSkyHDRI008_8K_HDR");
 #if UNITY_EDITOR
+                if (hdrCubemap == null)
+                {
+                    hdrCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/NightSkyHDRI008_8K_HDR.exr");
+                }
                 if (hdrCubemap == null)
                 {
                     hdrCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/HDR_multi_nebulae_2.hdr");
@@ -356,7 +360,23 @@ namespace ProjectName.Planetary
                 }
                 RenderSettings.ambientIntensity = Mathf.Max(0f, profile.ambientIntensity);
 
-                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+                // Custom HDR cubemap reflection texture for Earth evening sky
+                Cubemap earthCubemap = Resources.Load<Cubemap>("EveningSkyHDRI005B_8K_HDR");
+#if UNITY_EDITOR
+                if (earthCubemap == null)
+                {
+                    earthCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/EveningSkyHDRI005B_8K_HDR.exr");
+                }
+#endif
+                if (earthCubemap != null)
+                {
+                    RenderSettings.customReflectionTexture = earthCubemap;
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                }
+                else
+                {
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+                }
                 RenderSettings.reflectionIntensity = Mathf.Clamp01(profile.reflectionIntensity);
 
                 RenderSettings.fog = profile.fogEnabled;
