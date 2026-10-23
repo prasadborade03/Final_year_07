@@ -232,10 +232,6 @@ namespace ProjectName.Terrain
                     Cubemap hdrCubemap = null;
 #if UNITY_EDITOR
                     hdrCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/NightSkyHDRI008_8K_HDR.exr");
-                    if (hdrCubemap == null)
-                    {
-                        hdrCubemap = UnityEditor.AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/project/materials/HDR_multi_nebulae_2.hdr");
-                    }
 #endif
                     if (hdrCubemap != null)
                     {
@@ -990,3 +986,4 @@ namespace ProjectName.Terrain
         }
     }
 }
+
