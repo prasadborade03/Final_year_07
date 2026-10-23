@@ -72,6 +72,20 @@ License: [CC0 1.0 Universal License](https://polyhaven.com/license)
 Source: [ambientCG](https://ambientcg.com/)  
 License: [Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)
 
+### 1. Planetary Skyboxes (HDRIs)
+- **Night Sky HDRI**
+  - Asset: NightSkyHDRI008
+  - Source: https://ambientcg.com/a/NightSkyHDRI008
+  - Usage: Space skybox for Mars, Moon, Venus and Titan.
+  - License: CC0
+
+- **Earth Sky HDRI**
+  - Asset: EveningSkyHDRI005B
+  - Source: https://ambientcg.com/a/EveningSkyHDRI005B
+  - Usage: Earth skybox.
+  - License: CC0
+
+### 2. Surface Textures
 - **Ground048**
   - Use: Lunar fine dust reference & neutral grey tone
   - License: CC0
