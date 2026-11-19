@@ -104,7 +104,7 @@ namespace ProjectName.Output
                     if (instance == null)
                     {
                         var go = new GameObject("MissionRecorder");
-                        DontDestroyOnLoad(go);
+                        if (Application.isPlaying) DontDestroyOnLoad(go);
                         instance = go.AddComponent<MissionRecorder>();
                     }
                 }
@@ -113,13 +113,10 @@ namespace ProjectName.Output
             private set => instance = value;
         }
 
-        public const int TRACE_CHANNEL_COUNT = 6;
+        public const int TRACE_CHANNEL_COUNT = 3;
         public const int CHANNEL_SPEED = 0;
         public const int CHANNEL_SLOPE = 1;
         public const int CHANNEL_SLIP = 2;
-        public const int CHANNEL_POWER = 3;
-        public const int CHANNEL_BATTERY = 4;
-        public const int CHANNEL_MOTOR_TEMP = 5;
 
         [Header("State")]
         [SerializeField] private RecordingState state = RecordingState.Idle;
@@ -177,7 +174,7 @@ namespace ProjectName.Output
             if (Instance == null)
             {
                 var go = new GameObject("MissionRecorder");
-                DontDestroyOnLoad(go);
+                if (Application.isPlaying) DontDestroyOnLoad(go);
                 Instance = go.AddComponent<MissionRecorder>();
             }
         }
@@ -190,7 +187,7 @@ namespace ProjectName.Output
                 return;
             }
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            if (Application.isPlaying) DontDestroyOnLoad(gameObject);
 
             InitBuffers();
             ActiveRoverContext.OnRoverDestroyed += HandleRoverDestroyed;
@@ -542,6 +539,10 @@ namespace ProjectName.Output
                 : "Mars";
             string roverId = handle.profile != null ? handle.profile.id : "rover";
 
+            float ambientTemp = PlanetEnvironmentController.Instance?.currentProfile != null
+                ? PlanetEnvironmentController.Instance.currentProfile.ambientTemperatureCelsius
+                : 18.0f;
+
             // Write telemetry row
             writer.WriteTelemetryRow(
                 simTime,
@@ -558,11 +559,7 @@ namespace ProjectName.Output
                 tel.rollDeg,
                 tel.headingDeg,
                 tel.terrainSlopeDeg,
-                tel.batteryPercent,
-                tel.powerDrawWatts,
-                tel.energyConsumedWh,
-                tel.motorTempCelsius,
-                tel.ambientTempCelsius,
+                ambientTemp,
                 maxSlipVal,
                 avgSlipVal,
                 groundedCount,
@@ -601,10 +598,6 @@ namespace ProjectName.Output
                 tel.pitchDeg,
                 tel.rollDeg,
                 tel.terrainSlopeDeg,
-                tel.batteryPercent,
-                tel.powerDrawWatts,
-                tel.energyConsumedWh,
-                tel.motorTempCelsius,
                 maxSlipVal ?? 0f,
                 avgSlipVal ?? 0f,
                 groundedCount,
@@ -616,9 +609,6 @@ namespace ProjectName.Output
             traceBuffers[CHANNEL_SPEED].Push(tel.linearSpeedMps);
             traceBuffers[CHANNEL_SLOPE].Push(tel.terrainSlopeDeg);
             traceBuffers[CHANNEL_SLIP].Push(avgSlipVal ?? 0f);
-            traceBuffers[CHANNEL_POWER].Push(tel.powerDrawWatts);
-            traceBuffers[CHANNEL_BATTERY].Push(tel.batteryPercent);
-            traceBuffers[CHANNEL_MOTOR_TEMP].Push(tel.motorTempCelsius);
 
             frameIndex++;
             OnSampleRecorded?.Invoke();

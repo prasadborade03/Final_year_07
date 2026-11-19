@@ -130,7 +130,7 @@ namespace ProjectName.Output
                             "PosX_m,PosY_m,PosZ_m,Elevation_m,Odometer_m," +
                             "LinearSpeed_mps,GroundSpeed_kmph,ForwardAccel_mps2,GForce_G," +
                             "Pitch_deg,Roll_deg,Heading_deg,Slope_deg," +
-                            "Battery_pct,Power_W,EnergyConsumed_Wh,MotorTemp_C,AmbientTemp_C," +
+                            "AmbientTemp_C," +
                             "MaxWheelSlip_pct,AvgWheelSlip_pct,GroundedWheelCount," +
                             "Gravity_mps2,RolloverWarn,SteepSlopeWarn,Planet,Rover";
             telemetryWriter.WriteLine(header);
@@ -159,10 +159,6 @@ namespace ProjectName.Output
             float roll,
             float heading,
             float slope,
-            float batt,
-            float power,
-            float energy,
-            float motorTemp,
             float ambientTemp,
             float? maxSlip,
             float? avgSlip,
@@ -192,10 +188,6 @@ namespace ProjectName.Output
             AppendF3(roll); sb.Append(',');
             AppendF3(heading); sb.Append(',');
             AppendF3(slope); sb.Append(',');
-            AppendF2(batt); sb.Append(',');
-            AppendF1(power); sb.Append(',');
-            AppendF2(energy); sb.Append(',');
-            AppendF2(motorTemp); sb.Append(',');
             AppendF2(ambientTemp); sb.Append(',');
 
             if (maxSlip.HasValue) AppendF2(maxSlip.Value);
@@ -462,7 +454,6 @@ namespace ProjectName.Output
             js.AppendLine($"    \"display_name\": \"{EscapeJson(rover?.displayName ?? "Rover")}\",");
             js.AppendLine($"    \"mass_kg\": {(rover != null ? rover.massKg.ToString("F1", inv) : "0")},");
             js.AppendLine($"    \"wheel_radius_m\": {(rover != null ? rover.wheelRadius.ToString("F3", inv) : "0")},");
-            js.AppendLine($"    \"battery_capacity_wh\": {(rover != null ? rover.batteryWh.ToString("F1", inv) : "0")},");
             js.AppendLine($"    \"max_speed_mps\": {(rover != null ? rover.maxSpeed.ToString("F2", inv) : "0")}");
             js.AppendLine("  },");
 
@@ -539,11 +530,7 @@ namespace ProjectName.Output
             js.AppendLine("    \"Roll_deg\": { \"unit\": \"deg\", \"kind\": \"measured\", \"desc\": \"Chassis roll attitude angle (+ right down, - left down)\" },");
             js.AppendLine("    \"Heading_deg\": { \"unit\": \"deg\", \"kind\": \"measured\", \"desc\": \"Chassis compass heading (0 = +Z North, 90 = +X East)\" },");
             js.AppendLine("    \"Slope_deg\": { \"unit\": \"deg\", \"kind\": \"measured\", \"desc\": \"Local terrain surface slope angle beneath chassis\" },");
-            js.AppendLine("    \"Battery_pct\": { \"unit\": \"%\", \"kind\": \"modeled\", \"desc\": \"Simulated battery state of charge from integrated energy consumption\" },");
-            js.AppendLine("    \"Power_W\": { \"unit\": \"W\", \"kind\": \"modeled\", \"desc\": \"Simulated total power draw (avionics base + actuators + grade work + rolling resistance)\" },");
-            js.AppendLine("    \"EnergyConsumed_Wh\": { \"unit\": \"Wh\", \"kind\": \"modeled\", \"desc\": \"Numerical integration of power draw over mission duration\" },");
-            js.AppendLine("    \"MotorTemp_C\": { \"unit\": \"°C\", \"kind\": \"modeled\", \"desc\": \"Lumped differential thermal actuator model with environmental dissipation\" },");
-            js.AppendLine("    \"AmbientTemp_C\": { \"unit\": \"°C\", \"kind\": \"measured\", \"desc\": \"Atmospheric ambient temperature from planetary profile\" },");
+                        js.AppendLine("    \"AmbientTemp_C\": { \"unit\": \"°C\", \"kind\": \"measured\", \"desc\": \"Atmospheric ambient temperature from planetary profile\" },");
             js.AppendLine("    \"MaxWheelSlip_pct\": { \"unit\": \"%\", \"kind\": \"derived\", \"desc\": \"Peak slip ratio among currently grounded wheels\" },");
             js.AppendLine("    \"AvgWheelSlip_pct\": { \"unit\": \"%\", \"kind\": \"derived\", \"desc\": \"Mean slip ratio across currently grounded wheels\" },");
             js.AppendLine("    \"GroundedWheelCount\": { \"unit\": \"\", \"kind\": \"measured\", \"desc\": \"Count of wheels in physical contact with terrain\" },");
@@ -592,15 +579,6 @@ namespace ProjectName.Output
             js.AppendLine($"    \"avg_slip_pct\": {summary.avg_slip_pct.ToString("F2", inv)},");
             js.AppendLine($"    \"max_slip_pct\": {summary.max_slip_pct.ToString("F2", inv)},");
             js.AppendLine($"    \"pct_time_any_wheel_airborne\": {summary.pct_time_any_wheel_airborne.ToString("F2", inv)},");
-            js.AppendLine($"    \"energy_wh\": {summary.energy_wh.ToString("F2", inv)},");
-            string epStr = summary.energy_per_m_wh.HasValue ? summary.energy_per_m_wh.Value.ToString("F4", inv) : "null";
-            js.AppendLine($"    \"energy_per_m_wh\": {epStr},");
-            js.AppendLine($"    \"avg_power_w\": {summary.avg_power_w.ToString("F1", inv)},");
-            js.AppendLine($"    \"battery_start_pct\": {summary.battery_start_pct.ToString("F2", inv)},");
-            js.AppendLine($"    \"battery_end_pct\": {summary.battery_end_pct.ToString("F2", inv)},");
-            js.AppendLine($"    \"motor_temp_start_c\": {summary.motor_temp_start_c.ToString("F2", inv)},");
-            js.AppendLine($"    \"motor_temp_max_c\": {summary.motor_temp_max_c.ToString("F2", inv)},");
-            js.AppendLine($"    \"motor_temp_rise_c\": {summary.motor_temp_rise_c.ToString("F2", inv)},");
             js.AppendLine($"    \"rollover_warning_count\": {summary.rollover_warning_count},");
             js.AppendLine($"    \"steep_slope_warning_count\": {summary.steep_slope_warning_count}");
             js.AppendLine("  },");

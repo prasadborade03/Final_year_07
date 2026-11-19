@@ -75,7 +75,7 @@ namespace ProjectName.Planetary
         [Tooltip("Surface temperature fact string (e.g. '≈ −60 °C' Mars, '+100 °C / −170 °C' Moon)")]
         public string surfaceTemperature = "≈ −60 °C";
 
-        [Tooltip("Ambient surface temperature in Celsius for physics and motor thermal lumped modeling")]
+        [Tooltip("Ambient surface temperature in Celsius for physics and atmospheric modeling")]
         public float ambientTemperatureCelsius = -60.0f;
 
         [Tooltip("Atmospheric surface pressure in kilopascals (kPa). 0 = hard vacuum")]

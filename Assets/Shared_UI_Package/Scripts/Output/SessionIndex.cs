@@ -140,13 +140,7 @@ namespace ProjectName.Output
             m = Regex.Match(json, "\"max_speed_mps\"\\s*:\\s*([0-9.]+)");
             if (m.Success && float.TryParse(m.Groups[1].Value, NumberStyles.Float, inv, out float maxV)) s.max_speed_mps = maxV;
 
-            m = Regex.Match(json, "\"energy_wh\"\\s*:\\s*([0-9.]+)");
-            if (m.Success && float.TryParse(m.Groups[1].Value, NumberStyles.Float, inv, out float eWh)) s.energy_wh = eWh;
-
-            m = Regex.Match(json, "\"energy_per_m_wh\"\\s*:\\s*([0-9.]+)");
-            if (m.Success && float.TryParse(m.Groups[1].Value, NumberStyles.Float, inv, out float ePerM)) s.energy_per_m_wh = ePerM;
-            else s.energy_per_m_wh = null;
-
+            
             m = Regex.Match(json, "\"avg_slip_pct\"\\s*:\\s*([0-9.]+)");
             if (m.Success && float.TryParse(m.Groups[1].Value, NumberStyles.Float, inv, out float slip)) s.avg_slip_pct = slip;
 
@@ -162,9 +156,7 @@ namespace ProjectName.Output
             m = Regex.Match(json, "\"max_g\"\\s*:\\s*([0-9.]+)");
             if (m.Success && float.TryParse(m.Groups[1].Value, NumberStyles.Float, inv, out float g)) s.max_g = g;
 
-            m = Regex.Match(json, "\"battery_end_pct\"\\s*:\\s*([0-9.]+)");
-            if (m.Success && float.TryParse(m.Groups[1].Value, NumberStyles.Float, inv, out float batt)) s.battery_end_pct = batt;
-
+            
             int warnCount = 0;
             m = Regex.Match(json, "\"rollover_warning_count\"\\s*:\\s*([0-9]+)");
             if (m.Success && int.TryParse(m.Groups[1].Value, out int rw))

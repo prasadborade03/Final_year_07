@@ -50,11 +50,11 @@ namespace ProjectName.Output
         private VisualElement traceChannelRow;
         private Label lblTraceEmpty;
         private LiveTraceElement liveTrace;
-        private Button[] channelChips = new Button[6];
+        private Button[] channelChips = new Button[3];
 
         private VisualElement summaryGrid;
-        private Label sumDist, sumAvgV, sumMaxV, sumEnergy, sumWhPerM, sumSlip;
-        private Label sumSlope, sumPitch, sumRoll, sumG, sumBatt, sumWarn;
+        private Label sumDist, sumAvgV, sumMaxV, sumSlip;
+        private Label sumSlope, sumPitch, sumRoll, sumG, sumWarn;
         private Label lblOutputStatus;
 
         private ScrollView sessionList;
@@ -128,14 +128,11 @@ namespace ProjectName.Output
             sumDist = root.Q<Label>("SumDist");
             sumAvgV = root.Q<Label>("SumAvgV");
             sumMaxV = root.Q<Label>("SumMaxV");
-            sumEnergy = root.Q<Label>("SumEnergy");
-            sumWhPerM = root.Q<Label>("SumWhPerM");
             sumSlip = root.Q<Label>("SumSlip");
             sumSlope = root.Q<Label>("SumSlope");
             sumPitch = root.Q<Label>("SumPitch");
             sumRoll = root.Q<Label>("SumRoll");
             sumG = root.Q<Label>("SumG");
-            sumBatt = root.Q<Label>("SumBatt");
             sumWarn = root.Q<Label>("SumWarn");
 
             lblOutputStatus = root.Q<Label>("LblOutputStatus");
@@ -164,11 +161,8 @@ namespace ProjectName.Output
                 channelChips[0] = traceChannelRow.Q<Button>("ChipSpeed");
                 channelChips[1] = traceChannelRow.Q<Button>("ChipSlope");
                 channelChips[2] = traceChannelRow.Q<Button>("ChipSlip");
-                channelChips[3] = traceChannelRow.Q<Button>("ChipPower");
-                channelChips[4] = traceChannelRow.Q<Button>("ChipBattery");
-                channelChips[5] = traceChannelRow.Q<Button>("ChipTemp");
 
-                for (int i = 0; i < 6; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     int chIndex = i;
                     if (channelChips[chIndex] != null)
@@ -682,14 +676,11 @@ namespace ProjectName.Output
             if (sumDist != null) sumDist.text = s.distance_m.ToString("F2", inv);
             if (sumAvgV != null) sumAvgV.text = s.avg_speed_mps.ToString("F2", inv);
             if (sumMaxV != null) sumMaxV.text = s.max_speed_mps.ToString("F2", inv);
-            if (sumEnergy != null) sumEnergy.text = s.energy_wh.ToString("F1", inv);
-            if (sumWhPerM != null) sumWhPerM.text = s.energy_per_m_wh.HasValue ? s.energy_per_m_wh.Value.ToString("F3", inv) : "—";
             if (sumSlip != null) sumSlip.text = s.avg_slip_pct.ToString("F1", inv);
             if (sumSlope != null) sumSlope.text = s.max_slope_deg.ToString("F1", inv);
             if (sumPitch != null) sumPitch.text = s.max_abs_pitch_deg.ToString("F1", inv);
             if (sumRoll != null) sumRoll.text = s.max_abs_roll_deg.ToString("F1", inv);
             if (sumG != null) sumG.text = s.max_g.ToString("F2", inv);
-            if (sumBatt != null) sumBatt.text = s.battery_end_pct.ToString("F1", inv);
             if (sumWarn != null) sumWarn.text = (s.rollover_warning_count + s.steep_slope_warning_count).ToString();
         }
 
@@ -698,14 +689,11 @@ namespace ProjectName.Output
             if (sumDist != null) sumDist.text = "—";
             if (sumAvgV != null) sumAvgV.text = "—";
             if (sumMaxV != null) sumMaxV.text = "—";
-            if (sumEnergy != null) sumEnergy.text = "—";
-            if (sumWhPerM != null) sumWhPerM.text = "—";
             if (sumSlip != null) sumSlip.text = "—";
             if (sumSlope != null) sumSlope.text = "—";
             if (sumPitch != null) sumPitch.text = "—";
             if (sumRoll != null) sumRoll.text = "—";
             if (sumG != null) sumG.text = "—";
-            if (sumBatt != null) sumBatt.text = "—";
             if (sumWarn != null) sumWarn.text = "—";
         }
 

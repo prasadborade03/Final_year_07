@@ -1869,8 +1869,9 @@
 }
 
 .output-summary-grid .summary-cell {
-    width: 15.5%;
-    min-width: 70px;
+    width: 31.8%;
+    min-width: 90px;
+    margin-bottom: 4px;
 }
 
 .output-status-line {

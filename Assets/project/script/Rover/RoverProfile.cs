@@ -85,12 +85,9 @@ namespace ProjectName.Rover
         [Range(0.1f, 1.0f)]
         public float slipFairThreshold = 0.40f;
 
-        [Header("Subsystems & Power")]
+        [Header("Physical Parameters")]
         [Tooltip("Nominal rover mass in kilograms")]
         public float massKg = 50f;
-
-        [Tooltip("Standard battery pack capacity in Watt-hours")]
-        public float batteryWh = 1200f;
 
         [Header("Operational Drive Modes (Used in Phase 2)")]
         public DriveModeDefinition[] driveModes = new DriveModeDefinition[0];

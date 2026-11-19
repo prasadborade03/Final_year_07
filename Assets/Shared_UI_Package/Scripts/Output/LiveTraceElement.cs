@@ -12,23 +12,20 @@ namespace ProjectName.Output
         {
             new Color(0.0f, 0.898f, 1.0f, 1.0f),   // Speed: Cyan (#00E5FF)
             new Color(1.0f, 0.702f, 0.0f, 1.0f),   // Slope: Amber (#FFB300)
-            new Color(0.0f, 0.902f, 0.463f, 1.0f),  // Slip: Green (#00E676)
-            new Color(1.0f, 0.090f, 0.267f, 1.0f),  // Power: Red (#FF1744)
-            new Color(0.0f, 0.690f, 1.0f, 1.0f),   // Battery: Blue (#00B0FF)
-            new Color(1.0f, 0.427f, 0.0f, 1.0f)    // Motor Temp: Orange (#FF6D00)
+            new Color(0.0f, 0.902f, 0.463f, 1.0f)  // Slip: Green (#00E676)
         };
 
         public static readonly string[] ChannelNames = new string[]
         {
-            "SPEED", "SLOPE", "SLIP", "POWER", "BATT", "TEMP"
+            "SPEED", "SLOPE", "SLIP"
         };
 
         public static readonly string[] ChannelUnits = new string[]
         {
-            "m/s", "deg", "%", "W", "%", "°C"
+            "m/s", "deg", "%"
         };
 
-        public bool[] ChannelEnabled = new bool[] { true, true, true, false, false, false };
+        public bool[] ChannelEnabled = new bool[] { true, true, true };
 
         private VisualElement canvas;
         private VisualElement yAxisOverlay;
@@ -68,10 +65,10 @@ namespace ProjectName.Output
             var yMinContainer = new VisualElement();
             yMinContainer.style.flexDirection = FlexDirection.Column;
 
-            yMinLabels = new Label[6];
-            yMaxLabels = new Label[6];
+            yMinLabels = new Label[ChannelNames.Length];
+            yMaxLabels = new Label[ChannelNames.Length];
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < ChannelNames.Length; i++)
             {
                 var lblMax = new Label();
                 lblMax.style.fontSize = 9;
@@ -148,7 +145,7 @@ namespace ProjectName.Output
 
             if (hasData)
             {
-                for (int i = 0; i < 6; i++)
+                for (int i = 0; i < ChannelNames.Length; i++)
                 {
                     if (ChannelEnabled[i])
                     {
@@ -196,7 +193,7 @@ namespace ProjectName.Output
             var recorder = MissionRecorder.Instance;
             if (recorder == null || recorder.TraceBuffers == null) return;
 
-            for (int ch = 0; ch < 6; ch++)
+            for (int ch = 0; ch < ChannelNames.Length; ch++)
             {
                 if (!ChannelEnabled[ch]) continue;
 

@@ -21,14 +21,6 @@ namespace ProjectName.Output
         public float avg_slip_pct;
         public float max_slip_pct;
         public float pct_time_any_wheel_airborne;
-        public float energy_wh;
-        public float? energy_per_m_wh;
-        public float avg_power_w;
-        public float battery_start_pct = 100f;
-        public float battery_end_pct = 100f;
-        public float motor_temp_start_c;
-        public float motor_temp_max_c;
-        public float motor_temp_rise_c;
         public int rollover_warning_count;
         public int steep_slope_warning_count;
     }
@@ -46,8 +38,6 @@ namespace ProjectName.Output
         private int sampleCount = 0;
         private float startOdometer = 0f;
         private float lastOdometer = 0f;
-        private float startEnergy = 0f;
-        private float lastEnergy = 0f;
 
         private double sumSpeed = 0;
         private float maxSpeed = 0f;
@@ -56,13 +46,6 @@ namespace ProjectName.Output
         private float maxSlope = 0f;
         private float maxAbsPitch = 0f;
         private float maxAbsRoll = 0f;
-
-        private double sumPower = 0;
-        private float battStart = 100f;
-        private float battEnd = 100f;
-
-        private float tempStart = 0f;
-        private float tempMax = float.MinValue;
 
         private double sumGroundedSlip = 0;
         private int groundedSlipSamples = 0;
@@ -80,8 +63,6 @@ namespace ProjectName.Output
             sampleCount = 0;
             startOdometer = 0f;
             lastOdometer = 0f;
-            startEnergy = 0f;
-            lastEnergy = 0f;
             sumSpeed = 0;
             maxSpeed = 0f;
             sumAbsAccel = 0;
@@ -89,11 +70,6 @@ namespace ProjectName.Output
             maxSlope = 0f;
             maxAbsPitch = 0f;
             maxAbsRoll = 0f;
-            sumPower = 0;
-            battStart = 100f;
-            battEnd = 100f;
-            tempStart = 0f;
-            tempMax = float.MinValue;
             sumGroundedSlip = 0;
             groundedSlipSamples = 0;
             maxGroundedSlip = 0f;
@@ -112,10 +88,6 @@ namespace ProjectName.Output
             float pitch,
             float roll,
             float slope,
-            float batt,
-            float power,
-            float energy,
-            float motorTemp,
             float maxSlip,
             float avgSlip,
             int groundedWheels,
@@ -126,17 +98,11 @@ namespace ProjectName.Output
             if (isFirstSample)
             {
                 startOdometer = odo;
-                startEnergy = energy;
-                battStart = batt;
-                tempStart = motorTemp;
-                tempMax = motorTemp;
                 isFirstSample = false;
             }
 
             sampleCount++;
             lastOdometer = odo;
-            lastEnergy = energy;
-            battEnd = batt;
 
             sumSpeed += speed;
             if (speed > maxSpeed) maxSpeed = speed;
@@ -150,9 +116,6 @@ namespace ProjectName.Output
 
             float absRoll = Mathf.Abs(roll);
             if (absRoll > maxAbsRoll) maxAbsRoll = absRoll;
-
-            sumPower += power;
-            if (motorTemp > tempMax) tempMax = motorTemp;
 
             if (groundedWheels > 0)
             {
@@ -188,7 +151,6 @@ namespace ProjectName.Output
                 summary.max_slope_deg = maxSlope;
                 summary.max_abs_pitch_deg = maxAbsPitch;
                 summary.max_abs_roll_deg = maxAbsRoll;
-                summary.avg_power_w = (float)(sumPower / sampleCount);
                 summary.pct_time_any_wheel_airborne = (100f * airborneSamples) / sampleCount;
             }
 
@@ -202,23 +164,6 @@ namespace ProjectName.Output
                 summary.avg_slip_pct = 0f;
                 summary.max_slip_pct = 0f;
             }
-
-            summary.energy_wh = Mathf.Max(0f, lastEnergy - startEnergy);
-            if (summary.distance_m >= 1.0f)
-            {
-                summary.energy_per_m_wh = summary.energy_wh / summary.distance_m;
-            }
-            else
-            {
-                summary.energy_per_m_wh = null;
-            }
-
-            summary.battery_start_pct = battStart;
-            summary.battery_end_pct = battEnd;
-
-            summary.motor_temp_start_c = tempStart;
-            summary.motor_temp_max_c = tempMax == float.MinValue ? tempStart : tempMax;
-            summary.motor_temp_rise_c = summary.motor_temp_max_c - summary.motor_temp_start_c;
 
             summary.rollover_warning_count = rolloverWarnCount;
             summary.steep_slope_warning_count = steepSlopeWarnCount;
@@ -278,13 +223,7 @@ namespace ProjectName.Output
             sb.AppendLine($"| Average Wheel Slip | {s.avg_slip_pct.ToString("F2", inv)} | % |");
             sb.AppendLine($"| Maximum Wheel Slip | {s.max_slip_pct.ToString("F2", inv)} | % |");
             sb.AppendLine($"| Airborne Time Ratio | {s.pct_time_any_wheel_airborne.ToString("F2", inv)} | % |");
-            sb.AppendLine($"| Total Energy Consumed | {s.energy_wh.ToString("F2", inv)} | Wh |");
-            string ePerMStr = s.energy_per_m_wh.HasValue ? s.energy_per_m_wh.Value.ToString("F4", inv) : "N/A (< 1 m)";
-            sb.AppendLine($"| Specific Energy | {ePerMStr} | Wh/m |");
-            sb.AppendLine($"| Average Power Draw | {s.avg_power_w.ToString("F1", inv)} | W |");
-            sb.AppendLine($"| Battery State (Start / End) | {s.battery_start_pct.ToString("F1", inv)} / {s.battery_end_pct.ToString("F1", inv)} | % |");
-            sb.AppendLine($"| Motor Temperature (Start / Max / Rise) | {s.motor_temp_start_c.ToString("F1", inv)} / {s.motor_temp_max_c.ToString("F1", inv)} / {s.motor_temp_rise_c.ToString("F1", inv)} | °C |");
-            sb.AppendLine($"| Rollover Warnings Triggered | {s.rollover_warning_count} | count |");
+                        sb.AppendLine($"| Rollover Warnings Triggered | {s.rollover_warning_count} | count |");
             sb.AppendLine($"| Steep Slope Warnings Triggered | {s.steep_slope_warning_count} | count |");
             sb.AppendLine();
 
@@ -333,9 +272,9 @@ namespace ProjectName.Output
             }
             sb.AppendLine();
 
-            sb.AppendLine("## 5. Provenance & Model Disclaimer");
+            sb.AppendLine("## 5. Provenance & Notes");
             sb.AppendLine();
-            sb.AppendLine("> Power, energy, battery and motor temperature are simulation model estimates and are not hardware-validated.");
+            sb.AppendLine("> All kinematic, attitude, and terrain values are derived directly from Unity physics and URDF parameters.");
             sb.AppendLine();
 
             sb.AppendLine("## 6. Artifact Files");

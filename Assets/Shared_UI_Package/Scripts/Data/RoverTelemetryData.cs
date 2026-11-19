@@ -41,12 +41,6 @@ namespace ProjectName.UI
         public float odometerMeters = 0f;    // Cumulative distance traversed
         public float missionTimeSeconds = 0f;// Active operation time
 
-        [Header("Power & Subsystems")]
-        public float batteryPercent = 100f;  // State of charge (0 - 100%)
-        public float powerDrawWatts = 150f;  // Instantaneous power consumption
-        public float motorTempCelsius = 24f; // Motor temperature (deg C)
-        public bool thermalWarning = false;
-
         [Header("Wheels")]
         public WheelTelemetry[] wheels = new WheelTelemetry[0];
 

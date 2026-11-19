@@ -21,13 +21,10 @@ namespace ProjectName.Rover
 
         [Header("Physical Rover Specs")]
         public float wheelRadius = 0.165f; // Meters (auto-tuned per rover model)
-        public float batteryCapacityWh = 1200f; // Watt-hours (standard aerospace rover pack)
-        public float ambientTempCelsius = 18.0f; // Ambient surface temperature
 
         [Header("Safety Thresholds")]
         public float pitchWarningThresholdDeg = 25f;
         public float rollWarningThresholdDeg = 22f;
-        public float thermalWarningThresholdCelsius = 60f;
 
         // Internal tracking references
         private ArticulationBody rootArticulationBody;
@@ -37,7 +34,6 @@ namespace ProjectName.Rover
 
         private Vector3 lastPosition;
         private float lastSpeedMps = 0f;
-        private float energyConsumedWh = 0f;
         private bool isInitialized = false;
 
         private class WheelTracker
@@ -150,8 +146,6 @@ namespace ProjectName.Rover
             }
 
             telemetry.wheels = new WheelTelemetry[wheelTrackers.Count];
-            telemetry.motorTempCelsius = ambientTempCelsius;
-            telemetry.batteryPercent = 100f;
             telemetry.odometerMeters = 0f;
             telemetry.missionTimeSeconds = 0f;
             isInitialized = true;
@@ -191,7 +185,6 @@ namespace ProjectName.Rover
             UpdateKinematics(dt);
             UpdateAttitudeAndSlope();
             UpdateWheelTelemetry(dt);
-            UpdatePowerAndThermals(dt);
             UpdateEnvironmentTelemetry();
         }
 
@@ -391,45 +384,7 @@ namespace ProjectName.Rover
             }
         }
 
-        private void UpdatePowerAndThermals(float dt)
-        {
-            // Base avionics power (Sensors, flight computer, communications): ~75W
-            float currentPower = 75f;
 
-            // Physical electrical power consumed by driving wheels
-            float totalWheelPower = 0f;
-            if (telemetry.wheels != null)
-            {
-                foreach (var w in telemetry.wheels)
-                {
-                    // Mechanical power = Torque * Omega (scaled by realistic electrical efficiency 0.85)
-                    float p = (w.motorTorque * 0.001f) * w.angularVelocityRad;
-                    totalWheelPower += Mathf.Clamp(p, 0f, 120f);
-                }
-            }
-
-            // Add slope incline effort
-            float slopeFactor = 1f + Mathf.Sin(telemetry.terrainSlopeDeg * Mathf.Deg2Rad) * 1.2f;
-            currentPower += (totalWheelPower * slopeFactor);
-
-            if (telemetry.speedMps > 0.05f)
-            {
-                currentPower += (telemetry.speedMps * 45f);
-            }
-
-            telemetry.powerDrawWatts = Mathf.Round(currentPower);
-
-            // Battery state of charge calculation
-            float wattHoursUsed = (currentPower * (dt / 3600f));
-            energyConsumedWh += wattHoursUsed;
-            telemetry.batteryPercent = Mathf.Clamp(100f * (1f - (energyConsumedWh / batteryCapacityWh)), 0f, 100f);
-
-            // Motor thermal dynamics (Newton's cooling law towards ambient + joule heating from power)
-            float heatingRate = (currentPower - 75f) * 0.02f;
-            float targetTemp = ambientTempCelsius + heatingRate;
-            telemetry.motorTempCelsius = Mathf.MoveTowards(telemetry.motorTempCelsius, targetTemp, dt * 0.3f);
-            telemetry.thermalWarning = (telemetry.motorTempCelsius >= thermalWarningThresholdCelsius);
-        }
 
         private string FormatWheelName(string raw)
         {

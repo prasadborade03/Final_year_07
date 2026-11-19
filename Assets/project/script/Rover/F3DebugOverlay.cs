@@ -148,10 +148,6 @@ namespace ProjectName.Rover
                     GUILayout.Label($"Odometer: {t.odometerMeters:F2} m | Mission Time: {t.missionTimeSeconds:F1} s", textStyle);
 
                     GUILayout.Space(6);
-                    GUILayout.Label("--- POWER & THERMALS ---", headerStyle);
-                    GUILayout.Label($"Power Draw: {t.powerDrawWatts:F0} W | Battery: {t.batteryPercent:F1}% | Motor Temp: {t.motorTempCelsius:F1} °C", textStyle);
-
-                    GUILayout.Space(6);
                     GUILayout.Label($"--- ACTUATORS & TRACTION ({t.wheelStates.Length} WHEELS) ---", headerStyle);
                     for (int i = 0; i < t.wheelStates.Length; i++)
                     {

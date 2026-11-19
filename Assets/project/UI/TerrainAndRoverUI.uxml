@@ -924,9 +924,6 @@
                         <ui:Button name="ChipSpeed" text="SPEED" class="material-chip material-chip-active" />
                         <ui:Button name="ChipSlope" text="SLOPE" class="material-chip material-chip-active" />
                         <ui:Button name="ChipSlip" text="SLIP" class="material-chip material-chip-active" />
-                        <ui:Button name="ChipPower" text="POWER" class="material-chip" />
-                        <ui:Button name="ChipBattery" text="BATT" class="material-chip" />
-                        <ui:Button name="ChipTemp" text="TEMP" class="material-chip" />
                     </ui:VisualElement>
 
                     <!-- Trace Canvas Container -->
@@ -963,19 +960,6 @@
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement class="metric-cell summary-cell">
-                            <ui:Label text="ENERGY" class="metric-label" />
-                            <ui:VisualElement class="metric-value-row">
-                                <ui:Label name="SumEnergy" text="—" class="metric-value metric-value-sm" />
-                                <ui:Label text="Wh" class="metric-unit" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="metric-cell summary-cell">
-                            <ui:Label text="Wh/m" class="metric-label" />
-                            <ui:VisualElement class="metric-value-row">
-                                <ui:Label name="SumWhPerM" text="—" class="metric-value metric-value-sm" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="metric-cell summary-cell">
                             <ui:Label text="SLIP" class="metric-label" />
                             <ui:VisualElement class="metric-value-row">
                                 <ui:Label name="SumSlip" text="—" class="metric-value metric-value-sm" />
@@ -1008,13 +992,6 @@
                             <ui:VisualElement class="metric-value-row">
                                 <ui:Label name="SumG" text="—" class="metric-value metric-value-sm" />
                                 <ui:Label text="G" class="metric-unit" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="metric-cell summary-cell">
-                            <ui:Label text="BATT" class="metric-label" />
-                            <ui:VisualElement class="metric-value-row">
-                                <ui:Label name="SumBatt" text="—" class="metric-value metric-value-sm" />
-                                <ui:Label text="%" class="metric-unit" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement class="metric-cell summary-cell">

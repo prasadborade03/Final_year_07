@@ -469,6 +469,7 @@ MonoBehaviour:
   maxSpeedDegPerSec: 240
   maxSteerAngleDeg: 40
   inputSmoothing: 8
+  steerSlewRateDegPerSec: 90
   wheelBase: 2.2
   trackWidth: 2
   throttleAxis: Vertical
@@ -476,8 +477,6 @@ MonoBehaviour:
   toggleModeKey: 109
   liftChassisKey: 32
   isInputBlocked: 0
-  overrideThrottle: 0
-  overrideSteer: 0
 --- !u!114 &770217958
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -498,7 +497,6 @@ MonoBehaviour:
   jointFriction: 0.05
   wheelDamping: 2500
   wheelForceLimit: 2500
-  invertRightSideDrives: 1
   steerStiffness: 5000
   steerDamping: 500
   steerForceLimit: 1000
@@ -508,6 +506,23 @@ MonoBehaviour:
   suspTargetElevationDeg: 0
   ignoreInternalCollisions: 1
   autoSpawnOnStart: 0
+  wLF: {fileID: 0}
+  wRF: {fileID: 0}
+  wLM: {fileID: 0}
+  wRM: {fileID: 0}
+  wLR: {fileID: 0}
+  wRR: {fileID: 0}
+  steerLF: {fileID: 0}
+  steerRF: {fileID: 0}
+  steerLR: {fileID: 0}
+  steerRR: {fileID: 0}
+  posLF: {x: 1.19, y: 1.06}
+  posRF: {x: 1.19, y: -1.06}
+  posLM: {x: 0, y: 1.18}
+  posRM: {x: 0, y: -1.18}
+  posLR: {x: -1.07, y: 1.06}
+  posRR: {x: -1.07, y: -1.06}
+  isRoverReady: 0
 --- !u!1 &781041463
 GameObject:
   m_ObjectHideFlags: 0
@@ -1025,12 +1040,10 @@ MonoBehaviour:
   navCoordsText: {fileID: 0}
   odoAltText: {fileID: 0}
   wheelTelemetryText: {fileID: 0}
-  powerHealthText: {fileID: 0}
   environmentText: {fileID: 0}
   warningBannerText: {fileID: 0}
   miniHudText: {fileID: 0}
   speedProgressBar: {fileID: 0}
-  batteryProgressBar: {fileID: 0}
   showKmph: 0
   maxSpeedGauge: 6
 --- !u!114 &1638835895
@@ -5336,6 +5349,20 @@ MonoBehaviour:
       m_SingletonActionBindings: []
       m_Flags: 0
     m_Reference: {fileID: 0}
+  rightStickClickAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 45003b7e-13ad-40d9-aae7-eb83556e9977
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  rightLineVisual: {fileID: 0}
+  rightLineRenderer: {fileID: 0}
   desktopGripKey: 103
   isFlying: 0
 --- !u!114 &8821593979247426196
@@ -5352,6 +5379,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectName.Rover.RoverCameraRig
   currentPerspective: 0
   transitionDuration: 0.5
+  vrFadeOutDuration: 0.1
+  vrFadeInDuration: 0.15
   smoothTime: 0.14
   rotationDamping: 8
   orbitSensitivity: 3
