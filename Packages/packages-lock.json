@@ -17,13 +17,12 @@
       }
     },
     "com.tomgit473.unity-urdf-importer": {
-      "version": "https://github.com/Tomgit473/unity-urdf-importer.git",
+      "version": "file:com.tomgit473.unity-urdf-importer",
       "depth": 0,
-      "source": "git",
+      "source": "embedded",
       "dependencies": {
         "com.unity.editorcoroutines": "1.0.0"
-      },
-      "hash": "076ba14a82b0d601829eb6f813ebb79d1ccd66ed"
+      }
     },
     "com.unity.ai.navigation": {
       "version": "2.0.13",

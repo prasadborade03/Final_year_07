@@ -1040,12 +1040,10 @@ MonoBehaviour:
   navCoordsText: {fileID: 0}
   odoAltText: {fileID: 0}
   wheelTelemetryText: {fileID: 0}
-  powerHealthText: {fileID: 0}
   environmentText: {fileID: 0}
   warningBannerText: {fileID: 0}
   miniHudText: {fileID: 0}
   speedProgressBar: {fileID: 0}
-  batteryProgressBar: {fileID: 0}
   showKmph: 0
   maxSpeedGauge: 6
 --- !u!114 &1638835895
